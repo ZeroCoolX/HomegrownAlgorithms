@@ -38,6 +38,7 @@ public class CustomHeap {
         }
     }
     
+    //will still need accessor and mutators
     public CustomHeap(int[] nodes){
         CustomHeap.CustomInt[] heap = new CustomHeap.CustomInt[nodes.length];
         //given an integer array, transfer everything into the CustomInt array
