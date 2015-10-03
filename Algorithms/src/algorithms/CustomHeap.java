@@ -38,6 +38,21 @@ public class CustomHeap {
         }
     }
     
+    public CustomHeap(int[] nodes){
+        CustomHeap.CustomInt[] heap = new CustomHeap.CustomInt[nodes.length];
+        //given an integer array, transfer everything into the CustomInt array
+        for(int i = 1; i <= nodes.length; ++i){
+            heap[i] = new CustomHeap.CustomInt(nodes[i]);
+        }
+        int heapSize=0;
+        //contruct CustomInt array as a heap
+        for(int i = 1; i <= heap.length; ++i){
+            ++heapSize;
+            //System.out.println("Inserting element " + heapSize + " with value of " + heap[heapSize-1].getValue());
+            insert(heap, i, heapSize);
+        }
+    }
+    
     public static void main (String[] args){
         //always minus 1 for going to parent and plus 1 for going to children
         String unsortedHeap = "[30,88,21,5,11,43,1,13,12,3,53,32,86,190,17,117,24,76,65,80,19,39,22,99,81,69,16,61,55,17]";
