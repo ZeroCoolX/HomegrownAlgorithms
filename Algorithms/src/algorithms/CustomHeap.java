@@ -4,7 +4,6 @@
  * and open the template in the editor.
  */
 package algorithms;
-import java.lang.*;
 
 /**
  *
@@ -12,105 +11,35 @@ import java.lang.*;
  */
 public class CustomHeap {
     
-    private static class CustomInt{
-        private int value;
-        private boolean sorted;
-
-        public CustomInt(int val){
-            this.value = val;
-            this.sorted = false;
-        }
+    private CustomHeap.CustomInt[] heapArray;
         
-        public void setValue(int val){
-            this.value = val;
-        }
-        
-        public int getValue(){
-            return this.value;
-        }
-        
-        public void setSorted(boolean sorted){
-            this.sorted = sorted;
-        }
-        
-        public boolean isSorted(){
-            return this.sorted;
-        }
-    }
-    
-    //will still need accessor and mutators
+    //will still need accessor and mutators and such.
     public CustomHeap(int[] nodes){
-        CustomHeap.CustomInt[] heap = new CustomHeap.CustomInt[nodes.length];
+        heapArray = new CustomHeap.CustomInt[nodes.length];
         //given an integer array, transfer everything into the CustomInt array
-        for(int i = 1; i <= nodes.length; ++i){
-            heap[i] = new CustomHeap.CustomInt(nodes[i]);
+        for(int i = 0; i < nodes.length; ++i){
+            heapArray[i] = new CustomHeap.CustomInt(nodes[i]);
         }
         int heapSize=0;
         //contruct CustomInt array as a heap
-        for(int i = 1; i <= heap.length; ++i){
+        for(int i = 1; i <= heapArray.length; ++i){
             ++heapSize;
             //System.out.println("Inserting element " + heapSize + " with value of " + heap[heapSize-1].getValue());
-            insert(heap, i, heapSize);
+            insert(heapArray, i, heapSize);
         }
+        
     }
     
     public static void main (String[] args){
         //always minus 1 for going to parent and plus 1 for going to children
-        String unsortedHeap = "[30,88,21,5,11,43,1,13,12,3,53,32,86,190,17,117,24,76,65,80,19,39,22,99,81,69,16,61,55,17]";
-        //int[] heap = {30,88,21,5,11,43,1,13};
-        CustomHeap.CustomInt[] heap = {
-            new CustomHeap.CustomInt(30),
-            new CustomHeap.CustomInt(88),
-            new CustomHeap.CustomInt(21),
-            new CustomHeap.CustomInt(5),
-            new CustomHeap.CustomInt(11),
-            new CustomHeap.CustomInt(43),
-            new CustomHeap.CustomInt(1),
-            new CustomHeap.CustomInt(13),
-            new CustomHeap.CustomInt(12),
-            new CustomHeap.CustomInt(3),
-            new CustomHeap.CustomInt(53),
-            new CustomHeap.CustomInt(32),
-            new CustomHeap.CustomInt(86),
-            new CustomHeap.CustomInt(190),
-            new CustomHeap.CustomInt(17),
-            new CustomHeap.CustomInt(117),
-            new CustomHeap.CustomInt(24),
-            new CustomHeap.CustomInt(76),
-            new CustomHeap.CustomInt(65),
-            new CustomHeap.CustomInt(80),
-            new CustomHeap.CustomInt(19),
-            new CustomHeap.CustomInt(39),
-            new CustomHeap.CustomInt(22),
-            new CustomHeap.CustomInt(99),
-            new CustomHeap.CustomInt(81),
-            new CustomHeap.CustomInt(69),
-            new CustomHeap.CustomInt(16),
-            new CustomHeap.CustomInt(61),
-            new CustomHeap.CustomInt(55),
-            new CustomHeap.CustomInt(17),
-        };
-        int heapSize = 0;
-        for(int i = 1; i <= heap.length; ++i){
-            ++heapSize;
-            //System.out.println("Inserting element " + heapSize + " with value of " + heap[heapSize-1].getValue());
-            insert(heap, i, heapSize);
-        }
-        System.out.print("Unsorted Heap: "+ unsortedHeap+"\nSorted Heap: [");
-        for(int k = 0; k < heap.length; ++k){
-            System.out.print(heap[k].getValue());
-            if(k!=heap.length-1){
-                System.out.print(",");
-            }
-        }
-        System.out.println("]");
-        
-        heapSize = heap.length;
-        for(int i = 1; i < heap.length; ++i){
-            //System.out.println("Replacing element " + 1 + " with value of " + heap[heapSize-1].getValue());
-            removeMin(heap, 1, heapSize);
-            --heapSize;
-        }
+        int[] unsortedHeap = {30,88,21,5,11,43,1,13,12,3,53,32,86,190,17,117,24,76,65,80,19,39,22,99,81,69,16,61,55,17};
+        CustomHeap heap = new CustomHeap(unsortedHeap);
+        printHeapSort(heap.getHeapArray());  
+        inPlaceSort(heap.getHeapArray());
+        printHeapSort(heap.getHeapArray());
+    }
+    
+    public static void printHeapSort(CustomHeap.CustomInt[] heap){
         System.out.print("Sorted items sm-lg: [");
         for(int k = heap.length-1; k >= 0; --k){
             System.out.print(heap[k].getValue());
@@ -119,7 +48,16 @@ public class CustomHeap {
             }
         }
         System.out.println("]");
-        
+    }
+    
+    public static CustomHeap.CustomInt[] inPlaceSort(CustomHeap.CustomInt[] heap){//maybe also return heap
+        int heapSize = heap.length;
+        for(int i = 1; i < heap.length; ++i){
+            //System.out.println("Replacing element " + 1 + " with value of " + heap[heapSize-1].getValue());
+            removeMin(heap, 1, heapSize);
+            --heapSize;
+        }
+        return heap;
     }
     
     private static CustomHeap.CustomInt[] removeMin(CustomHeap.CustomInt[] heap, int v, int hSize){
@@ -221,4 +159,39 @@ public class CustomHeap {
         //System.out.println("calculating right child for index " + v + " which is " + v*2+1);
         return (v*2)+1;
     }
+    
+    public void setHeapArray(CustomHeap.CustomInt[] heapArray){
+        this.heapArray = heapArray;
+    }
+    
+    public CustomHeap.CustomInt[] getHeapArray(){
+        return this.heapArray;
+    }
+    
+    private static class CustomInt{
+        private int value;
+        private boolean sorted;
+
+        public CustomInt(int val){
+            this.value = val;
+            this.sorted = false;
+        }
+        
+        public void setValue(int val){
+            this.value = val;
+        }
+        
+        public int getValue(){
+            return this.value;
+        }
+        
+        public void setSorted(boolean sorted){
+            this.sorted = sorted;
+        }
+        
+        public boolean isSorted(){
+            return this.sorted;
+        }
+    }
+    
 }
