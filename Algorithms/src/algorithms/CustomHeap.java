@@ -50,7 +50,17 @@ public class CustomHeap {
         System.out.println("]");
     }
     
-    public static CustomHeap.CustomInt[] inPlaceSort(CustomHeap.CustomInt[] heap){//maybe also return heap
+    
+    /**
+     * 
+     * @param heap
+     * @return heap
+     * 
+     * Takes in an array of CustomInt already formatted in correct heap style formatting.
+     * Removes the minimum value (placing it at the end-1 index of the array until end-1=0) until ell elements have been removed
+     * thus reading from right to left the array is now in sorted order
+     */
+    public static CustomHeap.CustomInt[] inPlaceSort(CustomHeap.CustomInt[] heap){
         int heapSize = heap.length;
         for(int i = 1; i < heap.length; ++i){
             //System.out.println("Replacing element " + 1 + " with value of " + heap[heapSize-1].getValue());
@@ -60,6 +70,18 @@ public class CustomHeap {
         return heap;
     }
     
+    /**
+     * 
+     * @param heap
+     * @param v
+     * @param hSize
+     * @return heap
+     * 
+     * Removes the root node and swaps it with the last node in the heap (--heap.length)
+     * Each time the root node and the "last" node in the heap are swapped THAT index at the end of the array
+     * becomes inaccessible and the "last" node now becomes index of the last node-1 moving up the heap each run through
+     * until the root node is also the "last node" 
+     */
     private static CustomHeap.CustomInt[] removeMin(CustomHeap.CustomInt[] heap, int v, int hSize){
         if(hSize == 0){//very last element
             return heap;
