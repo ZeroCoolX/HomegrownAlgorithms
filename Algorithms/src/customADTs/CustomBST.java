@@ -8,6 +8,8 @@ package customADTs;
 /**
  *
  * @author dewit
+ * @param <Key>
+ * @param <Value>
  */
 public class CustomBST<Key extends Comparable<Key>, Value> {
     //BST root
@@ -44,7 +46,7 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
         return size() == 0;
     }
     
-    private int size(){
+    public int size(){
         return size(root);
     }
     
@@ -56,10 +58,11 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
         }
     }
     
-    private Value get(Key k){
+    /*doesn't work nicely yet...*/
+    public Value get(Key k){
         return get(root, k);
     }
-    
+    /*nope...not yet*/
     private Value get(Node n, Key k){
         if(n == null){
             return null;
@@ -74,7 +77,7 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
         }
     }
     
-    private void put(Key k, Value v){
+    public void put(Key k, Value v){
         if(v == null){
             return;//dont support this
         }else{
@@ -105,6 +108,10 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
         return (n.right == null && n.left == null);
     }
     
+    public int height(){
+        return height(root);
+    }
+    
     private int height(Node n){
         if(isExternal(n)){//external
             return 0;
@@ -120,7 +127,66 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
         }
     }
     
-    private void allDepths(){
+    public void preOrder(){
+        preOrder(root);
+    }
+    
+    
+    private void preOrder(Node n){
+        //System.out.println("n.key = " + n.key + "\nn.val = " + n.val + "\nn.parent = " + (n == root ? "" : n.parent.key));
+        if(n.left != null){
+            preOrder(n.left);
+        }
+        if(n.right != null){
+            preOrder(n.right);
+        }
+    }
+    
+    public void algorithmPrettyPrint(){
+        algorithmPrettyPrint(root, 0);
+    }
+    
+    private void algorithmPrettyPrint(Node n, int breaker){
+        System.out.println("running thru");
+        ++breaker;
+        n.x = n.depth;
+        System.out.println("n.x = " + n.x);
+        if(n == root || n.key.compareTo(n.parent.key) <= 0){
+            System.out.println("here");
+            //its on the left or root -> meaning 1st
+            if(n == root){
+                n.y = 1 + countChildren(n.left);
+            }else{
+                if(n.right == null){
+                    n.y = n.parent.y-1;
+                }else{
+                    n.y = n.parent.y - (1 + countChildren(n.right));
+                }
+            }
+        }else{
+            System.out.println("no here");
+            if(n.left == null){
+                n.y = n.parent.y+1;
+            }else{
+                n.y = n.parent.y + (1 + countChildren(n.left));
+            }
+        }
+        if(breaker > size()){
+            return;
+        }else{
+            algorithmPrettyPrint(n.left, breaker);
+            algorithmPrettyPrint(n.right, breaker);
+        }
+    }
+    private int countChildren(Node n){
+        System.out.println("counting children");
+        if(n == null){
+            return 0;
+        }
+        return 1 + countChildren(n.left) + countChildren(n.right);
+    }
+    
+    public void allDepths(){
         allDepths(root);
     }
     
