@@ -5,7 +5,7 @@
  */
 package algorithms;
 
-import algorithms.BorrowedCode.BST;
+import customADTs.CustomBST;
 import java.util.NoSuchElementException;
 
 /**
@@ -15,7 +15,6 @@ import java.util.NoSuchElementException;
 public class PrettyPrint {
     
     public static void main(String [] args){
-        BST b = new BST();
-        System.out.println("b.size = " + b.size());
+        CustomBST b = new CustomBST();
     }
 }
