@@ -27,9 +27,7 @@ public static void main(String [] args){
         b.put(9, "i");
         //System.out.println("size = " + b.size());
         //System.out.println("root.height = " + b.height());
-        b.allDepths();
         b.algorithmPrettyPrint();
-        b.preOrder();
     }
     
 }

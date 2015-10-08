@@ -140,10 +140,12 @@ private void preOrder(Node n){
         if(n.right != null){
             preOrder(n.right);
         }
-    }
+}
     
     public void algorithmPrettyPrint(){
+        allDepths();
         algorithmPrettyPrint(root, 0);
+        preOrder();
     }
     
     private void algorithmPrettyPrint(Node n, int breaker){
