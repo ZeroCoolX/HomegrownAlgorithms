@@ -132,8 +132,8 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
     }
     
     
-    private void preOrder(Node n){
-        //System.out.println("n.key = " + n.key + "\nn.val = " + n.val + "\nn.parent = " + (n == root ? "" : n.parent.key));
+private void preOrder(Node n){
+        System.out.println("n.key = " + n.key + "\t\tn.val = " + n.val + "\t\tn.coordinates = (" + n.x + "," + n.y + ")");
         if(n.left != null){
             preOrder(n.left);
         }
@@ -147,15 +147,15 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
     }
     
     private void algorithmPrettyPrint(Node n, int breaker){
-        System.out.println("running thru");
+        if(n == null){
+            return;
+        }
         ++breaker;
         n.x = n.depth;
-        System.out.println("n.x = " + n.x);
         if(n == root || n.key.compareTo(n.parent.key) <= 0){
-            System.out.println("here");
             //its on the left or root -> meaning 1st
             if(n == root){
-                n.y = 1 + countChildren(n.left);
+                n.y = countChildren(n.left);
             }else{
                 if(n.right == null){
                     n.y = n.parent.y-1;
@@ -164,7 +164,6 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
                 }
             }
         }else{
-            System.out.println("no here");
             if(n.left == null){
                 n.y = n.parent.y+1;
             }else{
@@ -179,11 +178,7 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
         }
     }
     private int countChildren(Node n){
-        System.out.println("counting children");
-        if(n == null){
-            return 0;
-        }
-        return 1 + countChildren(n.left) + countChildren(n.right);
+        return size(n);
     }
     
     public void allDepths(){
