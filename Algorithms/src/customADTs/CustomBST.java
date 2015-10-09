@@ -30,6 +30,8 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
         private int y;
         //depth for specific node
         private int depth;
+        //testing ability to count children beneath a node and store it
+        private int children;
         
 
         public Node(Key key, Value val, int subs) {
@@ -44,6 +46,23 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
     
     public boolean isEmpty(){
         return size() == 0;
+    }
+    
+    public void allSizes(){
+        allSizes(root);
+    }
+    
+    private int allSizes(Node n){
+        if(n==null){
+            return 0;
+        }
+        if(n.left != null){
+            n.children += 1+allSizes(n.left);
+        }
+        if(n.right != null){
+            n.children += 1+allSizes(n.right);
+        }
+        return n.children;
     }
     
     public int size(){
@@ -132,8 +151,8 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
     }
     
     
-private void preOrder(Node n){
-        System.out.println("n.key = " + n.key + "\t\tn.val = " + n.val + "\t\tn.coordinates = (" + n.x + "," + n.y + ")");
+    private void preOrder(Node n){
+        System.out.println("n.key = " + n.key + "\t\tn.val = " + n.val + "\t\tn.children = " + n.children + "\t\tn.coordinates = (" + n.x + "," + n.y + ")");
         if(n.left != null){
             preOrder(n.left);
         }

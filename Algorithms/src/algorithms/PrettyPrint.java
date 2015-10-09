@@ -28,6 +28,8 @@ public static void main(String [] args){
         //System.out.println("size = " + b.size());
         //System.out.println("root.height = " + b.height());
         b.algorithmPrettyPrint();
+        b.allSizes();
+        b.preOrder();
     }
     
 }
