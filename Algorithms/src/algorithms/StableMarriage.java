@@ -68,9 +68,9 @@ public class StableMarriage {
     }
     
     public static void main (String [] args){
-        System.out.println("Algorithm beginning...");
-        algorithmStableMarriage();
-        System.out.println("Algorithm completed.\n");
+        //System.out.println("Algorithm beginning...");
+        printMarriages(algorithmStableMarriage());
+        //System.out.println("Algorithm completed.\n");
     }
     
     private static void algorithmStableMarriage(int n){//n refers to the number of pairs to be used
@@ -80,7 +80,7 @@ public class StableMarriage {
         }
     }
     
-    private static void algorithmStableMarriage(){
+    private static HashMap<Integer,Integer> algorithmStableMarriage(){
         HashMap<Integer,Integer> rel = new HashMap<Integer,Integer>();//key,value
         
         //matrix of mens preferences
@@ -118,37 +118,37 @@ public class StableMarriage {
         rel.put(2,-1);
         while(!isFull(rel)){
             Man m = new Man(getNextMan(rel));//really the key from the hashmap of a man
-            System.out.println("Processing Man: " + m.getId());
+            //System.out.println("Processing Man: " + m.getId());
             int x = 0;
             if(rel.get(m.getId()) == -1){
                 x = -1;
                 Woman w;
                 do{
                     ++x;
-                    System.out.println("Checking Woman: " + Q[m.getId()][x].getId());
+                    //System.out.println("Checking Woman: " + Q[m.getId()][x].getId());
                     w = Q[m.getId()][x];//grab specific woman from the matrix
                 }while(w.hasRejected(m.getId()));//continue looping while w has rejected M so that when it breaks, its a woman who hasn't rejected m
-                System.out.println("Processing Woman: " + w.getId());
+                //System.out.println("Processing Woman: " + w.getId());
                 if(!rel.containsValue(w.getId())){//w is not any mans lover
-                    System.out.println("Woman("+w.getId()+") is not the lover of Man("+m.getId()+") so pair them up.");
+                    //System.out.println("Woman("+w.getId()+") is not the lover of Man("+m.getId()+") so pair them up.");
                     rel.put(m.getId(), w.getId());
                 }else{
-                    System.out.println("Woman("+w.getId()+") already has a lover...further processing required");
+                    //System.out.println("Woman("+w.getId()+") already has a lover...further processing required");
                     //shes already a lover, but will she change lovers...thats the question
-                    System.out.println("Attempting to getKey("+w.getId()+")");
+                    //System.out.println("Attempting to getKey("+w.getId()+")");
                     Man mPrime = new Man(getKey(rel, w.getId()));//the man that w is currently involved in
                     int y = 0;
                     Man mChoice;
                     for(int i = w.getId(); y < Q.length; ++y){
                         mChoice = P[i][y];
-                                                    System.out.println("Comparing \nMan(mChoice): " + mChoice.getId() + "\nMan(mPrime): " + mPrime.getId() + "\nMan(m): " + m.getId());
+                        //System.out.println("Comparing \nMan(mChoice): " + mChoice.getId() + "\nMan(mPrime): " + mPrime.getId() + "\nMan(m): " + m.getId());
                         if(mChoice.getId() == mPrime.getId()){//if they have the same id's they're the same dudes
-                            System.out.println("Woman: " + w.getId() + " rejects Man: " + m.getId());
+                            //System.out.println("Woman: " + w.getId() + " rejects Man: " + m.getId());
                             w.addToRejected(m.getId());
                             break;
                         }else if(mChoice.getId() == m.getId()){//again same sterff
                             w.addToRejected(mPrime.getId());
-                            System.out.println("Woman: " + w.getId() + " rejects Man: " + mPrime.getId() + " and accepts Man: " + m.getId());
+                            //System.out.println("Woman: " + w.getId() + " rejects Man: " + mPrime.getId() + " and accepts Man: " + m.getId());
                             rel.put(mPrime.getId(), -1);
                             rel.put(m.getId(), w.getId());
                             break;
@@ -157,7 +157,15 @@ public class StableMarriage {
                 }
             }
         }
-        System.out.println("rel:\n"+rel.toString());
+        //System.out.println("rel:\n"+rel.toString());
+        return rel;
+    }
+    
+    private static void printMarriages(HashMap<Integer, Integer> hm){
+        System.out.println("Marriage Pairs:\n\n");
+        for(Map.Entry<Integer,Integer> e : hm.entrySet()){
+            System.out.println("\tMan:" + e.getKey() + " paired with Woman:" + e.getValue() + "\n");
+        }
     }
     
     //If the hashmap does not contain any key with a value of null that means everything is paired up and thus "is full"
