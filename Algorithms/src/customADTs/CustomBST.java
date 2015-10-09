@@ -53,9 +53,6 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
     }
     
     private int allSizes(Node n){
-        if(n==null){
-            return 0;
-        }
         if(n.left != null){
             n.children += 1+allSizes(n.left);
         }
