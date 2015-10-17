@@ -15,27 +15,24 @@ public class KthSmallestElementSearch {
             int[] A = {4, 5, 7, 45, 67, 77, 86, 94, 101};
             int[] B = {1, 3, 6, 8, 23, 24, 34, 44, 51};
             int k = 6;
-            System.out.print("\nDetermine the kth element under the union of the two arrays\nA: {");
-            for(int i=0; i < A.length; ++i){
-                System.out.print(A[i]);
-                if(i==A.length-1){
-                    System.out.println("}");
-                }else{
-                    System.out.print(",");
-                }
-            }
-            System.out.print("\nB: {");
-            for(int i=0; i < B.length; ++i){
-                System.out.print(B[i]);
-                if(i==B.length-1){
-                    System.out.println("}");
-                }else{
-                    System.out.print(",");
-                }
-            }
+            System.out.print("\nDetermine the kth element under the union of the two arrays\n");
+            outputData("A", A);
+            outputData("B", B);
             System.out.println("\n\n\tThe "+k+"th element: "+getKthSmallest(A, B, k));
         }
         
+        
+        private static void outputData(String xName, int x[]){
+            System.out.print(xName+": {");
+            for(int i=0; i < x.length; ++i){
+                System.out.print(x[i]);
+                if(i==x.length-1){
+                    System.out.println("}");
+                }else{
+                    System.out.print(",");
+                }
+            }
+        }
         
         
         /**
@@ -99,7 +96,6 @@ public class KthSmallestElementSearch {
                     //lowB now becomes k2+1 (one MORE than k2)
                     lowA = k1+1;    
                 }
-                System.out.println("k = " + k);
             }
             return kth;
         }
