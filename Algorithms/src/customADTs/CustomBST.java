@@ -217,15 +217,18 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
         */
     private void drawTree(int[][] matrix){
         //process node then left and right then continue
-        int padding = 0;
         for(int i = 0; i < matrix.length; ++ i){
+            boolean leftMost = true;
+            int padding = 0;
             for(int j = 0; j < matrix[i].length; ++j){
                 
                 if(matrix[i][j] > -1){
-                    for(int k = 0; k < (i*2+1)-i; ++k){
+                    for(int k = 0; k < (leftMost?j:j-padding); ++k){
                         System.out.print("\t");
                     }
+                    padding = j;
                     System.out.print(matrix[i][j]);
+                    leftMost = false;
                 }
             }
             System.out.print("\n");
