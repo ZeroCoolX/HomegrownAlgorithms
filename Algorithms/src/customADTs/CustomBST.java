@@ -5,6 +5,10 @@
  */
 package customADTs;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+
 /**
  *
  * @author dewit
@@ -50,8 +54,8 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
         return size() == 0;
     }
     
-    public void allSizes(){
-        allSizes(root);
+    public int allSizes(){
+        return allSizes(root);
     }
     
     private int allSizes(Node n){
@@ -150,25 +154,19 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
         }
     }
     
-    public void preOrder(){
-        preOrder(root);
+    public void preOrderDataPrint(){
+        preOrderDataPrint(root);
     }
     
     
-    private void preOrder(Node n){
+    private void preOrderDataPrint(Node n){
         System.out.println("n.key = " + n.key + "\t\tn.val = " + n.val + "\t\tn.children = " + n.children + "\t\tn.coordinates = (" + n.x + "," + n.y + ")");
         if(n.left != null){
-            preOrder(n.left);
+            preOrderDataPrint(n.left);
         }
         if(n.right != null){
-            preOrder(n.right);
+            preOrderDataPrint(n.right);
         }
-    }
-    
-    public void algorithmPrettyPrint(){
-        allDepths();
-        algorithmPrettyPrint(root, 0);
-        preOrder();
     }
     
     private int[][] createMatrix(){
@@ -196,7 +194,8 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
     public void drawTree(){
         drawTree(createMatrix());
     }
-        /*example of test tree
+    
+    /*example of test tree
             4
           /   \
          2     6
@@ -205,7 +204,7 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
                   \
                    9
         
-        */
+    */
     private void drawTree(int[][] matrix){
         //process node then left and right then continue
         for(int i = 0; i < matrix.length; ++ i){
@@ -224,6 +223,12 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
             }
             System.out.print("\n");
         }
+    }
+    
+    public void algorithmPrettyPrint(){
+        allDepths();
+        algorithmPrettyPrint(root, 0);
+        preOrderDataPrint();
     }
     
     private void algorithmPrettyPrint(Node n, int breaker){
@@ -257,6 +262,11 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
             algorithmPrettyPrint(n.right, breaker);
         }
     }
+    
+    public int countChildren(){
+        return countChildren(root);
+    }
+    
     private int countChildren(Node n){
         return size(n);
     }
