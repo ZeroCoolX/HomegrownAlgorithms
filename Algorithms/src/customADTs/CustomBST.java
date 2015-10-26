@@ -17,7 +17,7 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
 
     private class Node {
         //key
-        private Key key;  
+        private final Key key;  
         //value
         private Value val;   
         //right and left subtree, parent
@@ -81,20 +81,20 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
         }
     }
     
-    /*doesn't work nicely yet...*/
+    
     public Value get(Key k){
         return get(root, k);
     }
-    /*nope...not yet*/
+
     private Value get(Node n, Key k){
         if(n == null){
             return null;
         }
         int comp = k.compareTo(n.key);
         if(comp < 0){//move left
-            return get(n.left, n.key);
+            return get(n.left, k);
         }else if (comp > 0){//move right
-            return get(n.right, n.key);
+            return get(n.right, k);
         }else{
             return n.val;
         }
@@ -102,7 +102,7 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
     
     public void put(Key k, Value v){
         if(v == null){
-            return;//dont support this
+            return;//dont support this...
         }else{
             root = put(root, k, v);
         }
@@ -172,24 +172,16 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
     }
     
     private int[][] createMatrix(){
-        int[][] matrix = new int [4][8];
+        int[][] matrix = new int [height()+1][size()];
         for(int i = 0; i < matrix.length; ++ i){
             for(int j = 0; j < matrix[i].length; ++j){
                 matrix[i][j] = -1;
             }
         }
         return createMatrix(root,matrix);
-        /*for(int i = 0; i < matrix.length; ++ i){
-            for(int j = 0; j < matrix[i].length; ++j){
-                if(matrix[i][j] > -1){
-                    System.out.println(matrix[i][j]);
-                }
-            }
-        }*/
     }
     
     private int[][] createMatrix(Node n, int [][] matrix){
-        //int[][] matrix = new int [4][7];
         if(n == null){
             return matrix;
         }
@@ -204,7 +196,6 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
     public void drawTree(){
         drawTree(createMatrix());
     }
-            //need a preorder traversal
         /*example of test tree
             4
           /   \

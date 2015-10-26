@@ -25,22 +25,9 @@ public static void main(String [] args){
         b.put(5, "e");
         b.put(7, "g");
         b.put(9, "i");
-        //System.out.println("size = " + b.size());
-        //System.out.println("root.height = " + b.height());
         b.algorithmPrettyPrint();
         b.drawTree();
-        //need a preorder traversal
-        /*
-            4
-          /   \
-         2     6
-        / \   / \
-       1   3 5   7
-                  \
-                   9
-        
-        */
-        
+        //System.out.println("grabbing value at key 6: " + b.get(6));
     }
     
 }
