@@ -28,8 +28,19 @@ public static void main(String [] args){
         //System.out.println("size = " + b.size());
         //System.out.println("root.height = " + b.height());
         b.algorithmPrettyPrint();
-        b.allSizes();
-        b.preOrder();
+        b.drawTree();
+        //need a preorder traversal
+        /*
+            4
+          /   \
+         2     6
+        / \   / \
+       1   3 5   7
+                  \
+                   9
+        
+        */
+        
     }
     
 }

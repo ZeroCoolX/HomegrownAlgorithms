@@ -33,7 +33,9 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
         //testing ability to count children beneath a node and store it
         private int children;
         
-
+        public int getKey(){
+            return (Integer)key;
+        }
         public Node(Key key, Value val, int subs) {
             this.key = key;
             this.val = val;
@@ -161,12 +163,73 @@ public class CustomBST<Key extends Comparable<Key>, Value> {
         if(n.right != null){
             preOrder(n.right);
         }
-}
+    }
     
     public void algorithmPrettyPrint(){
         allDepths();
         algorithmPrettyPrint(root, 0);
         preOrder();
+    }
+    
+    private int[][] createMatrix(){
+        int[][] matrix = new int [4][8];
+        for(int i = 0; i < matrix.length; ++ i){
+            for(int j = 0; j < matrix[i].length; ++j){
+                matrix[i][j] = -1;
+            }
+        }
+        return createMatrix(root,matrix);
+        /*for(int i = 0; i < matrix.length; ++ i){
+            for(int j = 0; j < matrix[i].length; ++j){
+                if(matrix[i][j] > -1){
+                    System.out.println(matrix[i][j]);
+                }
+            }
+        }*/
+    }
+    
+    private int[][] createMatrix(Node n, int [][] matrix){
+        //int[][] matrix = new int [4][7];
+        if(n == null){
+            return matrix;
+        }
+        System.out.println("storing key "  +n.key + "in ["+n.x+"]["+n.y+"]");
+        matrix[n.x][n.y] = n.getKey();//process n
+        createMatrix(n.left, matrix);//left
+        createMatrix(n.right, matrix);//right
+        return matrix;
+        
+    }
+    
+    public void drawTree(){
+        drawTree(createMatrix());
+    }
+            //need a preorder traversal
+        /*example of test tree
+            4
+          /   \
+         2     6
+        / \   / \
+       1   3 5   7
+                  \
+                   9
+        
+        */
+    private void drawTree(int[][] matrix){
+        //process node then left and right then continue
+        int padding = 0;
+        for(int i = 0; i < matrix.length; ++ i){
+            for(int j = 0; j < matrix[i].length; ++j){
+                
+                if(matrix[i][j] > -1){
+                    for(int k = 0; k < (i*2+1)-i; ++k){
+                        System.out.print("\t");
+                    }
+                    System.out.print(matrix[i][j]);
+                }
+            }
+            System.out.print("\n");
+        }
     }
     
     private void algorithmPrettyPrint(Node n, int breaker){
