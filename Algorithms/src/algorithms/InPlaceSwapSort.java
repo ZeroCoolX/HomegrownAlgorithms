@@ -28,18 +28,6 @@ public class InPlaceSwapSort {
                 if(A[i]==-1){
                     neg = i;
                     if(zb >= 0){
-                        /*int temp = -1;
-                        if(A[zb+1]==0){
-                            temp = zb+1;
-                        }
-                        nSwap(A, neg, zb);
-                        int ttemp = neg;
-                        neg=zb;
-                        if(temp>=0){
-                            zb=temp;
-                        }else{
-                            zb=ttemp;
-                        }*/
                         while(zb-neg != 1){
                             if(A[neg-1]==0&&neg-1==zb){
                                 ++zb;
@@ -56,19 +44,6 @@ public class InPlaceSwapSort {
                     }
                     ze=i;
                     if(one>=0){
-                        /*int temp = -1;
-                        if(A[ze+1]==1){
-                            temp = zb+1;
-                        }
-                        nSwap(A, neg, zb);
-                        int ttemp = neg;
-                        neg=zb;
-                        if(temp>=0){
-                            zb=temp;
-                        }else{
-                            zb=ttemp;
-                        }*/
-                        
                         while(one-ze != 1){
                             if(A[ze-1] == -1&&ze-1==neg){
                                 ++neg;
@@ -114,13 +89,7 @@ public class InPlaceSwapSort {
         }
     }
     
-    //maybe this is unnecessary?
-    private static void nSwap(int [] arr, int x, int y){
-        //if -1 is passed as the inc, dont inc
-        int temp = arr[x];
-        arr[x] = arr[y];
-        arr[y] = temp;
-    }
+
     
     private static void swap(int [] arr, int swap, int pad){
         //if -1 is passed as the inc, dont inc
