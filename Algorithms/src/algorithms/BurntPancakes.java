@@ -49,56 +49,56 @@ public class BurntPancakes {
         O(n) * O(n-(n-k)) =>  O(n) * O(n-n+k) =>  O(n) * O(k) [but k is proportional to n so] =>  O(n) * O(n) = O(n^2)
     */
     
-    private static void presentPancakes(){
+    private static void presentPancakes() {
         //finally finished when each value is exactly equal to value-1 index in the array. thus [1,2,3,4,5] -> [0,1,2,3,4] is complete
         int numComplete = 0;
         //scan for the element = P.length-1 and place it at the farthest right possible at index L-1, then repeat placing it at index (L-2, L-3,...,L-L)
-        while(numComplete < P.length){//O(P.length) -> O(n)
-            int targetIndex = (P.length-1)-numComplete; //given P.length = 5, then targetIndex will be 5-0=5, then 5-1=4, then 5-2=3....etc
+        while (numComplete < P.length) {//O(P.length) -> O(n)
+            int targetIndex = (P.length - 1) - numComplete; //given P.length = 5, then targetIndex will be 5-0=5, then 5-1=4, then 5-2=3....etc
             //System.out.println("targetIndex = " + targetIndex + "\nnumComplete = " + numComplete + "\nP["+targetIndex+"] = " + P[targetIndex]);
-            if(P[targetIndex]!=targetIndex+1){//it's not in the right spot so begin looking backwards from here
-               for(int i = targetIndex; i >= 0; --i){//O(n)
-                   //System.out.println("Math.abs("+P[i]+"])=="+(targetIndex+1));
-                   if(Math.abs(P[i])==targetIndex+1){
-                       //flip to the first, (then flip just the first once more if needed) then flip to the targetIndex
-                       if(P[i]<0){
-                           flip(i+1);
-                           flip(1);
-                           flip(targetIndex+1);
-                       }else{
-                           flip(i+1);
-                           flip(targetIndex+1);
-                       }
-                       ++numComplete;
-                       break;
-                   }
-               }
-            }else{
+            if (P[targetIndex] != targetIndex + 1) {//it's not in the right spot so begin looking backwards from here
+                for (int i = targetIndex; i >= 0; --i) {//O(n)
+                    //System.out.println("Math.abs("+P[i]+"])=="+(targetIndex+1));
+                    if (Math.abs(P[i]) == targetIndex + 1) {
+                        //flip to the first, (then flip just the first once more if needed) then flip to the targetIndex
+                        if (P[i] < 0) {
+                            flip(i + 1);
+                            flip(1);
+                            flip(targetIndex + 1);
+                        } else {
+                            flip(i + 1);
+                            flip(targetIndex + 1);
+                        }
+                        ++numComplete;
+                        break;
+                    }
+                }
+            } else {
                 ++numComplete;
             }
         }
     }
-    
+
     //the number value-1 corresponds to the index it should be located at in the array. for any j it should be located in P[j-1]
-    private static void flip(int flipHere){
-        for(int i = flipHere-1; i>((flipHere-1)/2);--i){//O(n/2)
-            int temp = P[i]*-1;
-            P[i]=P[(flipHere-1)%i]*-1;
-            P[((flipHere-1)%i)] = temp;
-            System.out.println("switching " +i+" with" + ((flipHere-1)%i) + " and " + ((flipHere-1)%i) + " with "+i);
+    private static void flip(int flipHere) {
+        for (int i = flipHere - 1; i > ((flipHere - 1) / 2); --i) {//O(n/2)
+            int temp = P[i] * -1;
+            P[i] = P[(flipHere - 1) % i] * -1;
+            P[((flipHere - 1) % i)] = temp;
+            System.out.println("switching " + i + " with" + ((flipHere - 1) % i) + " and " + ((flipHere - 1) % i) + " with " + i);
         }
-        if(flipHere%2!=0){//must flip the sign bit of the exact middle since it didn't move
-            P[(flipHere-1)/2] *= -1;//O(1)
+        if (flipHere % 2 != 0) {//must flip the sign bit of the exact middle since it didn't move
+            P[(flipHere - 1) / 2] *= -1;//O(1)
         }
     }
-    
-        private static void print(int[] A, String str){
-            System.out.print(str+"\n[");
-        for(int i = 0; i < A.length; ++i){
+
+    private static void print(int[] A, String str) {
+        System.out.print(str + "\n[");
+        for (int i = 0; i < A.length; ++i) {
             System.out.print(A[i]);
-            if(i+1 != A.length){
+            if (i + 1 != A.length) {
                 System.out.print(",");
-            }else{
+            } else {
                 System.out.println("]");
             }
         }
