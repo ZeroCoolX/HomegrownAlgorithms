@@ -10,16 +10,16 @@ package algorithms;
  * @author dewit
  */
 public class BurntPancakes {
-    private static int [] P = 
+    
+    public static void main (String [] args){
+            int [] pancakes = 
             //new int[8];
             //{-3,2,4,-1,-5}
             {-12,-4,-2,13,3,9,-10,-1,-5,8,-11,-7,-6};
-    
-    public static void main (String [] args){
         System.out.println("ready to flip some perncerks?!?!");
-        print(P, "Before Flipping");
-        presentPancakes();
-        print(P, "After Flipping");
+        print(pancakes, "Before Flipping");
+        presentPancakes(pancakes);
+        print(pancakes, "After Flipping");
     }
     
     /*
@@ -49,7 +49,7 @@ public class BurntPancakes {
         O(n) * O(n-(n-k)) =>  O(n) * O(n-n+k) =>  O(n) * O(k) [but k is proportional to n so] =>  O(n) * O(n) = O(n^2)
     */
     
-    private static void presentPancakes() {
+    private static void presentPancakes(int [] P) {
         //finally finished when each value is exactly equal to value-1 index in the array. thus [1,2,3,4,5] -> [0,1,2,3,4] is complete
         int numComplete = 0;
         //scan for the element = P.length-1 and place it at the farthest right possible at index L-1, then repeat placing it at index (L-2, L-3,...,L-L)
@@ -62,12 +62,12 @@ public class BurntPancakes {
                     if (Math.abs(P[i]) == targetIndex + 1) {
                         //flip to the first, (then flip just the first once more if needed) then flip to the targetIndex
                         if (P[i] < 0) {
-                            flip(i + 1);
-                            flip(1);
-                            flip(targetIndex + 1);
+                            flip(i + 1, P);
+                            flip(1, P);
+                            flip(targetIndex + 1, P);
                         } else {
-                            flip(i + 1);
-                            flip(targetIndex + 1);
+                            flip(i + 1 , P);
+                            flip(targetIndex + 1, P);
                         }
                         ++numComplete;
                         break;
@@ -80,12 +80,12 @@ public class BurntPancakes {
     }
 
     //the number value-1 corresponds to the index it should be located at in the array. for any j it should be located in P[j-1]
-    private static void flip(int flipHere) {
+    private static void flip(int flipHere, int[] P) {
         for (int i = flipHere - 1; i > ((flipHere - 1) / 2); --i) {//O(n/2)
             int temp = P[i] * -1;
             P[i] = P[(flipHere - 1) % i] * -1;
             P[((flipHere - 1) % i)] = temp;
-            System.out.println("switching " + i + " with" + ((flipHere - 1) % i) + " and " + ((flipHere - 1) % i) + " with " + i);
+            //System.out.println("switching " + i + " with" + ((flipHere - 1) % i) + " and " + ((flipHere - 1) % i) + " with " + i);
         }
         if (flipHere % 2 != 0) {//must flip the sign bit of the exact middle since it didn't move
             P[(flipHere - 1) / 2] *= -1;//O(1)
