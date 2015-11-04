@@ -28,10 +28,10 @@ public class InPlaceSwapSort {
                 if (A[n] == 0) {
                     recurSwapSort(A, neg, one, ++n);
                 } else if (A[n] == -1) {
-                    swap2(A, n, neg);
+                    swap(A, n, neg);
                     recurSwapSort(A, ++neg, one, n);
                 } else if (A[n] == 1) {
-                    swap2(A, n, one);
+                    swap(A, n, one);
                     recurSwapSort(A, neg, --one, n);
                 } else {
                     throw new Exception(A[n] + " is not a valid character from the alphabet \nReturning unfinished collection");
@@ -55,8 +55,7 @@ public class InPlaceSwapSort {
         }
     }
 
-    private static void swap2(int[] arr, int x, int y) {
-        //if -1 is passed as the inc, dont inc
+    private static void swap(int[] arr, int x, int y) {
         int temp = arr[x];
         arr[x] = arr[y];
         arr[y] = temp;
