@@ -10,18 +10,60 @@ package algorithms;
  * @author dewit
  */
 public class InPlaceSwapSort {
-    public static void main(String[] args){
-        int [] A = new int[] 
-        {0,1,-1,-1,1,0,1,0,-1,0,-1,-1,1,1,0,-1,-1,1,0,0,-1}
-        /*{1,1,1,1,1,1,1,1,1,1}*/
-        /*{0,0,0,0,0,0,0,0,0}*/
-        /*{-1,-1,-1,-1,-1,-1,-1}*/
-        /*{0,1,-1,-1,1,2,0,1,0,-1,0}*/;
-        print(A,"BEFORE In Place Swap Sort");
-        print(inPlaceSwapSort(A),"AFTER In Place Swap Sort");
+    public static void main(String[] args) {
+        int[] A = new int[]{0,1,-1,-1,1,0,1,0,-1,0,-1,-1,1,1,0,-1,-1,1,0,0,-1}
+                         /*{1,1,1,1,1,1,1,1,1,1}*/ 
+                         /*{0,0,0,0,0,0,0,0,0}*/ 
+                         /*{-1,-1,-1,-1,-1,-1,-1}*/ 
+                         /*{0,1,-1,-1,1,2,0,1,0,-1,0}*/
+                         /*Above is just a bunch of different test cases*/;
+        print(A, "BEFORE In Place Swap Sort");
+        recurSwapSort(A, 0, A.length - 1, 0);
+        print(A, "AFTER In Place Swap Sort");
+    }
+
+    private static void recurSwapSort(int[] A, int neg, int one, int n) {
+        try {
+            if (n < one) {
+                if (A[n] == 0) {
+                    recurSwapSort(A, neg, one, ++n);
+                } else if (A[n] == -1) {
+                    swap2(A, n, neg);
+                    recurSwapSort(A, ++neg, one, n);
+                } else if (A[n] == 1) {
+                    swap2(A, n, one);
+                    recurSwapSort(A, neg, --one, n);
+                } else {
+                    throw new Exception(A[n] + " is not a valid character from the alphabet \nReturning unfinished collection");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private static void print(int[] A, String str) {
+        System.out.print(str + "\n[");
+        for (int i = 0; i < A.length; ++i) {
+            System.out.print(A[i]);
+            if (i + 1 != A.length) {
+                System.out.print(",");
+            } else {
+                System.out.println("]");
+            }
+        }
+    }
+
+    private static void swap2(int[] arr, int x, int y) {
+        //if -1 is passed as the inc, dont inc
+        int temp = arr[x];
+        arr[x] = arr[y];
+        arr[y] = temp;
     }
     
-    private static int[] inPlaceSwapSort(int[] A){
+    //obsolete and inefficient code. Still keep it around tho because it was a unique algorithm nonetheless. The above is just better in every sense of the word ^_^
+    /*private static int[] inPlaceSwapSort(int[] A){
         try{
             int zb=-1, ze=-1, one=-1, neg = -1;
             for(int i = 0; i < A.length; ++i){
@@ -75,27 +117,14 @@ public class InPlaceSwapSort {
             System.out.println(e.getMessage());
         }
         return A;
-    }
+    }*/
     
-    private static void print(int[] A, String str){
-            System.out.print(str+"\n[");
-        for(int i = 0; i < A.length; ++i){
-            System.out.print(A[i]);
-            if(i+1 != A.length){
-                System.out.print(",");
-            }else{
-                System.out.println("]");
-            }
-        }
-    }
-    
-
-    
-    private static void swap(int [] arr, int swap, int pad){
+    //obsolete because it was only used in inefficient code
+    /*private static void swap(int [] arr, int swap, int pad){
         //if -1 is passed as the inc, dont inc
         int temp = arr[swap];
         arr[swap] = arr[swap+pad];
         arr[swap+pad] = temp;
-    }
+    }*/
     
 }
