@@ -595,7 +595,7 @@ public class SwiftPathing {
                             yDir = block_west;
                         } else {
                             //(3)
-                            tempYDir = R.nextInt(yDir - 1);//because the upper bound is not included
+                            tempYDir = R.nextInt(yDir - 1);
                             System.out.println("trying to use yDir as " + yDir);
                             //(4)s
                             while (g[xDir][tempYDir] == 1 || blocked) {
@@ -653,6 +653,7 @@ public class SwiftPathing {
         }catch(Exception e){
                 throw new Exception(e.getMessage(), e);
         }
+        //If we FINALLY reach here that is awesome and we have successfully generated one solvable levels
         return 1;
     }
 
