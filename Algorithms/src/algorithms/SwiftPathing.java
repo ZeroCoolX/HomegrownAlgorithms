@@ -123,13 +123,17 @@ public class SwiftPathing {
         
     }
     
-    //-1 indicates a free space
-    //0 indicated a block
-    //1 indicates an unavaliable space
-    //returns a 1 is it was successful, otherwise error
-    private static int populateGrid(int[][] g, int x, int y, int moves, int width, int height, Random R) throws IllegalStateException, Exception{
-        try{
-        /*
+    /*
+    METHOD NOTES:
+        The movable block that actually traverses the paths is referred to as the runner
+
+        -1 indicates a free space
+        0 indicated a block
+        1 indicates an unavaliable space
+        8 indicates the runner 
+        returns a 1 is it was successful, otherwise error
+    
+    
         Cardinal directions. 
             
                                       North - decreasing x values
@@ -137,177 +141,242 @@ public class SwiftPathing {
            decreasing y values - East  Y Y  West - increasing y values
                                         X
                                       South - increasing x values
-         */
-        
+    */
+    private static int populateGrid(int[][] g, int x, int y, int moves, int width, int height, Random R) throws IllegalStateException, Exception{
+        try{
         //keeps track of how many moves in a level
         int counter = 0;
-        //X coordinate for the current movable (dude) block 
+        //X and Y coordinate for the current runner
+        //changes once per move (obviously)
         int xDir = x;
-        //Y coordinate for the current movable (dude) block 
         int yDir = y;
+        
         //temporary values used for holding the NEXT X or Y coordinate
+        //changes a lot duing the course of the program
         int tempXDir = x;
         int tempYDir = y;
+        
+        //stored the X and Y coordinates of the starting position used later on to make sure the finish block it not right next to it 
+        // because on average this would make the puzzle wayyyy easier to solve...and we don't want that >:)
+        //never change till program exits
+        int xStart = x;
+        int yStart = y;
+        
+        //indicate true if a direction is traversable and false if it is not (blocked, or out of bounds)
         boolean north = false;
         boolean south = false;
         boolean east = false;
         boolean west = false;
                 
         System.out.println("moves = " + moves);
+        //holds the direction we last went to get to where we are now
         int lastDir = 0;//1=north, 2=south, 3=east, 4=wests
+        
+        /*
+        MAIN MEAT
+        each runthrough of the loop generates one path from one block to another
+        as long as it doesn't get suck in an infinite loop or fail because it drove itself into a place it couldn't get out of it executes 
+            the number of moves specified by the parameter
+        EXCEPT unless the final block is adjacent to the start position. If this happens, then the logic below doens't increase the counter 
+            and thus there could  technically be: moves+n (n=number of moves to get away from the start position)
+        */
         while (counter < moves) {
-            //must reset these each runthrough
+            /*
+            Indicate if there is a block somewhere exactly along the line the moveable block (dude) jsut came from.
+            They let the runner know if it can presumably retrace its path to get out of some "stuck" corner or even to just add multiple ways of reaching a goal
+            must reset these each runthrough
+            */
             int block_north = -1;
             int block_south = -1;
             int block_east = -1;
             int block_west = -1;
             System.out.println("yPos = " + tempYDir + "\nxPos = " + tempXDir + "\nxDir = " + xDir + "\nyDir = " + yDir + "\nwidth = " + width + "\nheight = " + height);
-            if (yDir < 2 || g[xDir][yDir-2]==1) {//furthest left
+            
+            if (yDir < 2 || g[xDir][yDir-2]==1) {//runner cannot go west if IT is far west as possible (1)
                 west = false;
                 System.out.println("west is impossible");
             } else {
-                if(g[xDir][yDir-1] == 0 || g[xDir][yDir-2] == 0){//impossible to go this direction if either the direct next or next two blocks is blocked
-                    west = false;
+                if(g[xDir][yDir-1] == 0 || g[xDir][yDir-2] == 0){//impossible to go west direction if either the direct next or next two blocks are blocked (2)
+                    west = false;//this is partly so we don't have a ton of very small (2 unit) swipes (3)
                     System.out.println("west is impossible");
-                }else{
+                }else{//otherwise west is either completely traversable or retracable to exactly the first block in the row (4)
                     for (int i = yDir - 2; i >= 0; --i) {
-                        //System.out.println("checking left");
                         if (g[xDir][i] == 0) {
                             System.out.println("west blocked but retracable");
-                            block_west = i;//used in y value 
+                            //block locations stored so we know if west is chosen as the direction to traverse we MUST go exactly to this block. no further no lesser. (5)
+                            block_west = i;
                             break;
                         }
                     }
                     west = true;
                 }
             }
-            if (yDir >= width - 2 || g[xDir][yDir+2]==1) {//furthest right 
+            /*
+            NOTICE: 
+                for the next three if blocks below, they all use the same logic juust with different details such as coordinates and directions so
+                refer to the numbers corresponding to the above comments to understand code.
+                In the future the common logic will be extracted but for now there's admittedly some repetition
+            */
+            if (yDir >= width - 2 || g[xDir][yDir+2]==1) { //(1)
                 east = false;
                 System.out.println("east is impossible");
             } else {
-                if(g[xDir][yDir+1] == 0 || g[xDir][yDir+2] == 0){//impossible to go this direction if either the direct next or next two blocks is blocked
-                    east = false;
+                if(g[xDir][yDir+1] == 0 || g[xDir][yDir+2] == 0){//(2)
+                    east = false;//(3)
                     System.out.println("east is impossible");
-                }else{
+                }else{//(4)
                     for (int i = yDir + 2; i < width; ++i) {
-                        //System.out.println("checking right");
                         if (g[xDir][i] == 0) {
                             System.out.println("east is blocked but retracable");
-                            block_east = i;//used in y value
+                            //(5)
+                            block_east = i;
                             break;
                         }
                     }
                     east = true;
                 }
             }
-            if (xDir < 2 || g[xDir-2][yDir]==1) {//furthest north
+            if (xDir < 2 || g[xDir-2][yDir]==1) {//(1)
                 north = false;
                 System.out.println("north is impossible");
             } else {
-                if(g[xDir-1][yDir] == 0 || g[xDir-2][yDir] == 0){//impossible to go this direction if either the direct next or next two blocks is blocked
-                    north = false;
+                if(g[xDir-1][yDir] == 0 || g[xDir-2][yDir] == 0){//(2)
+                    north = false;//(3)
                     System.out.println("north is impossible");
-                }else{
+                }else{//(4)
                     for (int i = xDir - 2; i >= 0; --i) {
-                        //System.out.println("checking up");
                         if ( g[i][yDir] == 0) {
                             System.out.println("north blocked but possible to retrace");
-                            block_north = i;//used in x value
+                            //(5)
+                            block_north = i;
                             break;
                         }
                     }
                     north = true;
                 }
             }
-            if (xDir >= height - 2 || g[xDir+2][yDir]==1) {//furthest south
+            if (xDir >= height - 2 || g[xDir+2][yDir]==1) {//(1)
                 south = false;
                 System.out.println("south is impossible");
             } else {
-                if(g[xDir+1][yDir] == 0 || g[xDir+2][yDir] == 0){//impossible to go this direction if either the direct next or next two blocks is blocked
-                    south = false;
+                if(g[xDir+1][yDir] == 0 || g[xDir+2][yDir] == 0){//(2)
+                    south = false;//(3)
                     System.out.println("south is impossible");
-                }else{
+                }else{//(4)
                     for (int i = xDir + 2; i < height; ++i) {
-                        //System.out.println("checking down");
                         if (g[i][yDir] == 0) {
                             System.out.println("south blocked but retracable");
-                            block_south = i;//used in x value
+                            //(5)
+                            block_south = i;
                             break;
                         }
                     }
                     south = true;
                 }
             }
-            //we know that we cannot go directly back from whichever way we came from (except a special case), and that we cannot go forward which "through" the block
+            
+            /*
+            NATURAL BLOCK MOVEMENT:
+                1. We know that we cannot go directly back from whichever way we came from except for if the path behind us does not have an obstacle block in our way, and
+                there are free (-1) spaces, and a new block and the runner can fit there.
+                2. We know we cannot go forward once we set a block because this would be like the runner going "through" the block.
+                    Obviously this chenges with breakable and bubble blocks, but they aren't implemented yet
+            */
             switch(lastDir){
-                case 1:
+                case 1://north 
                     System.out.println("north is impossible");
+                    //Since we had to go north to get to where we are now we know rule 2 above tells us we cannot go further ATM (1)
                     north = false;
-                    //south is only impossible if there are not two open spaces and NO blocks behind it 
+                    //default the opposite direction to false until we check for the special cases of rule 1 above (didn't find any -1's and/or 0's) (2)
                     south = false;
-                    //south is only impossible if there are not two open spaces and NO blocks behind it <--false...thats stupid to backtrack
+                    /*
+                        We must traverse from out current block location back one space along the line we came from and being our search there
+                        at each block behind us until we find the FIRST -1. Then we grab the block before it meaning the block that would have came before it (meaning the
+                        runner would technically hit THIS block before the -1) we know we cannot just over the block in our way, BUT we know we can GO that direction
+                        in the act of retracing our steps. So as long as there isn't a line of 1's beind us with no -1's we're allowed to go that way
+                    (3)
+                    */
                     for(int i = xDir+1; i<height; ++i){
-                        if (g[i][yDir]==-1 ){//make sure we aren't jumping over any blocks
+                        if (g[i][yDir]==-1 ){//make sure we aren't jumping over any blocks (3)
                             if(g[i-1][yDir]!=0){
-                                //its POSSIBLE to go this direction
+                                //allowed to retrace steps (5)
                                 south = true;
                                 break;
                             }else{
+                                /*a block is in our way so mark this direction impossible even though technically we might be able to 
+                                traverse EXACTLY to this block, but above there was logic that took care of that so even if the path 
+                                is untraversable here, later it will show that if there is a block and nothing in between we can go back exactly to that block
+                                (6)
+                                */
                                 south = false;
                                 break;
                             }
                         }
                     }
                     break;
-                case 2:
+                    /*
+                    NOTICE:
+                        Once again the code below in the following case statements follow the same logic just with different details so refer to comment numbers
+                        to understand the code with the above commented case statement.
+                        Admittedly again there is repeated code, but later it will be extracted
+                    */
+                case 2://south
                     System.out.println("south is impossible");
+                    //(1)
                     south = false;
+                    //(2)
                     north = false;
-                    //north is only impossible if there are not two open spaces and NO blocks behind it <false..
+                    //(3)
                     for(int i = xDir-1; i>=0; --i){
-                        if (g[i][yDir]==-1){
+                        if (g[i][yDir]==-1){//(4)
                             if(g[i+1][yDir]!=0){
-                                //its POSSIBLE to go this direction
+                                //(5)
                                 north = true;
                                 break;
                             }else{
+                                //(6)
                                 north = false;
                                 break;
                             }
                         }
                     }
                     break;
-                case 3:
+                case 3://east
                     System.out.println("east is impossible");
+                    //(1)
                     east = false;
-                    //default to false just in case
+                    //(2)
                     west = false;
-                    //west is only impossible if there are not two open spaces or  one block behind exactly past the open spaces, it can just use that block to backtrack<-- false
+                    //(3)
                     for(int i = yDir-1; i>=0; --i){
-                        if (g[xDir][i]==-1){
+                        if (g[xDir][i]==-1){//(4)
                             if(g[xDir][i+1]!=0){
-                                //its POSSIBLE to go this direction
+                                //(5)
                                 west = true;
                                 break;
                             }else{
+                                //(6)
                                 west = false;
                                 break;
                             }
                         }
                     }
                     break;
-                case 4:
+                case 4://west
                     System.out.println("west is impossible");
+                    //(1)
                     west = false;
+                    //(2)
                     east = false;
-                    //east is only impossible if there are not two open spaces and NO blocks behind it <-- false
+                    //(3)
                     for(int i = yDir+1; i<width; ++i){
-                        if (g[xDir][i]==-1){
+                        if (g[xDir][i]==-1){//(4)
                             if(g[xDir][i-1]!=0){
-                                //its POSSIBLE to go this direction
+                                //(5)
                                 east = true;
                                 break;
                             }else{
+                                //(6)
                                 east = false;
                                 break;
                             }
@@ -315,6 +384,7 @@ public class SwiftPathing {
                     }
                     break;
             }
+            /*CONTINE COMMENTING HERE*/
             //add all possible directions to the list
             ArrayList<Integer> possibleDirs = new ArrayList();
             if (north) {//1
@@ -510,8 +580,9 @@ public class SwiftPathing {
                 e.printStackTrace();
                 throw new Exception("Some unknow error happened?!", e);
             }
-                if(counter == moves && xDir-2 == 0 && yDir-2 == 0){continue;}
-                else{
+                if(counter == moves && xDir-2 == xStart && yDir-2 == yStart){
+                    continue;
+                }else{
                     ++counter;
                 }
             //print for logging purposes
