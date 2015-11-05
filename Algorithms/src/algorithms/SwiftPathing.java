@@ -384,190 +384,250 @@ public class SwiftPathing {
                     }
                     break;
             }
-            /*CONTINE COMMENTING HERE*/
-            //add all possible directions to the list
+
+            //All possible directions runner could traverse are stored
             ArrayList<Integer> possibleDirs = new ArrayList();
-            if (north) {//1
+            if (north) {
                 System.out.println("adding north");
                 possibleDirs.add(1);
             }
-            if (south) {//2
+            if (south) {
                 System.out.println("adding south");
                 possibleDirs.add(2);
             }
-            if (east) {//3
+            if (east) {
                 System.out.println("adding east");
                 possibleDirs.add(3);
             }
-            if (west) {//4
+            if (west) {
                 System.out.println("adding west");
                 possibleDirs.add(4);
             }
 
-            //just storing the previous directions before any changes occus
+            /*
+                The current X and Y coordinates at this given time need to be stored so that they can be used to 
+                map out the actual path between the current coordinates of the runner and the next location it appears at
+            */
             int previousX = xDir;
             int previousY = yDir;
             try {
+                //its possible the runner (idiot) got itself stuck in a position where absolutely no directions are possible. 
+                //In this case the level becomes unsolvable and should terminate to re-generate a new one
                 if (possibleDirs.isEmpty()) {
                     throw new IllegalStateException();
                 }
             } catch (IllegalStateException ie) {
                 throw new IllegalStateException("Every direction is impossible", ie);
             }
-            //randomly get a value based off the number of directions possible to go
+            
+            //Rondomly select one of possible directions for the runner to go
             int randDir = possibleDirs.get(R.nextInt(possibleDirs.size()));
             
-            //indicates if a block is between the current position and the position in the desired direction.
+            //Indicates if a block is between the current position of the runner and the position desired in the specific direction.
             boolean blocked = false;
-            
+            //Keeps track of how many times the runner tries going a certain direction (and fails). Only allow 100 times before we restart the generation.
             int infinityCounter = 0;
+            
             try {
-                //figure out the next x or y
+                //This logic figures out where to place the next block (and ultimately move the runner) in the specified direction
                 switch (randDir) {
                     case 1://north
+                        //keep track of the direction he chose(1)
                         lastDir = 1;
                         System.out.println("randomly choose north");
-                        //decreasing upwards
-                        if (block_north > 0) {//this allows the use of another side of a block
+                        //If at any point above the runner saw that he could retrace his path and his a block allow it
+                        //This allows for the runner to hit different sides of the same block obviously not at the same time, but after n moves.
+                        //We immediately set the coordinates of the block as his target location because thats the only place he could go. (2)
+                        if (block_north > 0) {
                             xDir = block_north;
                         } else {
-                            tempXDir = R.nextInt(xDir - 1);//beacuse the upper bound is not included
+                            //If there wasn't a retraceable path and block, he can go ANYWHERE (with respect to rules of the logic)
+                            //Get a random number in the direction wanted and see if he can achieve that target (3)
+                            tempXDir = R.nextInt(xDir - 1);
                             System.out.println("trying to use tempXDir as " + tempXDir);
-                            while (g[tempXDir][yDir] == 1 || blocked/*|| g[tempXDir][yDir]==0*/) {
+                            /*
+                                The while loop executes while the randomly selected location for the runner to go is in the way of a two other blocks,
+                                so he's gotta choose another one.
+                                Otherwise, if the location is on another block, we are blocked but not necessarily unable to place a block somewhere BEFORE that block so try again
+                                (4)
+                            */
+                            while (g[tempXDir][yDir] == 1 || blocked) {
                                 System.out.println("trying AGAIN to use tempXDir as " + tempXDir);
-                                tempXDir = R.nextInt(xDir - 1);//beacuse the upper bound is not included
+                                //Get another random number(5)
+                                tempXDir = R.nextInt(xDir - 1);
                                 blocked = false;
-                                //this is to check that there are no blocks in the line of sight to the next block
+                                //This is to check that there are no blocks in the line of sight to the next block(6)
                                 for (int i = previousX; (i >= 0) && i > tempXDir; --i) {
-                                    //if we make it all the way down the line we need a new direction...
+                                    //If we make it all the way down the line without breaking its possible this entire line is made up on another blocks path we need a new direction...(7)
                                     System.out.println("i = " + i);
                                     if (g[i][yDir] == 0) {
                                         blocked = true;
                                         break;
                                     }
                                 }
+                                //Increment the counter and make sure its not > 100. If it is, statistically we're stuck in a loop. Throw exception and get out to re-generate a new level(8)
                                 ++infinityCounter;
                                 if (infinityCounter > 100) {
                                     throw new IllegalStateException();
                                 }
                             }
+                            //ONCE we make it past all the above, we have a successful path for the runner to traverse and a new place for the next block(9)
                             xDir = tempXDir;
                         }
                         System.out.println("new position to place block is (" + xDir + "," + yDir + ")");
+                        //Store the new block in the found place(10)
                         g[xDir][yDir] = 0;
+                        //Since the runner can't actually go INTO the block, it has to stop one space before the placed block since it "hits" the block
+                        //NOTICE: This is only true for plain obscure block obstacles. Once Bubble, Breakable, and Portal blocks are implemented this will need jsut a little extra magic (11)
                         ++xDir;
                         g[xDir][yDir] = 8;
                         System.out.println("new position for movement block is block is (" + xDir + "," + yDir + ")");
+                        //Lastly all we have to do is traverse backwards from the new location of the runner to the location where it came from drawing out the path (inserting 1's) (12)
                         for (int i = xDir + 1; (i < height) && i <= previousX && (g[i][yDir] != 0); ++i) {
                             g[i][yDir] = 1;
                         }
                         break;
+                        /*
+                        NOTICE:
+                            once again...proof I need to extract code out because of so much being repeated, but the case statements below all follow the same logic
+                            save minor details so refer to the numbers corresponding with the comments above to understand the code
+                        */
                     case 2://south
-                        //increasing downwards
+                        //(1)
                         lastDir = 2;
                         System.out.println("randomly choose south");
-                        if (block_south > 0) {//this allows the use of another side of a block
+                        //(2)
+                        if (block_south > 0) {
                             xDir = block_south;
                         } else {
+                            //(3)
                             tempXDir = ((height - 1) - (xDir + 2)) > 0 ? R.nextInt(((height - 1) - (xDir + 2))) + (xDir + 2) : (xDir + 2);
                             System.out.println("trying to use xPos as " + tempXDir);
+                            //(4)
                             while (g[tempXDir][yDir] == 1 || blocked) {
                                 System.out.println("trying AIAIN to use xPos as " + tempXDir);
+                                //(5)
                                 tempXDir = R.nextInt(((height - 1) - xDir + 2)) + (xDir + 2);
                                 blocked = false;
-                                //this is to check that there are no blocks in the line of sight to the next block
+                                //(6)
                                 for (int i = previousX; (i < height) && i < tempXDir; ++i) {
                                     System.out.println("i = " + i);
+                                    //(7)
                                     if (g[i][yDir] == 0) {
                                         blocked = true;
                                         break;
                                     }
                                 }
+                                //(8)
                                 ++infinityCounter;
                                 if (infinityCounter > 100) {
                                     throw new IllegalStateException();
                                 }
                             }
+                            //(9)
                             xDir = tempXDir;
                         }
+                        //(10)
                         g[xDir][yDir] = 0;
                         --xDir;
+                        //(11)
                         g[xDir][yDir] = 8;
                         System.out.println("new position to place block is (" + xDir + "," + yDir + ")");
+                        //(12)
                         for (int i = xDir - 1; (i >= 0) && i >= previousX && (g[i][yDir] != 0); --i) {
                             System.out.println("i = " + i);
                             g[i][yDir] = 1;
                         }
                         break;
                     case 3://east
-                        //increasing to the right
+                        ////(1)
                         lastDir = 3;
                         System.out.println("randomly choose east");
+                        //(2)
                         if (block_east > 0) {
                             yDir = block_east;
                         } else {
+                            //(3)
                             tempYDir = ((width - 1) - (yDir + 2)) > 0 ? R.nextInt(((width - 1) - (yDir + 2))) + (yDir + 2) : (yDir + 2);
                             System.out.println("trying to use yPos as " + tempYDir);
+                            //(4)
                             while (g[xDir][tempYDir] == 1 || blocked) {
                                 System.out.println("trying AGAIN to use yDir as " + tempYDir);
+                                //(5)
                                 tempYDir = R.nextInt(((width - 1) - (yDir + 2))) + (yDir + 2);
                                 blocked = false;
-                                //this is to check that there are no blocks in the line of sight to the next block
+                                //(6)
                                 for (int i = previousY; (i < width) && i < tempYDir; ++i) {
                                     System.out.println("i = " + i);
+                                    //(7)
                                     if (g[xDir][i] == 0) {
                                         blocked = true;
                                         break;
                                     }
                                 }
+                                //(8)
                                 ++infinityCounter;
                                 if (infinityCounter > 100) {
                                     throw new IllegalStateException();
                                 }
                             }
+                            //(9)
                             yDir = tempYDir;
                         }
+                        //(10)
                         g[xDir][yDir] = 0;
                         --yDir;
+                        //(11)
                         g[xDir][yDir] = 8;
                         System.out.println("new position to place block is (" + xDir + "," + yDir + ")");
+                        //(12)
                         for (int i = yDir - 1; (i >= 0) && i >= previousY && (g[xDir][i] != 0); --i) {
                             System.out.println("i = " + i);
                             g[xDir][i] = 1;
                         }
                         break;
                     case 4://west
-                        //descreasing to the left
+                        //(1)
                         lastDir = 4;
                         System.out.println("randomly choose west");
+                        //(2)
                         if (block_west > 0) {
                             yDir = block_west;
                         } else {
+                            //(3)
                             tempYDir = R.nextInt(yDir - 1);//because the upper bound is not included
                             System.out.println("trying to use yDir as " + yDir);
-                            while (g[xDir][tempYDir] == 1 || blocked/*|| g[xDir][tempYDir]==0*/) {
+                            //(4)s
+                            while (g[xDir][tempYDir] == 1 || blocked) {
+                                //(5)
                                 tempYDir = R.nextInt(yDir - 1);
                                 blocked = false;
-                                //this is to check that there are no blocks in the line of sight to the next block
+                                //(6)
                                 for (int i = previousY; (i >= 0) && i > tempYDir; --i) {
                                     System.out.println("i = " + i);
+                                    //(7)
                                     if (g[xDir][i] == 0) {
                                         blocked = true;
                                         break;
                                     }
                                 }
                                 System.out.println("trying AGAIN to use yDir as " + yDir);
+                                //(8)s
                                 ++infinityCounter;
                                 if (infinityCounter > 100) {
                                     throw new IllegalStateException();
                                 }
                             }
+                            //(9)
                             yDir = tempYDir;
                         }
+                        //(10)
                         g[xDir][yDir] = 0;
                         ++yDir;
+                        //(11)
                         g[xDir][yDir] = 8;
                         System.out.println("new position to place block is (" + xDir + "," + yDir + ")");
+                        //(12)
                         for (int i = yDir + 1; (i < width) && i <= previousY && (g[xDir][i] != 0); ++i) {
                             System.out.println("i = " + i);
                             g[xDir][i] = 1;
