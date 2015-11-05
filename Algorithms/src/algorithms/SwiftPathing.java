@@ -104,7 +104,11 @@ public class SwiftPathing {
             
             //for now we assume the start block starts in the top left most corner. Will absolutely be randomly placed later on
             grid[0/*row*/][0/*column*/] = 0;
-            System.out.println("------------------------------------------------GENERING LEVEL "+ (levelsCompleted+1)+"------------------------------------------------");
+            System.out.println("--------------------"
+                    + "----------------------------"
+                    + "GENERING LEVEL "+ (levelsCompleted+1)
+                    +"----------------------"
+                    + "--------------------------");
             print(grid);
             try {
                 //populate one level
@@ -135,12 +139,15 @@ public class SwiftPathing {
                                       South - increasing x values
          */
         
-        //
+        //keeps track of how many moves in a level
         int counter = 0;
+        //X coordinate for the current movable (dude) block 
         int xDir = x;
+        //Y coordinate for the current movable (dude) block 
         int yDir = y;
-        int xPos = x;
-        int yPos = y;
+        //temporary values used for holding the NEXT X or Y coordinate
+        int tempXDir = x;
+        int tempYDir = y;
         boolean north = false;
         boolean south = false;
         boolean east = false;
@@ -154,7 +161,7 @@ public class SwiftPathing {
             int block_south = -1;
             int block_east = -1;
             int block_west = -1;
-            System.out.println("yPos = " + yPos + "\nxPos = " + xPos + "\nxDir = " + xDir + "\nyDir = " + yDir + "\nwidth = " + width + "\nheight = " + height);
+            System.out.println("yPos = " + tempYDir + "\nxPos = " + tempXDir + "\nxDir = " + xDir + "\nyDir = " + yDir + "\nwidth = " + width + "\nheight = " + height);
             if (yDir < 2 || g[xDir][yDir-2]==1) {//furthest left
                 west = false;
                 System.out.println("west is impossible");
@@ -354,7 +361,7 @@ public class SwiftPathing {
                         if (block_north > 0) {//this allows the use of another side of a block
                             xDir = block_north;
                         } else {
-                            int tempXDir = R.nextInt(xDir - 1);//beacuse the upper bound is not included
+                            tempXDir = R.nextInt(xDir - 1);//beacuse the upper bound is not included
                             System.out.println("trying to use tempXDir as " + tempXDir);
                             while (g[tempXDir][yDir] == 1 || blocked/*|| g[tempXDir][yDir]==0*/) {
                                 System.out.println("trying AGAIN to use tempXDir as " + tempXDir);
@@ -392,15 +399,14 @@ public class SwiftPathing {
                         if (block_south > 0) {//this allows the use of another side of a block
                             xDir = block_south;
                         } else {
-                            //xPos = xDir;
-                            xPos = ((height - 1) - (xDir + 2)) > 0 ? R.nextInt(((height - 1) - (xDir + 2))) + (xDir + 2) : (xDir + 2);
-                            System.out.println("trying to use xPos as " + xPos);
-                            while (g[xPos][yDir] == 1 || blocked/*|| g[xPos][yDir]==0*/) {
-                                System.out.println("trying AIAIN to use xPos as " + xPos);
-                                xPos = R.nextInt(((height - 1) - xDir + 2)) + (xDir + 2);
+                            tempXDir = ((height - 1) - (xDir + 2)) > 0 ? R.nextInt(((height - 1) - (xDir + 2))) + (xDir + 2) : (xDir + 2);
+                            System.out.println("trying to use xPos as " + tempXDir);
+                            while (g[tempXDir][yDir] == 1 || blocked) {
+                                System.out.println("trying AIAIN to use xPos as " + tempXDir);
+                                tempXDir = R.nextInt(((height - 1) - xDir + 2)) + (xDir + 2);
                                 blocked = false;
                                 //this is to check that there are no blocks in the line of sight to the next block
-                                for (int i = previousX; (i < height) && i < xPos; ++i) {
+                                for (int i = previousX; (i < height) && i < tempXDir; ++i) {
                                     System.out.println("i = " + i);
                                     if (g[i][yDir] == 0) {
                                         blocked = true;
@@ -412,7 +418,7 @@ public class SwiftPathing {
                                     throw new IllegalStateException();
                                 }
                             }
-                            xDir = xPos;
+                            xDir = tempXDir;
                         }
                         g[xDir][yDir] = 0;
                         --xDir;
@@ -430,15 +436,14 @@ public class SwiftPathing {
                         if (block_east > 0) {
                             yDir = block_east;
                         } else {
-                            //yPos = yDir;
-                            yPos = ((width - 1) - (yDir + 2)) > 0 ? R.nextInt(((width - 1) - (yDir + 2))) + (yDir + 2) : (yDir + 2);
-                            System.out.println("trying to use yPos as " + yPos);
-                            while (g[xDir][yPos] == 1 || blocked/*|| g[xDir][yPos]==0*/) {
-                                System.out.println("trying AGAIN to use yDir as " + yPos);
-                                yPos = R.nextInt(((width - 1) - (yDir + 2))) + (yDir + 2);
+                            tempYDir = ((width - 1) - (yDir + 2)) > 0 ? R.nextInt(((width - 1) - (yDir + 2))) + (yDir + 2) : (yDir + 2);
+                            System.out.println("trying to use yPos as " + tempYDir);
+                            while (g[xDir][tempYDir] == 1 || blocked) {
+                                System.out.println("trying AGAIN to use yDir as " + tempYDir);
+                                tempYDir = R.nextInt(((width - 1) - (yDir + 2))) + (yDir + 2);
                                 blocked = false;
                                 //this is to check that there are no blocks in the line of sight to the next block
-                                for (int i = previousY; (i < width) && i < yPos; ++i) {
+                                for (int i = previousY; (i < width) && i < tempYDir; ++i) {
                                     System.out.println("i = " + i);
                                     if (g[xDir][i] == 0) {
                                         blocked = true;
@@ -450,7 +455,7 @@ public class SwiftPathing {
                                     throw new IllegalStateException();
                                 }
                             }
-                            yDir = yPos;
+                            yDir = tempYDir;
                         }
                         g[xDir][yDir] = 0;
                         --yDir;
@@ -468,7 +473,7 @@ public class SwiftPathing {
                         if (block_west > 0) {
                             yDir = block_west;
                         } else {
-                            int tempYDir = R.nextInt(yDir - 1);//because the upper bound is not included
+                            tempYDir = R.nextInt(yDir - 1);//because the upper bound is not included
                             System.out.println("trying to use yDir as " + yDir);
                             while (g[xDir][tempYDir] == 1 || blocked/*|| g[xDir][tempYDir]==0*/) {
                                 tempYDir = R.nextInt(yDir - 1);
