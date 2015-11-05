@@ -14,7 +14,8 @@ public class SwiftPathing {
     
 
     public static void main(String[] args) {
-        generate();
+        //arbitrary values for now testing.
+        generate(16,10, 5, 16, 3);
     }
 
     public enum assets {
@@ -59,29 +60,18 @@ public class SwiftPathing {
     }
 
     
-    //randomized a min number of moves from n-m (for now)
-    private static void generate() {
-        //say we actually have coordinates <-- will get later
-        int[][] grid = new int[16][10];
-        /* this was for a smaller test but you get the idea
+    /* 
+      height X width
+        -1-1-1-1-1
+        -1-1-1-1-1
+        -1-1-1-1-1         
         -1-1-1-1-1
         -1-1-1-1-1
         -1-1-1-1-1
         -1-1-1-1-1
         -1-1-1-1-1
-        -1-1-1-1-1
-        -1-1-1-1-1
-        -1-1-1-1-1
-         */
-        Random randGen = new Random();
         
-        int minNumMoves = 0;
-        while(minNumMoves < 5){
-            minNumMoves = randGen.nextInt(16);
-        }
-        //for now assume the start block starts in the top left most corner
-        
-        /*
+        SUMMARY of logic:
             so in the matrix for any given n(x,y) x=columns, y=rows and m(x,y) there can't be anything in between n and m.
             but we put one block in n(x,y). the only other next block would be wither n(x+/-1,2,..n, y) or n(x,y+/-1,2,..,n)  basically either horizontally or vertically.
             so we randomly choose to either go vertical or horizontal however, we cannot go BACk the way we came ever so there are only 3 possibilities
@@ -89,25 +79,41 @@ public class SwiftPathing {
             each time we place a block tho, we have to mark out where blocks cannot be placed. so if a block is at n(x,y) and we place one at say m(x, y-3) then we mark off n(x, y-1) and n(x, y-2)
             we can pass through (the opposite directional plane) by swiping but not putting a block in there so the marks only refer to PLACING a block.        
             then we just do this as many times as minNumMoves.
-            
-        */
+    */
+    private static void generate(int height, int width, int minMinMove, int maxMinMove, int numLevels) {
+        //dimensions for the playable area.
+        int[][] grid = new int[height][width];
         
-        //initialize whole grid to -1
-        for(int i = 0; i < grid.length; ++i) {
-            for (int j = 0; j < grid[i].length; ++j) {
-                grid[i][j] = -1;
+        //Alwasy use the same instance of Random number generator so no duplicate sequence of randoms (oxymoronic I know but it happens) occur 
+        Random randGen = new Random();
+        
+        //counter to keep track of how many solvable levels have been created
+        int levelsCompleted = 0;
+        
+        //keep generating levels
+        while(levelsCompleted < numLevels){   
+            //min moves will be in the range of [minMinMove,maxMinMove]
+            int minNumMoves = randGen.nextInt(maxMinMove-minMinMove)+minMinMove;
+            
+            //initialize whole grid to -1 (-1 signifies free spaces to place a block)
+            for (int i = 0; i < grid.length; ++i) {
+                for (int j = 0; j < grid[i].length; ++j) {
+                    grid[i][j] = -1;
+                }
             }
-        }
-        //set the first movement block in upper left hand
-        grid[0/*row*/][0/*column*/] = 0;
-        print(grid);
-
-        try{
-            populateGrid(grid, 0, 0, minNumMoves, 10, 16, randGen);
-        }catch(IllegalStateException ie){
             
-        }catch(Exception e){
-            
+            //for now we assume the start block starts in the top left most corner. Will absolutely be randomly placed later on
+            grid[0/*row*/][0/*column*/] = 0;
+            System.out.println("------------------------------------------------GENERING LEVEL "+ (levelsCompleted+1)+"------------------------------------------------");
+            print(grid);
+            try {
+                //populate one level
+                levelsCompleted += populateGrid(grid, 0, 0, minNumMoves, width, height, randGen);
+            } catch (IllegalStateException ie) {
+                System.out.println(ie.toString() + "\n\t"+ ie.getMessage());
+            } catch (Exception e) {
+                System.out.println(e.toString() + "\n\t"+ e.getMessage());
+            }
         }
         
         
@@ -116,16 +122,17 @@ public class SwiftPathing {
     //-1 indicates a free space
     //0 indicated a block
     //1 indicates an unavaliable space
-    //returns a 1 is it was successful, otherwise 0
+    //returns a 1 is it was successful, otherwise error
     private static int populateGrid(int[][] g, int x, int y, int moves, int width, int height, Random R) throws IllegalStateException, Exception{
         try{
         /*
-        
-         North
-         X
-         South
-        
-         East Y West
+        Cardinal directions. 
+            
+                                      North - decreasing x values
+                                        X
+           decreasing y values - East  Y Y  West - increasing y values
+                                        X
+                                      South - increasing x values
          */
         
         //
@@ -138,9 +145,6 @@ public class SwiftPathing {
         boolean south = false;
         boolean east = false;
         boolean west = false;
-        
-        /*backups for if we need to revert and retry another path -- these may not be needed but keeping them around for nows*/
-
                 
         System.out.println("moves = " + moves);
         int lastDir = 0;//1=north, 2=south, 3=east, 4=wests
@@ -513,6 +517,7 @@ public class SwiftPathing {
         }catch(Exception e){
                 throw new Exception(e.getMessage(), e);
         }
+        return 1;
     }
 
     //print out the matrix for testing and logging purposes
