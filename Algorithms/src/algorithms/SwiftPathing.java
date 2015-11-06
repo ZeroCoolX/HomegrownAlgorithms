@@ -11,7 +11,14 @@ import java.util.Random;
  * @author dewit
  */
 public class SwiftPathing {
-    
+    private final String layoutPrefix = "android:layout_";
+    private final String idPrefix = "android:id";
+    private final String backgroundPrefix = "android:background";
+    private final String idFile = "=\"@id/";
+    private final String dimenFile = "=\"@dimen/";
+    private final String drawFile="=\"@drawable/";
+    private final String qm = "\"";
+    private final String constDimen = "obstacle_width";
 
     public static void main(String[] args) {
         //arbitrary values for now testing.
@@ -19,40 +26,105 @@ public class SwiftPathing {
     }
 
     public enum assets {
-
-        P_BR, P_BU, P_DU, P_FI, P_MO, P_MOSH, P_OB, P_PO, H, A_D, A_U, A_L, A_R, D_OW
+        P_BREAK, P_BUB, P_DUD, P_FIN, P_MOLT, P_MOLTSH, P_OBST, P_PORT, HNT, A_DWN, A_UP, A_LT, A_RT
+    }
+    
+    public enum absoluteLayouts{
+        CENT_VERT, CENT_HOR, A_PAR_RT, A_PAR_LT, A_PAR_TP, A_PAR_BT
+    }
+    
+    public enum relativeLayouts{
+        TO_LT_OF, TO_RT_OF, ALIGN_RT, ALIGN_LT, ABV, BLW
+    }
+    
+    public enum assetData{
+        ID, WDTH, HGTH, BKRND
+    }
+    
+    private String fullAssetDataName(assetData assData) {
+        switch (assData) {
+            case ID:
+                return idPrefix+idFile+"";
+            case BKRND:
+                return backgroundPrefix+drawFile+"";
+            case WDTH:
+                return layoutPrefix+"width"+dimenFile+constDimen;
+            case HGTH:
+                return layoutPrefix+"height"+dimenFile+constDimen;
+            default:
+                //should never happen
+                return "error";
+        }
+    }
+    
+    private String fullRelativeName(relativeLayouts layout){
+        switch (layout) {
+            case TO_LT_OF:
+                return layoutPrefix+"toLeftOf"+idFile;
+            case TO_RT_OF:
+                return layoutPrefix+"toRightOf"+idFile;            
+            case ALIGN_RT:
+                return layoutPrefix+"alignRight"+idFile;            
+            case ALIGN_LT:
+                return layoutPrefix+"alignLeft"+idFile;            
+            case ABV:
+                return layoutPrefix+"above"+idFile;            
+            case BLW:
+                return layoutPrefix+"below"+idFile;    
+            default:
+                //should never happen
+                return "android:layout";
+        }
+    }
+    
+    private String fullAbsoluteName(absoluteLayouts layout){
+        switch (layout) {
+            case CENT_VERT:
+                return layoutPrefix+"centerVertical"+qm;
+            case CENT_HOR:
+                return layoutPrefix+"centerHorizontal"+qm;            
+            case A_PAR_RT:
+                return layoutPrefix+"alignParentRight"+qm;            
+            case A_PAR_LT:
+                return layoutPrefix+"alignParentLeft"+qm;            
+            case A_PAR_TP:
+                return layoutPrefix+"alignParentTop"+qm;            
+            case A_PAR_BT:
+                return layoutPrefix+"alignParentBottom"+qm;                
+            default:
+                //should never happen
+                return "android:layout";
+        }
     }
 
-    private String realName(assets asset) {
+    private String fullAssetName(assets asset) {
         switch (asset) {
-            case P_BR:
-                return "@drawable/play_breakable";
-            case P_BU:
-                return "@drawable/play_bubble";
-            case P_DU:
-                return "@drawable/play_dude";
-            case P_FI:
-                return "@drawable/play_finish";
-            case P_MO:
-                return "@drawable/play_molten";
-            case P_MOSH:
-                return "@drawable/play_moltenshadow";
-            case P_OB:
-                return "@drawable/play_obstacle";
-            case P_PO:
-                return "@drawable/play_portal";
-            case H:
-                return "@drawable/hint";
-            case A_D:
-                return "@drawable/arrow_down";
-            case A_U:
-                return "@drawable/arrow_up";
-            case A_L:
-                return "@drawable/arrow_left";
-            case A_R:
-                return "@drawable/arrow_right";
-            case D_OW:
-                return "@dimen/obstacle_width";
+            case P_BREAK:
+                return "play_breakable";
+            case P_BUB:
+                return "play_bubble";
+            case P_DUD:
+                return "play_dude";
+            case P_FIN:
+                return "play_finish";
+            case P_MOLT:
+                return "play_molten";
+            case P_MOLTSH:
+                return "play_moltenshadow";
+            case P_OBST:
+                return "play_obstacle";
+            case P_PORT:
+                return "play_portal";
+            case HNT:
+                return "hint";
+            case A_DWN:
+                return "arrow_down";
+            case A_UP:
+                return "arrow_up";
+            case A_LT:
+                return "arrow_left";
+            case A_RT:
+                return "arrow_right";
             default:
                 //should never happen
                 return "@drawable/";
@@ -640,6 +712,7 @@ public class SwiftPathing {
                 e.printStackTrace();
                 throw new Exception("Some unknow error happened?!", e);
             }
+                //make sure that the final block is not exactly next to the start block...That'd be too easy
                 if(counter == moves && xDir-2 == xStart && yDir-2 == yStart){
                     continue;
                 }else{
