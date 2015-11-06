@@ -18,7 +18,12 @@ public class SwiftPathing {
     private final String dimenFile = "=\"@dimen/";
     private final String drawFile="=\"@drawable/";
     private final String qm = "\"";
+    
+    private final String constObstacle = "obstacle";
+    private final String constHint = "hint_";
     private final String constDimen = "obstacle_width";
+    
+    
 
     public static void main(String[] args) {
         //arbitrary values for now testing.
@@ -73,7 +78,7 @@ public class SwiftPathing {
                 return layoutPrefix+"below"+idFile;    
             default:
                 //should never happen
-                return "android:layout";
+                return "error";
         }
     }
     
@@ -93,7 +98,7 @@ public class SwiftPathing {
                 return layoutPrefix+"alignParentBottom"+qm;                
             default:
                 //should never happen
-                return "android:layout";
+                return "error";
         }
     }
 
@@ -127,7 +132,7 @@ public class SwiftPathing {
                 return "arrow_right";
             default:
                 //should never happen
-                return "@drawable/";
+                return "error";
         }
     }
 
