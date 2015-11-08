@@ -4,8 +4,13 @@
  * and open the template in the editor.
  */
 package algorithms;
+import customADTs.Block;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
 import java.util.Random;
+import java.util.Stack;
 /**
  *
  * @author dewit
@@ -204,7 +209,7 @@ public class SwiftPathing {
     */
     private static void generate(int height, int width, int minMinMove, int maxMinMove, int numLevels, int wallUse, ArrayList<StringBuilder>  allLevelsXML) {
         //dimensions for the playable area.
-        int[][] grid = new int[height][width];
+        Block[][] grid = new Block[height][width];
         
         //Alwasy use the same instance of Random number generator so no duplicate sequence of randoms (oxymoronic I know but it happens) occur 
         Random randGen = new Random();
@@ -220,15 +225,16 @@ public class SwiftPathing {
             //initialize whole grid to -1 (-1 signifies free spaces to place a block)
             for (int i = 0; i < grid.length; ++i) {
                 for (int j = 0; j < grid[i].length; ++j) {
-                    grid[i][j] = -1;
+                    grid[i][j] = new Block(i,j,-1);
                 }
             }
-            
+                        print(grid);
+
             //Randomize the start X and Y coordinates for the runner 
             int xStart =(randGen.nextInt((height-1)-1)+1);
             int yStart = (randGen.nextInt((width-1)-1)+1);
-            
-            grid[xStart/*row*/][yStart/*column*/] = 8;
+                        
+            grid[xStart/*row*/][yStart/*column*/].setType(8);
             System.out.println("--------------------"
                     + "----------------------------"
                     + "GENERING LEVEL "+ (levelsCompleted+1)
@@ -286,13 +292,21 @@ public class SwiftPathing {
             margin
             view end
     */
-    private static StringBuilder populateGrid(int[][] g, int x, int y, int moves, int width, int height, Random R, int wallUse) throws IllegalStateException, Exception {
+    private static StringBuilder populateGrid(Block[][] g, int x, int y, int moves, int width, int height, Random R, int wallUse) throws IllegalStateException, Exception {
         //Stores the generated XML for this particular level
         StringBuilder levelXML = new StringBuilder();
         
+        Stack<Block> finalPath = new Stack<Block>();
+        finalPath.push(new Block(x, y, 8));
         //stores the current block because it could potentially be the end
         int xFinish = x;
         int yFinish = y;
+        
+        //stored the X and Y coordinates of the starting position used later on to make sure the finish block it not right next to it 
+        // because on average this would make the puzzle wayyyy easier to solve...and we don't want that >:)
+        //never change till program exits
+        int xStart = x;
+        int yStart = y;
         
         try {
             //keeps track of how many moves in a level
@@ -309,18 +323,14 @@ public class SwiftPathing {
             //changes a lot duing the course of the program
             int tempXDir = x;
             int tempYDir = y;
-        
-            //stored the X and Y coordinates of the starting position used later on to make sure the finish block it not right next to it 
-            // because on average this would make the puzzle wayyyy easier to solve...and we don't want that >:)
-            //never change till program exits
-            int xStart = x;
-            int yStart = y;
 
             //indicate true if a direction is traversable and false if it is not (blocked, or out of bounds)
             boolean north = false;
             boolean south = false;
             boolean east = false;
             boolean west = false;
+            
+            boolean invalidFinish = false;
 
             System.out.println("moves = " + moves);
             //holds the direction we last went to get to where we are now
@@ -386,8 +396,8 @@ public class SwiftPathing {
                          (3)
                          */
                         for (int i = xDir + 1; i < height; ++i) {
-                            if (g[i][yDir] == -1) {//make sure we aren't jumping over any blocks (3)
-                                if (g[i - 1][yDir] != 0) {
+                            if (g[i][yDir].getType() == -1) {//make sure we aren't jumping over any blocks (3)
+                                if (g[i - 1][yDir].getType() != 0) {
                                     //allowed to retrace steps (5)
                                     south = true;
                                     break;
@@ -417,8 +427,8 @@ public class SwiftPathing {
                         north = false;
                         //(3)
                         for (int i = xDir - 1; i >= 0; --i) {
-                            if (g[i][yDir] == -1) {//(4)
-                                if (g[i + 1][yDir] != 0) {
+                            if (g[i][yDir].getType() == -1) {//(4)
+                                if (g[i + 1][yDir].getType() != 0) {
                                     //(5)
                                     north = true;
                                     break;
@@ -438,8 +448,8 @@ public class SwiftPathing {
                         west = false;
                         //(3)
                         for (int i = yDir - 1; i >= 0; --i) {
-                            if (g[xDir][i] == -1) {//(4)
-                                if (g[xDir][i + 1] != 0) {
+                            if (g[xDir][i].getType() == -1) {//(4)
+                                if (g[xDir][i + 1].getType() != 0) {
                                     //(5)
                                     west = true;
                                     break;
@@ -459,8 +469,8 @@ public class SwiftPathing {
                         east = false;
                         //(3)
                         for (int i = yDir + 1; i < width; ++i) {
-                            if (g[xDir][i] == -1) {//(4)
-                                if (g[xDir][i - 1] != 0) {
+                            if (g[xDir][i].getType() == -1) {//(4)
+                                if (g[xDir][i - 1].getType() != 0) {
                                     //(5)
                                     east = true;
                                     break;
@@ -478,7 +488,7 @@ public class SwiftPathing {
                     west = false;
                     System.out.println("west is impossible");
                 } else {
-                    if (g[xDir][yDir - 1] == 0 || g[xDir][yDir - 2] == 0) {//impossible to go west direction if either the direct next or next two blocks are blocked (2)
+                    if (g[xDir][yDir - 1].getType() == 0 || g[xDir][yDir - 2].getType() == 0) {//impossible to go west direction if either the direct next or next two blocks are blocked (2)
                         west = false;//this is partly so we don't have a ton of very small (2 unit) swipes (3)
                         System.out.println("west is impossible");
                     } else {//otherwise west is either completely traversable or retracable to exactly the first block in the row (4)
@@ -493,7 +503,7 @@ public class SwiftPathing {
                                  3. The runner sees a block and he CAN use walls  -> use the block because this indicated its either a real obstacle of a wall (whichever comes first, doesn't matter)
                                  (6)
                                  */
-                                if (g[xDir][i] == 0 && (!useWall ? !(i == 0 || i == width - 1) : true)) {
+                                if (g[xDir][i].getType() == 0 && (!useWall ? !(i == 0 || i == width - 1) : true)) {
                                     System.out.println("west blocked but retracable");
                                     //block locations stored so we know if west is chosen as the direction to traverse we MUST go exactly to this block. no further no lesser. (7)
                                     block_west = i;
@@ -515,7 +525,7 @@ public class SwiftPathing {
                     east = false;
                     System.out.println("east is impossible");
                 } else {
-                    if (g[xDir][yDir + 1] == 0 || g[xDir][yDir + 2] == 0) {//(2)
+                    if (g[xDir][yDir + 1].getType() == 0 || g[xDir][yDir + 2].getType() == 0) {//(2)
                         east = false;//(3)
                         System.out.println("east is impossible");
                     } else {//(4)
@@ -523,7 +533,7 @@ public class SwiftPathing {
                         if (counter < moves) {
                             for (int i = yDir + 2; i < width; ++i) {
                                 //(6)
-                                if (g[xDir][i] == 0 && (!useWall ? !(i == 0 || i == width - 1) : true)) {
+                                if (g[xDir][i].getType() == 0 && (!useWall ? !(i == 0 || i == width - 1) : true)) {
                                     System.out.println("east is blocked but retracable");
                                     //(7)
                                     block_east = i;
@@ -539,7 +549,7 @@ public class SwiftPathing {
                     north = false;
                     System.out.println("north is impossible");
                 } else {
-                    if (g[xDir - 1][yDir] == 0 || g[xDir - 2][yDir] == 0) {//(2)
+                    if (g[xDir - 1][yDir].getType() == 0 || g[xDir - 2][yDir].getType() == 0) {//(2)
                         north = false;//(3)
                         System.out.println("north is impossible");
                     } else {//(4)
@@ -547,7 +557,7 @@ public class SwiftPathing {
                         if (counter < moves) {
                             for (int i = xDir - 2; i >= 0; --i) {
                                 //(6)
-                                if (g[i][yDir] == 0 && (!useWall ? !(i == 0 || i == height - 1) : true)) {
+                                if (g[i][yDir].getType() == 0 && (!useWall ? !(i == 0 || i == height - 1) : true)) {
                                     System.out.println("north blocked but possible to retrace");
                                     //(7)
                                     block_north = i;
@@ -563,7 +573,7 @@ public class SwiftPathing {
                     south = false;
                     System.out.println("south is impossible");
                 } else {
-                    if (g[xDir + 1][yDir] == 0 || g[xDir + 2][yDir] == 0) {//(2)
+                    if (g[xDir + 1][yDir].getType() == 0 || g[xDir + 2][yDir].getType() == 0) {//(2)
                         south = false;//(3)
                         System.out.println("south is impossible");
                     } else {//(4)
@@ -571,7 +581,7 @@ public class SwiftPathing {
                         if (counter < moves) {
                             for (int i = xDir + 2; i < height; ++i) {
                                 //(6)
-                                if (g[i][yDir] == 0 && (!useWall ? !(i == 0 || i == height - 1) : true)) {
+                                if (g[i][yDir].getType() == 0 && (!useWall ? !(i == 0 || i == height - 1) : true)) {
                                     System.out.println("south blocked but retracable");
                                     //(7)
                                     block_south = i;
@@ -644,8 +654,9 @@ public class SwiftPathing {
                             //We immediately set the coordinates of the block as his target location because thats the only place he could go. (2)
                             if (block_north >= 0) {
                                 xDir = block_north;
+                                invalidFinish = true;
                                 System.out.println("choosing exaclt block located xDir " + xDir);
-                                if (g[xDir + 1][yDir] == 1) {//indicates that on the way to the block we were traversing an already traversed path = backtracking
+                                if (g[xDir + 1][yDir].getType() == 1) {//indicates that on the way to the block we were traversing an already traversed path = backtracking
                                     System.out.println("BACKTRACKED");
                                     backtracked = true;
                                 }
@@ -660,7 +671,7 @@ public class SwiftPathing {
                                  Otherwise, if the location is on another block, we are blocked but not necessarily unable to place a block somewhere BEFORE that block so try again
                                  (4)
                                  */
-                                while (g[tempXDir][yDir] == 1 || blocked) {
+                                while (g[tempXDir][yDir].getType() == 1 || blocked) {
                                     System.out.println("trying AGAIN to use tempXDir as " + tempXDir);
                                     //Get another random number(5)
                                     tempXDir = R.nextInt(xDir - 1);
@@ -669,7 +680,7 @@ public class SwiftPathing {
                                     for (int i = previousX; (i >= 0) && i > tempXDir; --i) {
                                         //If we make it all the way down the line without breaking its possible this entire line is made up on another blocks path we need a new direction...(7)
                                         System.out.println("i = " + i);
-                                        if (g[i][yDir] == 0) {
+                                        if (g[i][yDir].getType() == 0) {
                                             blocked = true;
                                             break;
                                         }
@@ -682,6 +693,7 @@ public class SwiftPathing {
                                 }
                                 //ONCE we make it past all the above, we have a successful path for the runner to traverse and a new place for the next block(9)
                                 xDir = tempXDir;
+                                backtracked = false;
                             }
                             //store THIS current block because it might be a finish block
                             xFinish = xDir;
@@ -689,15 +701,15 @@ public class SwiftPathing {
                             
                             System.out.println("new position to place block is (" + xDir + "," + yDir + ")");
                             //Store the new block in the found place(10)
-                            g[xDir][yDir] = 0;
+                            g[xDir][yDir].setType(0);
                             //Since the runner can't actually go INTO the block, it has to stop one space before the placed block since it "hits" the block
                             //NOTICE: This is only true for plain obscure block obstacles. Once Bubble, Breakable, and Portal blocks are implemented this will need jsut a little extra magic (11)
                             ++xDir;
-                            g[xDir][yDir] = 8;
+                            g[xDir][yDir].setType(8);
                             System.out.println("new position for movement block is block is (" + xDir + "," + yDir + ")");
                             //Lastly all we have to do is traverse backwards from the new location of the runner to the location where it came from drawing out the path (inserting 1's) (12)
-                            for (int i = xDir + 1; (i < height) && i <= previousX && (g[i][yDir] != 0); ++i) {
-                                g[i][yDir] = 1;
+                            for (int i = xDir + 1; (i < height) && i <= previousX && (g[i][yDir].getType() != 0); ++i) {
+                                g[i][yDir].setType(1);
                             }
                             break;
                         /*
@@ -716,8 +728,9 @@ public class SwiftPathing {
                             //(2)
                             if (block_south >= 0) {
                                 xDir = block_south;
+                                invalidFinish = true;
                                 System.out.println("choosing exaclt block located xDir " + xDir);
-                                if (g[xDir - 1][yDir] == 1) {//indicates that on the way to the block we were traversing an already traversed path = backtracking
+                                if (g[xDir - 1][yDir].getType() == 1) {//indicates that on the way to the block we were traversing an already traversed path = backtracking
                                     System.out.println("BACKTRACKED");
                                     backtracked = true;
                                 }
@@ -726,7 +739,7 @@ public class SwiftPathing {
                                 tempXDir = ((height - 1) - (xDir + 2)) > 0 ? R.nextInt(((height - 1) - (xDir + 2))) + (xDir + 2) : (xDir + 2);
                                 System.out.println("trying to use tempXDir as " + tempXDir + " and yDir as " + yDir);
                                 //(4)
-                                while (g[tempXDir][yDir] == 1 || blocked) {
+                                while (g[tempXDir][yDir].getType() == 1 || blocked) {
                                     System.out.println("trying AIAIN to use tempXDir as " + tempXDir);
                                     //(5)
                                     tempXDir = R.nextInt(((height - 1) - xDir + 2)) + (xDir + 2);
@@ -735,7 +748,7 @@ public class SwiftPathing {
                                     for (int i = previousX; (i < height - 1) && i < tempXDir; ++i) {
                                         System.out.println("i = " + i);
                                         //(7)
-                                        if (g[i][yDir] == 0) {
+                                        if (g[i][yDir].getType() == 0) {
                                             blocked = true;
                                             break;
                                         }
@@ -748,21 +761,22 @@ public class SwiftPathing {
                                 }
                                 //(9)
                                 xDir = tempXDir;
+                                backtracked = false;
                             }
                             //store THIS current block because it might be a finish block
                             xFinish = xDir;
                             yFinish = yDir;
                             
                             //(10)
-                            g[xDir][yDir] = 0;
+                            g[xDir][yDir].setType(0);
                             --xDir;
                             //(11)
-                            g[xDir][yDir] = 8;
+                            g[xDir][yDir].setType(8);
                             System.out.println("new position to place block is (" + xDir + "," + yDir + ")");
                             //(12)
-                            for (int i = xDir - 1; (i >= 0) && i >= previousX && (g[i][yDir] != 0); --i) {
+                            for (int i = xDir - 1; (i >= 0) && i >= previousX && (g[i][yDir].getType() != 0); --i) {
                                 System.out.println("i = " + i);
-                                g[i][yDir] = 1;
+                                g[i][yDir].setType(1);
                             }
                             break;
                         case 3://east
@@ -776,8 +790,9 @@ public class SwiftPathing {
                             //(2)
                             if (block_east >= 0) {
                                 yDir = block_east;
+                                invalidFinish = true;
                                 System.out.println("chosen to use exact block located at  yDir " + yDir);
-                                if (g[xDir][yDir - 1] == 1) {//indicates that on the way to the block we were traversing an already traversed path = backtracking
+                                if (g[xDir][yDir - 1].getType() == 1) {//indicates that on the way to the block we were traversing an already traversed path = backtracking
                                     System.out.println("BACKTRACKED");
                                     backtracked = true;
                                 }
@@ -786,7 +801,7 @@ public class SwiftPathing {
                                 tempYDir = ((width - 1) - (yDir + 2)) > 0 ? R.nextInt(((width - 1) - (yDir + 2))) + (yDir + 2) : (yDir + 2);
                                 System.out.println("trying to use tempYDir as " + tempYDir + " and xDir as " + xDir);
                                 //(4)
-                                while (g[xDir][tempYDir] == 1 || blocked) {
+                                while (g[xDir][tempYDir].getType() == 1 || blocked) {
                                     System.out.println("trying AGAIN to use tempYDir as " + tempYDir);
                                     //(5)
                                     tempYDir = R.nextInt(((width - 1) - (yDir + 2))) + (yDir + 2);
@@ -795,7 +810,7 @@ public class SwiftPathing {
                                     for (int i = previousY; (i < width - 1) && i < tempYDir; ++i) {
                                         System.out.println("i = " + i);
                                         //(7)
-                                        if (g[xDir][i] == 0) {
+                                        if (g[xDir][i].getType() == 0) {
                                             blocked = true;
                                             break;
                                         }
@@ -808,20 +823,21 @@ public class SwiftPathing {
                                 }
                                 //(9)
                                 yDir = tempYDir;
+                                backtracked = false;
                             }
                             //store THIS current block because it might be a finish block
                             xFinish = xDir;
                             yFinish = yDir;
                             //(10)
-                            g[xDir][yDir] = 0;
+                            g[xDir][yDir].setType(0);
                             --yDir;
                             //(11)
-                            g[xDir][yDir] = 8;
+                            g[xDir][yDir].setType(8);
                             System.out.println("new position to place block is (" + xDir + "," + yDir + ")");
                             //(12)
-                            for (int i = yDir - 1; (i >= 0) && i >= previousY && (g[xDir][i] != 0); --i) {
+                            for (int i = yDir - 1; (i >= 0) && i >= previousY && (g[xDir][i].getType() != 0); --i) {
                                 System.out.println("i = " + i);
-                                g[xDir][i] = 1;
+                                g[xDir][i].setType(1);
                             }
                             break;
                         case 4://west
@@ -835,8 +851,9 @@ public class SwiftPathing {
                             //(2)
                             if (block_west >= 0) {
                                 yDir = block_west;
+                                invalidFinish = true;
                                 System.out.println("chosen to use exact block located at  yDir " + yDir);
-                                if (g[xDir][yDir + 1] == 1) {//indicates that on the way to the block we were traversing an already traversed path = backtracking
+                                if (g[xDir][yDir + 1].getType() == 1) {//indicates that on the way to the block we were traversing an already traversed path = backtracking
                                     System.out.println("BACKTRACKED");
                                     backtracked = true;
                                 }
@@ -845,7 +862,7 @@ public class SwiftPathing {
                                 tempYDir = R.nextInt(yDir - 1);
                                 System.out.println("trying to use tempYDir as " + tempYDir + " and xDir as " + xDir);
                                 //(4)s
-                                while (g[xDir][tempYDir] == 1 || blocked) {
+                                while (g[xDir][tempYDir].getType() == 1 || blocked) {
                                     //(5)
                                     tempYDir = R.nextInt(yDir - 1);
                                     blocked = false;
@@ -853,7 +870,7 @@ public class SwiftPathing {
                                     for (int i = previousY; (i >= 0) && i > tempYDir; --i) {
                                         System.out.println("i = " + i);
                                         //(7)
-                                        if (g[xDir][i] == 0) {
+                                        if (g[xDir][i].getType() == 0) {
                                             blocked = true;
                                             break;
                                         }
@@ -865,6 +882,7 @@ public class SwiftPathing {
                                         throw new IllegalStateException();
                                     }
                                 }
+                                backtracked = false;
                                 //(9)
                                 yDir = tempYDir;
                             }
@@ -872,15 +890,15 @@ public class SwiftPathing {
                             xFinish = xDir;
                             yFinish = yDir;
                             //(10)
-                            g[xDir][yDir] = 0;
+                            g[xDir][yDir].setType(0);
                             ++yDir;
                             //(11)
-                            g[xDir][yDir] = 8;
+                            g[xDir][yDir].setType(8);
                             System.out.println("new position to place block is (" + xDir + "," + yDir + ")");
                             //(12)
-                            for (int i = yDir + 1; (i < width) && i <= previousY && (g[xDir][i] != 0); ++i) {
+                            for (int i = yDir + 1; (i < width) && i <= previousY && (g[xDir][i].getType() != 0); ++i) {
                                 System.out.println("i = " + i);
-                                g[xDir][i] = 1;
+                                g[xDir][i].setType(1);
                             }
                             break;
                     }
@@ -891,21 +909,83 @@ public class SwiftPathing {
                     e.printStackTrace();
                     throw new Exception("Some unknow error happened?!", e);
                 }
-                //Make sure that the final block is not exactly next to the start block...That'd be too easy
-                if (counter == moves && ((xDir - 2 == xStart && yDir - 2 == yStart) || (xDir + 2 == xStart && yDir + 2 == yStart))) {
-                    System.out.println("cannot end next to the start dont increment counter");
+                    System.out.println("CEHCKING  ["+xDir+","+yDir+"] and xStart = " + xStart + " and yStart = " + yStart);
+                //Make sure that the final block is not even in the same horizontal or vertical row/column of the start
+                if(counter+1 == moves && invalidFinish){
+                    ++backtrackCounter;
+                    System.out.println("cannot finish on an already placed block");
+                    invalidFinish = false;
+                                        boolean alreadySeen = false;
+                    for(Block b : finalPath){
+                        //check to see if this is REALLY a backtrack or just traversing a know direction
+                        if(b.getX() == xDir && b.getY() == yDir){
+                            alreadySeen=true;
+                            break;
+                        }
+                    }
+                    //its technically a new direction so add it
+                    if(!alreadySeen){
+                        System.out.println("ADDING TO finalPath even tho we backtracked cuz did not find dupe");
+                        finalPath.push(new Block(xDir, yDir, 8));
+                    }
+                }else if (counter+1 == moves && (xFinish == xStart || yFinish == yStart)) {
+                    ++backtrackCounter;
+                    System.out.println("cannot end in line with the start");
+                                        boolean alreadySeen = false;
+                    for(Block b : finalPath){
+                        //check to see if this is REALLY a backtrack or just traversing a know direction
+                        if(b.getX() == xDir && b.getY() == yDir){
+                            alreadySeen=true;
+                            break;
+                        }
+                    }
+                    //its technically a new direction so add it
+                    if(!alreadySeen){
+                        System.out.println("ADDING TO finalPath even tho we backtracked cuz did not find dupe");
+                        finalPath.push(new Block(xDir, yDir, 8));
+                    }
                 } else if (backtracked) {
                     System.out.println("we backtracked thus don't increment counter");
                     ++backtrackCounter;
-                    if (backtrackCounter > 500) {
+                    boolean alreadySeen = false;
+                    for(Block b : finalPath){
+                        //check to see if this is REALLY a backtrack or just traversing a know direction
+                        if(b.getX() == xDir && b.getY() == yDir){
+                            alreadySeen=true;
+                            break;
+                        }
+                    }
+                    //its technically a new direction so add it
+                    if(!alreadySeen){
+                        System.out.println("ADDING TO finalPath even tho we backtracked cuz did not find dupe");
+                        finalPath.push(new Block(xDir, yDir, 8));
+                    }else{
+                        finalPath.pop();
+                    }
+                    if (backtrackCounter > 700) {
                         throw new IllegalStateException("Stuck in an infinite loop due to an infinite backtrack cycle");
                     }
-                } else if ((xDir == 1 || xDir == height - 2) || (yDir == 1 || yDir == width - 2)) {
+                } else if (counter+1 == moves && (xDir == 1 || xDir == height - 2) || (yDir == 1 || yDir == width - 2)) {
+                    ++backtrackCounter;
                     System.out.println("cannot finish in a wall");
+                                        boolean alreadySeen = false;
+                    for(Block b : finalPath){
+                        //check to see if this is REALLY a backtrack or just traversing a know direction
+                        if(b.getX() == xDir && b.getY() == yDir){
+                            alreadySeen=true;
+                            break;
+                        }
+                    }
+                    //its technically a new direction so add it
+                    if(!alreadySeen){
+                        System.out.println("ADDING TO finalPath even tho we backtracked cuz did not find dupe");
+                        finalPath.push(new Block(xDir, yDir, 8));
+                    }
                 } else {
+                    finalPath.push(new Block(xDir, yDir, 8));
                     ++counter;
                     //print for logging purposes
-                    System.out.println("PRINTING");
+                    System.out.println("PRINTING and pushing ["+xDir+","+yDir+"]");
                     print(g);
                 }
                 System.out.println("counter = " + counter);
@@ -917,8 +997,14 @@ public class SwiftPathing {
         }
         
         //Before writing to XML we need to ensure that the min # of moves is at least moves-1. Its possible (since random block placement is a factor) that a presumed min 10 move puzzle could be solved in 2 moves..etc
+        //ensureMinMoves(g, moves, xStart, yStart, xFinish, yFinish);
+            System.out.print("Starting at BLOCK: ");
+            for(Block b : finalPath){
+                System.out.print("["+b.getX() + ","+b.getY()+"] \nGo to BLOCK: ");
+            }
         
-        
+         //not ready yet
+        //backwardsTraversal(finalPath);
         
         //If we FINALLY reach here that is awesome and we have successfully generated one solvable level. Now we write the xml
         System.out.println("Successful level generated - writing XML...");
@@ -937,7 +1023,7 @@ public class SwiftPathing {
                 //if we're on the perimeter even if there is a theoretical block, don't add it because it's acting as the wall
                 if (!(i == 0 || i == width - 1) && !(j == 0 || j == height-1)) {
                     //this is a writable block!
-                    if (g[i][j] == 0) {
+                    if (g[i][j].getType() == 0) {
                         levelXML.append(
                                 viewStart + "\n"
                                 + fullAssetDataName(assetData.ID) + ((i==xFinish&&j==yFinish)?(constFinish):(constObstacle + (obNum++))) + qm + "\n"
@@ -962,18 +1048,481 @@ public class SwiftPathing {
         return levelXML;
     }
     
-    private static void ensureMinMoves(int[][] g, int moveGoal, int xStart, int yStart, int xFinish, int yFinish){
+    //Not 100% accurate
+    private static void backwardsTraversal(Stack<Block>paths){
+        System.out.println("trying traversals");
+        //first thing popped off is the last node.
+        Stack<Block> correctPath = new Stack<Block>();
+        
+        boolean isXStreak = false;
+        int streak = 0;
+        int streakCounter = 1;
+        
+        //store last node
+        correctPath.push(paths.pop());
+        
+        if(correctPath.peek().getX() == paths.peek().getX()){//just set the streak  either east or west
+            streak = paths.peek().getX();
+            isXStreak = true;
+            ++streakCounter;
+        }else if(correctPath.peek().getY() == paths.peek().getY()){//just set the streak   either north or south
+            streak = paths.peek().getY();
+            isXStreak = true;
+            ++streakCounter;
+        }
+        
+        int streakX = 0;
+        int streakY = 0;
+        
+       /* try{
+        Block[] blocks = new Block[paths.size()];
+        int index = 0;
+        int counter = 0;
+        while(!paths.isEmpty()){
+            Block b = paths.pop();
+            System.out.println("storing " + b.getCoordinates());
+            if(counter < 2){
+                blocks[index] = b;
+                ++index;
+                ++counter;
+            }else{
+               Block oneLess = blocks[index-1];
+               Block twoLess = blocks[index-2];
+               if(b.getX() == twoLess.getX()){
+                   if(b.getX() == oneLess.getX()){
+                        blocks[index-1]=b;
+                   }else{
+                       blocks[index]=b;
+                       ++index;
+                   }
+               }else if(b.getY() == twoLess.getY()){
+                   if(b.getY() == oneLess.getY()){
+                        blocks[index-1]=b;
+                   }else{
+                       blocks[index]=b;
+                       ++index;
+                   }
+               }
+            }
+        }
+        for(int i = 0; i < blocks.length; ++i){
+            System.out.println(blocks[i].getCoordinates());
+        }
+        }catch(Exception e){
+        e.printStackTrace();
+        }*/
+        
+
+        while (!paths.isEmpty()) {
+            Block b = paths.pop();
+            System.out.println("streak is "+ streak + " counted at " + streakCounter + " checking "+b.getCoordinates());
+            if (streakCounter < 3) {
+                if (correctPath.peek().getX() == b.getX()) {//just set the streak
+                    System.out.println("X's");
+                    if(streak == b.getX() && isXStreak){
+                    ++streakCounter;
+                    }else{
+                     streak = b.getY();
+                     streak = 1;
+                    }
+                correctPath.push(b);
+                } else if (correctPath.peek().getY() == b.getY()) {//just set the streak
+                    System.out.println("Y's");
+                    if(streak == b.getY()){
+                    ++streakCounter;
+                    }else{
+                     streak = b.getX();
+                     streak = 1;
+                    }
+                                    correctPath.push(b);
+                }
+
+            } else {
+                System.out.println("NOT < 2");
+                if (b.getX() == streak) {//compare Y's
+                    System.out.println("X's, popping the streak"+correctPath.peek().getCoordinates() + " pushing " + b.getCoordinates());
+                    streak = b.getX();
+                    //correctPath.pop();
+                    //correctPath.push(b);
+                } else if (b.getY() == streak) {//compare X's
+                                        System.out.println("Y's the streak, popping "+correctPath.peek().getCoordinates() + " pushing " + b.getCoordinates());
+                    streak = b.getY();
+                    //correctPath.pop();
+                    //correctPath.push(b);
+                } else {
+                    System.out.println("neither");
+                    if (correctPath.peek().getX() == b.getX()) {//just set the streak
+                        if (streak == b.getX()) {
+                            ++streakCounter;
+                        } else {
+                            streak = b.getY();
+                            streak = 1;
+                        }
+                                            correctPath.push(b);
+
+                    } else if (correctPath.peek().getY() == b.getY()) {//just set the streak
+                        if (streak == b.getY()) {
+                            ++streakCounter;
+                        } else {
+                            streak = b.getX();
+                            streak = 1;
+                        }
+                                            correctPath.push(b);
+
+                    }
+                    System.out.println(" pushing " + b.getCoordinates());
+                }
+            }
+        }
+        
+        while(!correctPath.isEmpty()){
+            System.out.println(correctPath.pop().getCoordinates());
+        }
     
+    //Below are attempts at solving algorithms. None of them were 100% successful
+    /*
+    private static boolean correctForm(Block a, Block b, Block c, int xORy){
+        if(xORy==1){//x
+            if(b.getY() > a.getY() && c.getY() < a.getY()){
+                return true;
+            }else if(b.getY() < a.getY() && c.getY() > a.getY()){
+                return true;
+            }else{
+                return false;
+            }
+        }else{//y
+            if(b.getX() > a.getX() && c.getX() < a.getX()){
+                return true;
+            }else if(b.getX() < a.getX() && c.getX() > a.getX()){
+                return true;
+            }else{
+                return false;
+            }
+        }
     }
+    
+    private static void mapPaths(Block[][] g, Stack<Block> nodes) {
+        if (nodes.size() <= 3) {
+            System.out.println("Useless paths...");
+            return;
+        }
+        ArrayList<Stack<Block>> paths = new ArrayList<Stack<Block>>();
+        Stack<Block> SBeginning = new Stack<Block>();
+        Block pointer;
+        SBeginning.push(nodes.pop());
+        paths.add(SBeginning);
+        while (!nodes.isEmpty()) {
+            //check is the next node has anything in common
+            Block next = nodes.pop();
+            System.out.println("next node: " + next.getCoordinates());
+            for (Stack<Block> S : paths) {
+                pointer = S.peek();
+                System.out.println("pointer node: " + pointer.getCoordinates());
+                if (next.getX() == pointer.getX()) {
+                    System.out.println("next and pointer X's are the same");
+                    //it does so check the next node!
+                    Block temp = nodes.pop();
+                    System.out.println("temp node: " + temp.getCoordinates());
+                    //check if the thrid node ALSO has the same x
+                    if (temp.getX() == pointer.getX()) {//1==x, 2==y
+                        System.out.println("");
+                        Stack<Block> SS = S;
+                        SS.push(next);
+                        paths.add(SS);
+                        //acreate another stack, copy old stack, and add one to it
+                        //then for each stack before the added see if we can add the  that one too 
+                        for (int i = 0; i < paths.size() - 2; ++i) {
+                            if (paths.get(i).peek().getX() == temp.getX() || paths.get(i).peek().getY() == temp.getY()) {
+                                paths.get(i).push(temp);
+                            }
+                        }
+                    } else {
+                        if(temp.getX() == next.getX() || temp.getY() == pointer.getY()){
+                            S.push(next);
+                            S.push(temp);
+                        }else{
+                            S.push(temp);
+                        }
+                    }
+                } else if (next.getY() == pointer.getY()) {//same Y
+                    Block temp = nodes.pop();
+                    if (temp.getY() == pointer.getY()) {//same Y again!
+                        Stack<Block> SS = S;
+                        SS.push(next);
+                        paths.add(SS);
+                        //acreate another stack, copy old stack, and add one to it
+                        //then for each stack before the added see if we can add the  that one too 
+                        for (int i = 0; i < paths.size() - 2; ++i) {
+                            if (paths.get(i).peek().getX() == temp.getX() || paths.get(i).peek().getY() == temp.getY()) {
+                                paths.get(i).push(temp);
+                            }
+                        }
+                    } else {
+                        if(temp.getX() == next.getX() || temp.getY() == pointer.getY()){
+                            S.push(next);
+                            S.push(temp);
+                        }else{
+                            S.push(temp);
+                        }
+                    }
+                }
+            }
+        }
+*/
+    }
+    
+    
+    
+    
+    
+    /*
+//        totally recursive
+ //       Start at the beginning check north south east and west. 
+  //      Store all directions that are possible. 
+  //      Just choose one of the directions. Always choose north first if possible, then south, then east, then west as convention. 1 stack for each direction.
+  //      Using a stack push the coordinates the runner is currently on, onto a stack.
+    //    Move to the next obstacle in the path and repeat.
+      //  Do this for every direction possible
+    private static void ensureMinMoves(Block[][] g, int moveGoal, int xStart, int yStart, int xFinish, int yFinish){
+        Stack<Block> reversePaths = new Stack<Block>();
+        System.out.println("\t\ttraversing the paths!");
+        ArrayList<Stack<Block>> pathList = new ArrayList<Stack<Block>>();
+        HashMap<Integer, Integer> pathMap = new HashMap<Integer, Integer>();
+        traverse(g, xStart, yStart, xFinish, yFinish, reversePaths, -1, moveGoal, pathList, pathMap);
+        System.out.println("DONE traversing SpathList.size = " + pathList.size());
+        //Stack<Block> paths = new Stack<Block>();
+        //while(!reversePaths.isEmpty()){
+        //    paths.push(reversePaths.pop());
+        //}
+        for(Stack<Block> s : pathList){
+            System.out.print("Starting at BLOCK: ");
+            for(Block b : s){
+                System.out.print("["+b.getX() + ","+b.getY()+"] \nGo to BLOCK: ");
+            }
+        }
+    }
+    
+    private static boolean checkForFinish(Block[][]g, int x, int y){
+        if(g[x+1][y].getType() == 8 || g[x-1][y].getType() == 8 || g[x][y+1].getType() == 8 || g[x-1][y].getType() == 8){
+            return true;
+        }
+        return false;
+    }
+    
+    
+    private static void traverse(Block[][] g, int x, int y, int xFinish, int yFinish, Stack<Block> S, int lastDir, int moves, ArrayList<Stack<Block>> paths, HashMap<Integer, Integer> pathMap) {
+        System.out.println("traversing path from " + g[x][y].getCoordinates() + " with type: " + g[x][y].getType());
+        //WE HAVE MADE IT
+        if (checkForFinish(g, x, y)) {
+            //enqueue it and return
+            S.push(g[xFinish][yFinish]);
+            paths.add(S);
+            System.out.println("hit the finish!");
+            return;
+        }
+        Block b;
+        //check the path for 1=north, 2=south, 3=east, 4=west
+            //if the lastDirection was -1 that means this is the first runthrough so all directions are a possibility
+            //every other block is either exactly north and south or east and west
+            if (lastDir < 0 ) {
+                System.out.println("First time must check every dir");
+                System.out.println("cehcking north");
+                b = checkPath(g, g[x][y], 1, pathMap, lastDir);
+                if (b != null) {
+                    pathMap.put(b.getX(), b.getY());
+                    Stack<Block> SN = S;
+                    System.out.println("creating new Stack");
+                    System.out.println("the north path to "+b.getCoordinates()+"was good, store it");
+                    SN.push(b);
+                    traverse(g, b.getX(), b.getY(), xFinish, yFinish, SN, 1, moves, paths, pathMap);
+                }
+                b = checkPath(g, g[x][y], 2, pathMap, lastDir);
+                System.out.println("checking south");
+                if (b != null) {
+                    pathMap.put(b.getX(), b.getY());
+                    Stack<Block> SS = S;
+                    System.out.println("creating new Stack");
+                    System.out.println("the south path to "+b.getCoordinates()+"was good, store it");
+                    SS.push(b);
+                    traverse(g, b.getX(), b.getY(), xFinish, yFinish, SS, 2, moves, paths, pathMap);
+                }
+                b = checkPath(g, g[x][y], 3, pathMap, lastDir);
+                System.out.println("checking east");
+                if (b != null) {
+                    pathMap.put(b.getX(), b.getY());
+                    Stack<Block> SE = S;
+                    System.out.println("creating new Stack");
+                    System.out.println("the east path to "+b.getCoordinates()+"was good, store it");
+                    SE.push(b);
+                    traverse(g, b.getX(), b.getY(), xFinish, yFinish, SE, 3, moves, paths, pathMap);
+                }
+                b = checkPath(g, g[x][y], 4, pathMap, lastDir);
+                System.out.println("checking west");
+                if (b != null) {
+                    pathMap.put(b.getX(), b.getY());
+                    Stack<Block> SW = S;
+                    System.out.println("creating new Stack");
+                    System.out.println("the west path to "+b.getCoordinates()+"was good, store it");
+                    SW.push(b);
+                    traverse(g, b.getX(), b.getY(), xFinish, yFinish, SW, 4,moves, paths, pathMap);
+                }
+        }else {//anything BUT the first runthrough
+            if (lastDir == 1 || lastDir == 2) {//only check east and west
+                Block b1 = checkPath(g, g[x][y], 3, pathMap, lastDir);
+                Block b2 = checkPath(g, g[x][y], 4, pathMap, lastDir);
+                if(b1!= null && b2!=null){//store east, name a new stack for west
+                    System.out.println("EAST AND WEST storing in current stack");
+                    S.push(b1);
+                    pathMap.put(b1.getX(), b1.getY());
+                    System.out.println("the east path to "+b1.getCoordinates()+"was good, store it");
+                    traverse(g, b1.getX(), b1.getY(), xFinish, yFinish, S, 3,moves, paths, pathMap);
+                    System.out.println("copying old stack and creating new Stack");
+                    Stack<Block> S1 = S;
+                    S1.push(b2);
+                    pathMap.put(b2.getX(), b2.getY());
+                    System.out.println("the west path to "+b2.getCoordinates()+"was good, store it");
+                    traverse(g, b2.getX(), b2.getY(), xFinish, yFinish, S1,4,moves, paths, pathMap);
+                }else if(b1!=null){//store east
+                    System.out.println("the east path to " + b1.getCoordinates() + "was good, store it");
+                    System.out.println("storing in current stack");
+                    S.push(b1);
+                    pathMap.put(b1.getX(), b1.getY());
+                    System.out.println("the east path to "+b1.getCoordinates()+"was good, store it");
+                    traverse(g, b1.getX(), b1.getY(), xFinish, yFinish, S, 3,moves, paths, pathMap);
+                }else if(b2!=null){//store west
+                    System.out.println("storing in current stack");
+                    S.push(b2);
+                    pathMap.put(b2.getX(), b2.getY());
+                    System.out.println("the west path to "+b2.getCoordinates()+"was good, store it");
+                    traverse(g, b2.getX(), b2.getY(), xFinish, yFinish, S,4,moves, paths, pathMap);
+                }else{
+                    System.out.println("PATH END CANNOT GO ANYWHERE");
+                    return;
+                }
+            } else if (lastDir == 3 || lastDir == 4) {//only check north and south
+                Block b1 = checkPath(g, g[x][y], 1, pathMap, lastDir);
+                Block b2 = checkPath(g, g[x][y], 2, pathMap, lastDir);
+                if(b1!= null && b2!=null){//store east, name a new stack for west
+                    System.out.println("NORTH AND SOUTH storing in current stack");
+                    S.push(b1);
+                    pathMap.put(b1.getX(), b1.getY());
+                    System.out.println("the north path to "+b1.getCoordinates()+"was good, store it");
+                    traverse(g, b1.getX(), b1.getY(), xFinish, yFinish, S, 1,moves, paths, pathMap);
+                    System.out.println("copying old stack and creating new Stack");
+                    Stack<Block> S1 = S;
+                    S1.push(b2);
+                    pathMap.put(b2.getX(), b2.getY());
+                    System.out.println("the south path to "+b2.getCoordinates()+"was good, store it");
+                    traverse(g, b2.getX(), b2.getY(), xFinish, yFinish, S1,2,moves, paths, pathMap);
+                }else if(b1!=null){//store east
+                    S.push(b1);
+                    pathMap.put(b1.getX(), b1.getY());
+                    System.out.println("storing in current stack");
+                    System.out.println("the north path to "+b1.getCoordinates()+"was good, store it");
+                    traverse(g, b1.getX(), b1.getY(), xFinish, yFinish, S, 1,moves, paths, pathMap);
+                }else if(b2!=null){//store west
+                    S.push(b2);
+                    pathMap.put(b2.getX(), b2.getY());
+                    System.out.println("the south path to "+b2.getCoordinates()+"was good, store it");
+                    System.out.println("storing in current stack");
+                    traverse(g, b2.getX(), b2.getY(), xFinish, yFinish, S,2,moves, paths, pathMap);
+                }else{
+                    System.out.println("PATH END cannot go anywhere");
+                    return;
+                }
+            }
+        }
+        System.out.println("return s");
+    }
+    
+    private static boolean isValidBlock(int lastDir, int checking){
+        System.out.println("validating lastDir " + lastDir + " and checking "+checking);
+        switch (lastDir) {
+            case 1://north - cannot go south
+                System.out.println("came going north cant go north or south");
+                return checking != 2 && checking != 1;
+            case 2://south - cannot go north
+                System.out.println("came going south cant go south or north");
+                return checking != 1 && checking != 2;
+            case 3://east - cannot go west
+                System.out.println("came from east cant go east or west");
+                return checking != 4 && checking !=3;
+            case 4://west - cannot go east
+                System.out.println("came from west cant go west or east");
+                return checking != 3 && checking !=4;
+            default://will literally never happen. I hope..
+                return true;
+        }
+    }
+    
+    //Check along the north, south, east, west planes to see if there is a block 
+    //Its either horizontal or vertical
+    //NOTE! the returned block is actually the block right before the block encountered, because the runner stops AT each block, not on top of.
+    private static Block checkPath(Block[][] g,Block b, int direction, HashMap<Integer, Integer> pathMap,int lastDir) {
+        //horizontal if true verticcal if false;
+            switch (direction) {
+            case 3://east
+                System.out.println("checking east");
+                for (int j = b.getY(); j < g[b.getX()].length; ++j) {
+                    //as soon as we find a block return it
+                    if (g[b.getX()][j].getType() == 0 && (j-1!=b.getY()) && isValidBlock(lastDir, direction)) {
+                        System.out.println("found a block at "+g[b.getX()][j].getCoordinates());
+                        return g[b.getX()][j-1];
+                    }
+                }
+                break;
+            case 4://west
+                System.out.println("checking west");
+                for (int j = b.getY(); j >= 0; --j) {
+                    //as soon as we find a block return it
+                    if (g[b.getX()][j].getType() == 0 && (j+1!=b.getY()) && isValidBlock(lastDir, direction)) {
+                        System.out.println("found a block at "+g[b.getX()][j].getCoordinates());
+                        return g[b.getX()][j+1];
+                    }
+                }
+                break;
+            case 2://south
+                System.out.println("checking south");
+                for (int i = b.getX(); i < g[b.getX()].length; ++i) {
+                    //as soon as we find a block return it
+                    if (g[i][b.getY()].getType() == 0 && (i-1!=b.getX()) && isValidBlock(lastDir, direction)) {
+                        System.out.println("found a block at " + g[i][b.getY()].getCoordinates());
+                        return g[i-1][b.getY()];
+                    }
+                }
+                break;
+            case 1://north
+                System.out.println("checking north");
+                for (int i = b.getX(); i >= 0; --i) {
+                    //as soon as we find a block return it
+                    if (g[i][b.getY()].getType() == 0 && (i+1!=b.getX()) && isValidBlock(lastDir, direction)) {
+                        System.out.println("found a block at "+g[i][b.getY()].getCoordinates());
+                        return g[i+1][b.getY()];
+                    }
+                }
+                break;
+        }
+        //if we didn't find any blocks this way, then we shouldn't traverse it so return null
+        return null;
+    }
+    
+    
+    private static boolean hasBeenTraversed(HashMap<Integer, Integer> hm, int x, int y){
+        for(Map.Entry<Integer,Integer> e : hm.entrySet()){
+            if(e.getValue() == y && e.getKey() == x){
+                return true;
+            }
+        }
+        return false;
+    }*/
 
     //print out the matrix for testing and logging purposes
-    private static void print(int[][] grid) {
-        for (int i = 0; i < grid.length; ++i) {
-            for (int j = 0; j < grid[i].length; ++j) {
-                System.out.print(grid[i][j] + "\t");
+    private static void print(Block[][] g) {
+        for (int i = 0; i < g.length; ++i) {
+            for (int j = 0; j < g[i].length; ++j) {
+                System.out.print(g[i][j].getType() + "\t");
             }
             System.out.print("\n");
-
         }
     }
 
