@@ -1006,6 +1006,9 @@ public class SwiftPathing {
          //not ready yet
         //backwardsTraversal(finalPath);
         
+        //Collect blocks to place on the grid left to right, top to bottom in a hashmap. keys 1 to n, value block
+        HashMap<Integer, Block> blocks = lineUpBlocks(g, height, width);
+        
         //If we FINALLY reach here that is awesome and we have successfully generated one solvable level. Now we write the xml
         System.out.println("Successful level generated - writing XML...");
         //Before anything is said and done append the constant header to the file
@@ -1029,9 +1032,13 @@ public class SwiftPathing {
                                 + fullAssetDataName(assetData.ID) + ((i==xFinish&&j==yFinish)?(constFinish):(constObstacle + (obNum++))) + qm + "\n"
                                 + fullAssetDataName(assetData.WDTH) + qm + "\n"
                                 + fullAssetDataName(assetData.HGTH) + qm + "\n"
-                                + fullAssetDataName(assetData.BKRND) + fullAssetName(((i==xFinish&&j==yFinish)?assets.P_FIN:assets.P_OBST)) + qm + "\n"
-                                + viewEnd + "\n"
+                                + fullAssetDataName(assetData.BKRND) + fullAssetName(((i==xFinish&&j==yFinish)?assets.P_FIN:assets.P_OBST)) + qm
                         );
+                        //go through each block in the hashmap and...good luck
+                        for(int k = 1; k<=blocks.size();++k){
+                            
+                        }
+                        
                     }
                 }
             }
@@ -1047,6 +1054,32 @@ public class SwiftPathing {
         );
         return levelXML;
     }
+    
+    
+    private static HashMap<Integer, Block> lineUpBlocks(Block[][]g, int height, int width){
+        HashMap<Integer, Block> blockLines = new HashMap<Integer, Block>();
+        int blockNum = 1;
+        for (int j = 0; j < height - 1; ++j) {
+            for (int i = 0; i < g.length; ++i) {//row by row
+                if (!(i == 0 || i == width - 1) && !(j == 0 || j == height - 1)) {//inside the perimeter
+                    if (g[i][j].getType() == 0) {
+                        System.out.print("Storing block " + blockNum + ": " + g[i][j].getCoordinates() + "\t");
+                        blockLines.put(blockNum, g[i][j]);
+                        ++blockNum;
+                    }
+                }else{//on the perimeter
+                    if (g[i][j].getType() == 0) {
+                        System.out.print("Storing block " + blockNum + ": " + g[i][j].getCoordinates() + "\t");
+                        blockLines.put(blockNum, new Block(g[i][j].getX(), g[i][j].getY(), -2));
+                        ++blockNum;
+                    }
+                }
+            }
+        }
+        return blockLines;
+    }
+    
+    
     
     //Not 100% accurate
     private static void backwardsTraversal(Stack<Block>paths){
