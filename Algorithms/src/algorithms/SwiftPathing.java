@@ -24,11 +24,12 @@ public class SwiftPathing {
     private static final String dimenFile = "=\"@dimen/";
     private static final String drawFile="=\"@drawable/";
     private static final String qm = "\"";
+    private static final String tr="=\"true";
     //constant names for variable names. Sequentially increasing numbers are just appended onto them for each new instance
     private static final String constObstacle = "obstacle";
     private static final String constRunner = "dude";
     private static final String constHint = "hint_";
-    private static final String constDimen = "obstacle_width";
+    private static final String constDimen = "obstacle_width";//add the number at the end for the multiplier needed. Default to nothing
     private static final String constFinish = "finish";
     private static final String constParent = "=\"match_parent";
     private static final String constGridName = "rink";
@@ -115,13 +116,13 @@ public class SwiftPathing {
             case BLW:
                 return layoutPrefix+"below"+idFile;    
             case MGN_TP:
-                return layoutPrefix+"marginTop"+idFile;            
+                return layoutPrefix+"marginTop"+dimenFile;            
             case MGN_BTM:
-                return layoutPrefix+"marginBottom"+idFile;            
+                return layoutPrefix+"marginBottom"+dimenFile;            
             case MGN_LT:
-                return layoutPrefix+"marginLeft"+idFile;            
+                return layoutPrefix+"marginLeft"+dimenFile;            
             case MGN_RT:
-                return layoutPrefix+"marginRight"+idFile;   
+                return layoutPrefix+"marginRight"+dimenFile;   
             default:
                 //should never happen
                 return "error";
@@ -1019,7 +1020,8 @@ public class SwiftPathing {
                 + fullAssetDataName(assetData.PAR_HGTH) + qm + "\n"
                 + viewEnd + "\n"
         );
-        int obNum = 1;
+        int obNum = 0;
+        /*
         System.out.println("xFinish = " + xFinish + "\nyFinish = " + yFinish);
         for (int i = 0; i < g.length; ++i) {
             for (int j = 0; j < g[i].length; ++j) {
@@ -1034,15 +1036,98 @@ public class SwiftPathing {
                                 + fullAssetDataName(assetData.HGTH) + qm + "\n"
                                 + fullAssetDataName(assetData.BKRND) + fullAssetName(((i==xFinish&&j==yFinish)?assets.P_FIN:assets.P_OBST)) + qm
                         );
-                        //go through each block in the hashmap and...good luck
-                        for(int k = 1; k<=blocks.size();++k){
-                            
-                        }
                         
                     }
                 }
             }
-        }
+        }*/
+        try{
+            int halfWayMark = width/2;
+                        //go through each block in the hashmap and...good luck
+                        String codeBlock = "";
+                        Block lastSeenBlock = null;
+                        int blocksPerRow = 1;
+                        for(int k = 1; k<=blocks.size();++k){
+                            //we know the first block will be topmost left or top rightmost
+                            codeBlock += viewStart + "\n"
+                                + fullAssetDataName(assetData.ID) + ((k==xFinish&&k==yFinish)?(constFinish):(constObstacle + (k))) + qm + "\n"
+                                + fullAssetDataName(assetData.WDTH) + qm + "\n"
+                                + fullAssetDataName(assetData.HGTH) + qm + "\n"
+                                + fullAssetDataName(assetData.BKRND) + fullAssetName(((k==xFinish&&k==yFinish)?assets.P_FIN:assets.P_OBST)) + qm + "\n";
+                            Block currentBlock = blocks.get(k);
+                            if(k==1){//this is the beginning so top left
+                                //alignParentTop, alignParentLeft
+                                if(currentBlock.getY()!=1){//its the rightmost
+                                    codeBlock+= (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+                                    codeBlock+= (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
+                                }else{
+                                    codeBlock+= (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+                                    codeBlock+= (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
+                                }
+                            }else{
+                                //if(currentBlock.getX() < halfWayMark){//to the left of the middle
+                                    if(currentBlock.getX() == lastSeenBlock.getX()){//this block is on the same row of the last placed block
+                                        ++blocksPerRow;
+                                        //we know its to the right of it so
+                                        boolean marginLeft = false;//if true pushes it right
+                                        int marginNeeded = 0;
+                                        if(currentBlock.getY()<lastSeenBlock.getY()){
+                                            marginLeft = false;
+                                            marginNeeded = (lastSeenBlock.getY()-currentBlock.getY());
+                                        }else{
+                                            marginLeft = true;
+                                            marginNeeded = (currentBlock.getY()-lastSeenBlock.getY());
+                                        }
+                                        if(marginNeeded >= 1){
+                                            codeBlock += (fullRelativeName(marginLeft?relativeLayouts.TO_RT_OF:relativeLayouts.TO_LT_OF)+constObstacle+obNum+qm+"\n");
+                                            if(marginNeeded>=2){
+                                                codeBlock += (fullRelativeName(marginLeft?relativeLayouts.MGN_LT:relativeLayouts.MGN_RT)+constDimen+(marginNeeded>2?marginNeeded:"")+qm+"\n");//move it right one width
+                                            }
+                                        }
+                                    }else{//logically its the first block one row below the last block because otherwise its X value would be on the same plane as the last block
+                                        if(currentBlock.getY()!=1){//cannot do this on the first one
+                                            int curX = currentBlock.getX();
+                                            int curY = currentBlock.getY();
+                                            //check above it
+                                            if(g[curX-1][curY].getType() == 0){
+                                                codeBlock += (fullRelativeName(relativeLayouts.BLW)+constObstacle+getObstacleNum(blocks, curX-1, curY)+qm+"\n");
+                                            }else{//we need to find the closest one one level above it
+                                                Block closeBlock = findClosestBlockAbove(g, g[curX-1][curY], width);
+                                                //sadly there was no blocks on the row above this one
+                                                int inc = 1;
+                                                while(closeBlock == null){//theres no way we CANT find a block
+                                                    closeBlock = findClosestBlockAbove(g, g[curX-(1+inc)][curY], width);
+                                                    ++inc;
+                                                }
+                                                //alright we found a block above it.
+                                                int xDist = currentBlock.getX() - closeBlock.getX();
+                                                int yDist = 0;
+                                                boolean marginLeft = false;//if true moves it right
+                                                if(currentBlock.getY() < closeBlock.getY()){
+                                                    marginLeft = true;
+                                                    yDist = closeBlock.getY() - currentBlock.getY();
+                                                }else{
+                                                    marginLeft = false;//moves it left
+                                                    yDist = currentBlock.getY() - closeBlock.getY();
+                                                }
+                                                codeBlock += (fullRelativeName(relativeLayouts.BLW)+constObstacle+getObstacleNum(blocks, closeBlock.getX(), closeBlock.getY())+qm+"\n");
+                                                codeBlock += (fullRelativeName(relativeLayouts.MGN_TP)+constDimen+(xDist>2?xDist:"")+qm+"\n");//move it below the block
+                                                codeBlock += (fullRelativeName(marginLeft?relativeLayouts.MGN_LT:relativeLayouts.MGN_RT)+constDimen+yDist+qm+"\n");//move it right one width
+                                            }
+                                        }
+                                    }
+                               // }else{//to the right of the middle
+                                
+                               // }
+                            }
+                            //last line of codeblock must be ending view tag
+                            codeBlock += viewEnd + "\n";
+                            lastSeenBlock = blocks.get(k);
+                            levelXML.append(codeBlock);
+                            codeBlock = "";
+                            ++obNum;
+                        }
+                        
         //Lastly we just need to append the runner - dude - onto the XML
         levelXML.append(
                 viewStart + "\n"
@@ -1052,15 +1137,62 @@ public class SwiftPathing {
                 + fullAssetDataName(assetData.BKRND) + fullAssetName(assets.P_DUD) + qm + "\n"
                 + viewEnd + "\n"
         );
+        }catch(Exception e){
+            e.printStackTrace();
+            System.out.println("FUCK!");
+            System.exit(1);
+        }
         return levelXML;
+    }
+    
+    private static Block findClosestBlockAbove(Block[][] g, Block b, int width){
+        int x = b.getX();
+        int yLess = b.getY();
+        int yMore = b.getY();
+        while(yLess >=1 || yMore < width-1){
+            if(yLess >= 1){
+                if(g[x][yLess].getType()==0){
+                    return g[x][yLess];
+                }
+                --yLess;
+            }
+            if(yMore < width-1){
+                if(g[x][yMore].getType()==0){
+                    return g[x][yMore];
+                }
+                ++yMore;
+            }
+        }
+        return null;
+    }
+    
+    //check every map entry and return the key which corresponds to the obstacle variable number
+    private static int getObstacleNum(HashMap<Integer, Block> hm, int x, int y) {
+        for (Map.Entry<Integer, Block> e : hm.entrySet()) {
+            Block b = e.getValue();
+            if(b.getX() == x && b.getY() == y){
+                return e.getKey();
+            }
+        }
+        return -1;
     }
     
     
     private static HashMap<Integer, Block> lineUpBlocks(Block[][]g, int height, int width){
+        System.out.println("Lining up blocks");
         HashMap<Integer, Block> blockLines = new HashMap<Integer, Block>();
         int blockNum = 1;
-        for (int j = 0; j < height - 1; ++j) {
-            for (int i = 0; i < g.length; ++i) {//row by row
+        //check the top left and right blocks for a starter
+        if(g[1][1].getType()==-1){
+            blockLines.put(blockNum, new Block(1, 1, 0));
+            ++blockNum;
+        }else if(g[1][width-2].getType()==-1){
+            blockLines.put(blockNum, new Block(1, width-2, 0));
+            ++blockNum;
+        }
+        for (int i = 0; i < g.length; ++i) {
+            for (int j = 0; j < g[i].length; ++j) {
+                System.out.print(g[i][j].getType() + "\t");
                 if (!(i == 0 || i == width - 1) && !(j == 0 || j == height - 1)) {//inside the perimeter
                     if (g[i][j].getType() == 0) {
                         System.out.print("Storing block " + blockNum + ": " + g[i][j].getCoordinates() + "\t");
@@ -1068,14 +1200,16 @@ public class SwiftPathing {
                         ++blockNum;
                     }
                 }else{//on the perimeter
-                    if (g[i][j].getType() == 0) {
+                    /*if (g[i][j].getType() == 0) {
                         System.out.print("Storing block " + blockNum + ": " + g[i][j].getCoordinates() + "\t");
                         blockLines.put(blockNum, new Block(g[i][j].getX(), g[i][j].getY(), -2));
                         ++blockNum;
-                    }
+                    }*/
                 }
             }
+            System.out.print("\n");
         }
+        
         return blockLines;
     }
     
