@@ -1015,7 +1015,7 @@ public class SwiftPathing {
             }
             
         Block finish = finalPath.peek();
-        depthFirstSearch(g, S, xStart, yStart, width, height, finish.getX(), finish.getY());
+        //depthFirstSearch(g, S, xStart, yStart, width, height, finish.getX(), finish.getY());
         
         //Collect blocks to place on the grid left to right, top to bottom in a hashmap. keys 1 to n, value block
         HashMap<Integer, Block> blocks = lineUpBlocks(g, height, width);
