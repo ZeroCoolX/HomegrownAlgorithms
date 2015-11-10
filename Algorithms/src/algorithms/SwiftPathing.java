@@ -1008,7 +1008,12 @@ public class SwiftPathing {
         
          //not ready yet
         //backwardsTraversal(finalPath);
-        depthFirstSearch(g, finalPath, xStart, yStart, width, height);
+        Stack<Block> S = getAllPossiblePathLocs(g, width, height);
+            System.out.print("Showing all blocks possible to be traversed Block: ");
+            for(Block b : S){
+                System.out.print("["+b.getX() + ","+b.getY()+"] \nBlock: ");
+            }
+        //depthFirstSearch(g, finalPath, xStart, yStart, width, height);
         
         //Collect blocks to place on the grid left to right, top to bottom in a hashmap. keys 1 to n, value block
         HashMap<Integer, Block> blocks = lineUpBlocks(g, height, width);
@@ -1221,39 +1226,163 @@ public class SwiftPathing {
     //if it IS in the perimeter then just the node in front of it 
     //again all only if 1 or 8
     private static Stack<Block> getAllPossiblePathLocs(Block[][] g, int w, int h){
-        Stack<Block> allPossiblePathStartLocs = new Stack<Block>();
+        Stack<Block> startLocs = new Stack<Block>();
         for (int i = 0; i < g.length; ++i) {
             for (int j = 0; j < g[i].length; ++j) {
                 if(g[i][j].getType()==0){
                     Block b = g[i][j];
+                    System.out.println("Processing " + b.getCoordinates());
+                    Block put = null;
                     //big kahuna
-                    if(b.getX() == 0){//deal with IN north perimeter
-                    
-                    }else if(b.getX() == h-1){//deal with IN south perim
-                        
-                    }else if(b.getY() == 0){//deal with IN west perimeter
-                    
-                    }else if(b.getY() == w-1){//deal with IN east perim
-
-                    } else {//Determined not IN any perimeter. check if ON the perim
-                        if (b.getX() == 1) {//deal with IN north perimeter
-
-                        } else if (b.getX() == h - 1) {//deal with IN south perim
-
-                        } else if (b.getY() == 1) {//deal with IN west perimeter
-
-                        } else if (b.getY() == w - 1) {//deal with IN east perim
-
-                        }else{//Determined not ON any perimeter. Check all the four corners around it
-                        
+                    if (b.getX() == 0) {//deal with IN north perimeter - can only check directly below
+                        System.out.println("x==0");
+                        if (g[b.getX() + 1][b.getY()].getType() == 1 || g[b.getX() + 1][b.getY()].getType() == 8) {//store it
+                            System.out.println("pushing " + g[b.getX() + 1][b.getY()].getCoordinates());
+                            put = g[b.getX() + 1][b.getY()];
+                            if(!startLocs.contains(put)){startLocs.push(put);}
+                        }
+                    } else if (b.getX() == h - 1) {//deal with IN south perim - can only check directly above
+                        System.out.println("x==h-1");
+                        if (g[b.getX() - 1][b.getY()].getType() == 1 || g[b.getX() - 1][b.getY()].getType() == 8) {//store it
+                            System.out.println("pushing " + g[b.getX() - 1][b.getY()].getCoordinates());
+                            put = g[b.getX() - 1][b.getY()];
+                            if(!startLocs.contains(put)){startLocs.push(put);}
+                        }
+                    } else if (b.getY() == 0) {//deal with IN west perimeter
+                        System.out.println("y==0");
+                        if (g[b.getX()][b.getY() + 1].getType() == 1 || g[b.getX()][b.getY() + 1].getType() == 8) {//store it
+                            System.out.println("pushing " + g[b.getX()][b.getY() + 1].getCoordinates());
+                            put = g[b.getX()][b.getY() + 1];
+                            if(!startLocs.contains(put)){startLocs.push(put);}
+                        }
+                    } else if (b.getY() == w - 1) {//deal with IN east perim
+                        System.out.println("y==w-1");
+                        if (g[b.getX()][b.getY() - 1].getType() == 1 || g[b.getX()][b.getY() - 1].getType() == 8) {//store it
+                            System.out.println("pushing " + g[b.getX()][b.getY() - 1].getCoordinates());
+                            put = g[b.getX()][b.getY() - 1];
+                            if(!startLocs.contains(put)){startLocs.push(put);}
+                        }
+                    } else {//Determined not ON any perimeter. check if ON the perim
+                        if (b.getX() == 1 && b.getY() > 0 && b.getY() < w - 1) {//deal with IN north perimeter
+                            System.out.println("x==1");
+                            if (g[b.getX() + 1][b.getY()].getType() == 1 || g[b.getX() + 1][b.getY()].getType() == 8) {//check below it
+                                System.out.println("pushing " + g[b.getX() + 1][b.getY()].getCoordinates());
+                                put = g[b.getX() + 1][b.getY()];
+                                if(!startLocs.contains(put)){startLocs.push(put);}
+                            }
+                            if (b.getY() > 0) {//check left
+                                System.out.println("AND y > 1");
+                                if (b.getY() < w - 1 && (g[b.getX()][b.getY() - 1].getType() == 1 || g[b.getX()][b.getY() - 1].getType() == 8)) {
+                                    System.out.println("pushing " + g[b.getX()][b.getY() - 1].getCoordinates());
+                                    put = g[b.getX()][b.getY() - 1];
+                                    if(!startLocs.contains(put)){startLocs.push(put);}
+                                }
+                            }
+                            if (b.getY() < w - 1) {//check right
+                                System.out.println("AND y < w-1");
+                                if (b.getY() > 0 && (g[b.getX()][b.getY() + 1].getType() == 1 || g[b.getX()][b.getY() + 1].getType() == 8)) {
+                                    System.out.println("pushing " + g[b.getX()][b.getY() + 1].getCoordinates());
+                                    put = g[b.getX()][b.getY() + 1];
+                                    if(!startLocs.contains(put)){startLocs.push(put);}
+                                }
+                            }
+                        } else if (b.getX() == h - 2 && b.getY() > 0 && b.getY() < w - 1) {//deal with IN south perim
+                            System.out.println("x==h-2");
+                            if (g[b.getX() - 1][b.getY()].getType() == 1 || g[b.getX() - 1][b.getY()].getType() == 8) {//check above it
+                                System.out.println("pushing " + g[b.getX() - 1][b.getY()].getCoordinates());
+                                put = g[b.getX() - 1][b.getY()];
+                                if(!startLocs.contains(put)){startLocs.push(put);}
+                            }
+                            if (b.getY() > 0) {//check left
+                                System.out.println("AND Y > 1");
+                                if (b.getY() < w - 1 && (g[b.getX()][b.getY() - 1].getType() == 1 || g[b.getX()][b.getY() - 1].getType() == 8)) {
+                                    System.out.println("pushing " + g[b.getX()][b.getY() - 1].getCoordinates());
+                                    put = g[b.getX()][b.getY() - 1];
+                                    if(!startLocs.contains(put)){startLocs.push(put);}
+                                }
+                            }
+                            if (b.getY() < w - 1) {//check right
+                                System.out.println("AND y < w-1");
+                                if (b.getY() < w - 1 && (g[b.getX()][b.getY() + 1].getType() == 1 || g[b.getX()][b.getY() + 1].getType() == 1)) {
+                                    System.out.println("pushing " + g[b.getX()][b.getY() + 1].getCoordinates());
+                                    put = g[b.getX()][b.getY() + 1];
+                                    if(!startLocs.contains(put)){startLocs.push(put);}
+                                }
+                            }
+                        } else if (b.getY() == 1 && b.getX() > 0 && b.getX() < h - 1) {//deal with IN west perimeter
+                            System.out.println("y == 1");
+                            if (g[b.getX()][b.getY() + 1].getType() == 1 || g[b.getX()][b.getY() + 1].getType() == 8) {//check right
+                                System.out.println("pushing " + g[b.getX()][b.getY() + 1].getCoordinates());
+                                put = g[b.getX()][b.getY() + 1];
+                                if(!startLocs.contains(put)){startLocs.push(put);}
+                            }
+                            if (b.getX() > 0) {//check above
+                                System.out.println("AND x > 1");
+                                if (b.getX() < h - 1 && (g[b.getX() + 1][b.getY()].getType() == 1 || g[b.getX() + 1][b.getY()].getType() == 8)) {
+                                    System.out.println("pushing " + g[b.getX() + 1][b.getY()].getCoordinates());
+                                    put = g[b.getX() + 1][b.getY()];
+                                    if(!startLocs.contains(put)){startLocs.push(put);}
+                                }
+                            }
+                            if (b.getX() < h - 1) {//check below
+                                System.out.println("AND x < h-1");
+                                if (b.getX() > 0 && (g[b.getX() - 1][b.getY()].getType() == 1 || g[b.getX() - 1][b.getY()].getType() == 8)) {
+                                    System.out.println("pushing " + g[b.getX() - 1][b.getY()].getCoordinates());
+                                    put = g[b.getX() - 1][b.getY()];
+                                    if(!startLocs.contains(put)){startLocs.push(put);}
+                                }
+                            }
+                        } else if (b.getY() == w - 2 && b.getX() > 0 && b.getY() < h - 1) {//deal with IN east perim
+                            System.out.println("Y == w-2");
+                            if (g[b.getX()][b.getY() - 1].getType() == 1 || g[b.getX()][b.getY() - 1].getType() == 8) {//check right
+                                System.out.println("pushing " + g[b.getX()][b.getY() - 1].getCoordinates());
+                                put = g[b.getX()][b.getY() - 1];
+                                if(!startLocs.contains(put)){startLocs.push(put);}
+                            }
+                            if (b.getX() > 0) {//check above
+                                System.out.println("AND X > 1");
+                                if (b.getX() < h - 1 && (g[b.getX() + 1][b.getY()].getType() == 1 || g[b.getX() + 1][b.getY()].getType() == 8)) {
+                                    System.out.println("pushing " + g[b.getX() + 1][b.getY()].getCoordinates());
+                                    put = g[b.getX() + 1][b.getY()];
+                                    if(!startLocs.contains(put)){startLocs.push(put);}
+                                }
+                            }
+                            if (b.getY() < h - 1) {//check below
+                                System.out.println("Y < h-1");
+                                if (b.getX() > 0 && (g[b.getX() - 1][b.getY()].getType() == 1 || g[b.getX() - 1][b.getY()].getType() == 8)) {
+                                    System.out.println("pushing " + g[b.getX() - 1][b.getY()].getCoordinates());
+                                    put = g[b.getX() - 1][b.getY()];
+                                    if(!startLocs.contains(put)){startLocs.push(put);}
+                                }
+                            }
+                        } else {//Determined not ON any perimeter. Check all the four corners around it
+                            System.out.println("ITs not on the perimeter nor in it");
+                            if (g[b.getX() + 1][b.getY()].getType() == 1 || g[b.getX() + 1][b.getY()].getType() == 8) {//store it below
+                                System.out.println("pushing " + g[b.getX() + 1][b.getY()].getCoordinates());
+                                put = g[b.getX() + 1][b.getY()];
+                                if(!startLocs.contains(put)){startLocs.push(put);}
+                            }
+                            if (g[b.getX() - 1][b.getY()].getType() == 1 || g[b.getX() - 1][b.getY()].getType() == 8) {//store it above
+                                System.out.println("pushing " + g[b.getX() - 1][b.getY()].getCoordinates());
+                                put = g[b.getX() - 1][b.getY()];
+                                if(!startLocs.contains(put)){startLocs.push(put);}
+                            }
+                            if (g[b.getX()][b.getY() + 1].getType() == 1 || g[b.getX()][b.getY() + 1].getType() == 8) {//store it right
+                                System.out.println("pushing " + g[b.getX()][b.getY() + 1].getCoordinates());
+                                put = g[b.getX()][b.getY() + 1];
+                                if(!startLocs.contains(put)){startLocs.push(put);}
+                            }
+                            if (g[b.getX()][b.getY() - 1].getType() == 1 || g[b.getX()][b.getY() - 1].getType() == 8) {//store it left
+                                System.out.println("pushing " + g[b.getX()][b.getY() - 1].getCoordinates());
+                                put = g[b.getX()][b.getY() - 1];
+                                if(!startLocs.contains(put)){startLocs.push(put);}
+                            }
                         }
                     }
-                    
-                    
                 }
             }
         }
-        return null;
+        return startLocs;
     }
     
     /*
