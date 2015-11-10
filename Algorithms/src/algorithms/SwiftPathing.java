@@ -1242,6 +1242,8 @@ public class SwiftPathing {
                         if (g[b.getX() + 1][b.getY()].getType() == 1 || g[b.getX() + 1][b.getY()].getType() == 8) {//store it
                             System.out.println("pushing " + g[b.getX() + 1][b.getY()].getCoordinates());
                             put = g[b.getX() + 1][b.getY()];
+                            g[b.getX() + 1][b.getY()].setDirIntoBlock(1);
+                            put.setDirIntoBlock(1);//north into block
                             if(!startLocs.contains(put)){startLocs.push(put);}
                         }
                     } else if (b.getX() == h - 1) {//deal with IN south perim - can only check directly above
@@ -1249,6 +1251,8 @@ public class SwiftPathing {
                         if (g[b.getX() - 1][b.getY()].getType() == 1 || g[b.getX() - 1][b.getY()].getType() == 8) {//store it
                             System.out.println("pushing " + g[b.getX() - 1][b.getY()].getCoordinates());
                             put = g[b.getX() - 1][b.getY()];
+                            g[b.getX() - 1][b.getY()].setDirIntoBlock(2);
+                            put.setDirIntoBlock(2);//south into block
                             if(!startLocs.contains(put)){startLocs.push(put);}
                         }
                     } else if (b.getY() == 0) {//deal with IN west perimeter
@@ -1256,6 +1260,8 @@ public class SwiftPathing {
                         if (g[b.getX()][b.getY() + 1].getType() == 1 || g[b.getX()][b.getY() + 1].getType() == 8) {//store it
                             System.out.println("pushing " + g[b.getX()][b.getY() + 1].getCoordinates());
                             put = g[b.getX()][b.getY() + 1];
+                            g[b.getX()][b.getY() + 1].setDirIntoBlock(4);
+                            put.setDirIntoBlock(4);//west into block
                             if(!startLocs.contains(put)){startLocs.push(put);}
                         }
                     } else if (b.getY() == w - 1) {//deal with IN east perim
@@ -1263,14 +1269,18 @@ public class SwiftPathing {
                         if (g[b.getX()][b.getY() - 1].getType() == 1 || g[b.getX()][b.getY() - 1].getType() == 8) {//store it
                             System.out.println("pushing " + g[b.getX()][b.getY() - 1].getCoordinates());
                             put = g[b.getX()][b.getY() - 1];
+                            g[b.getX()][b.getY() - 1].setDirIntoBlock(3);
+                            put.setDirIntoBlock(3);//east into block
                             if(!startLocs.contains(put)){startLocs.push(put);}
                         }
                     } else {//Determined not ON any perimeter. check if ON the perim
-                        if (b.getX() == 1 && b.getY() > 0 && b.getY() < w - 1) {//deal with IN north perimeter
+                        if (b.getX() == 1 && b.getY() > 0 && b.getY() < w - 1) {//deal with ON north perimeter
                             System.out.println("x==1");
                             if (g[b.getX() + 1][b.getY()].getType() == 1 || g[b.getX() + 1][b.getY()].getType() == 8) {//check below it
                                 System.out.println("pushing " + g[b.getX() + 1][b.getY()].getCoordinates());
                                 put = g[b.getX() + 1][b.getY()];
+                                g[b.getX() + 1][b.getY()].setDirIntoBlock(1);
+                                put.setDirIntoBlock(1);//north into block
                                 if(!startLocs.contains(put)){startLocs.push(put);}
                             }
                             if (b.getY() > 0) {//check left
@@ -1278,6 +1288,8 @@ public class SwiftPathing {
                                 if (b.getY() < w - 1 && (g[b.getX()][b.getY() - 1].getType() == 1 || g[b.getX()][b.getY() - 1].getType() == 8)) {
                                     System.out.println("pushing " + g[b.getX()][b.getY() - 1].getCoordinates());
                                     put = g[b.getX()][b.getY() - 1];
+                                    g[b.getX()][b.getY() - 1].setDirIntoBlock(3);
+                                    put.setDirIntoBlock(3);//east into block since 1 is on the left side
                                     if(!startLocs.contains(put)){startLocs.push(put);}
                                 }
                             }
@@ -1286,14 +1298,18 @@ public class SwiftPathing {
                                 if (b.getY() > 0 && (g[b.getX()][b.getY() + 1].getType() == 1 || g[b.getX()][b.getY() + 1].getType() == 8)) {
                                     System.out.println("pushing " + g[b.getX()][b.getY() + 1].getCoordinates());
                                     put = g[b.getX()][b.getY() + 1];
+                                    g[b.getX()][b.getY() + 1].setDirIntoBlock(4);
+                                    put.setDirIntoBlock(4);//west into block since 1 is on the right
                                     if(!startLocs.contains(put)){startLocs.push(put);}
                                 }
                             }
-                        } else if (b.getX() == h - 2 && b.getY() > 0 && b.getY() < w - 1) {//deal with IN south perim
+                        } else if (b.getX() == h - 2 && b.getY() > 0 && b.getY() < w - 1) {//deal with ON south perim
                             System.out.println("x==h-2");
                             if (g[b.getX() - 1][b.getY()].getType() == 1 || g[b.getX() - 1][b.getY()].getType() == 8) {//check above it
                                 System.out.println("pushing " + g[b.getX() - 1][b.getY()].getCoordinates());
                                 put = g[b.getX() - 1][b.getY()];
+                                g[b.getX() - 1][b.getY()].setDirIntoBlock(2);
+                                put.setDirIntoBlock(2);//south into block
                                 if(!startLocs.contains(put)){startLocs.push(put);}
                             }
                             if (b.getY() > 0) {//check left
@@ -1301,6 +1317,8 @@ public class SwiftPathing {
                                 if (b.getY() < w - 1 && (g[b.getX()][b.getY() - 1].getType() == 1 || g[b.getX()][b.getY() - 1].getType() == 8)) {
                                     System.out.println("pushing " + g[b.getX()][b.getY() - 1].getCoordinates());
                                     put = g[b.getX()][b.getY() - 1];
+                                    g[b.getX()][b.getY() - 1].setDirIntoBlock(3);
+                                    put.setDirIntoBlock(3);//east into block 
                                     if(!startLocs.contains(put)){startLocs.push(put);}
                                 }
                             }
@@ -1309,6 +1327,8 @@ public class SwiftPathing {
                                 if (b.getY() < w - 1 && (g[b.getX()][b.getY() + 1].getType() == 1 || g[b.getX()][b.getY() + 1].getType() == 1)) {
                                     System.out.println("pushing " + g[b.getX()][b.getY() + 1].getCoordinates());
                                     put = g[b.getX()][b.getY() + 1];
+                                    g[b.getX()][b.getY() + 1].setDirIntoBlock(4);
+                                    put.setDirIntoBlock(4);//west into block
                                     if(!startLocs.contains(put)){startLocs.push(put);}
                                 }
                             }
@@ -1317,67 +1337,87 @@ public class SwiftPathing {
                             if (g[b.getX()][b.getY() + 1].getType() == 1 || g[b.getX()][b.getY() + 1].getType() == 8) {//check right
                                 System.out.println("pushing " + g[b.getX()][b.getY() + 1].getCoordinates());
                                 put = g[b.getX()][b.getY() + 1];
+                                g[b.getX()][b.getY() + 1].setDirIntoBlock(4);
+                                put.setDirIntoBlock(4);//west into block
                                 if(!startLocs.contains(put)){startLocs.push(put);}
                             }
-                            if (b.getX() > 0) {//check above
+                            if (b.getX() > 0) {//check below
                                 System.out.println("AND x > 1");
                                 if (b.getX() < h - 1 && (g[b.getX() + 1][b.getY()].getType() == 1 || g[b.getX() + 1][b.getY()].getType() == 8)) {
                                     System.out.println("pushing " + g[b.getX() + 1][b.getY()].getCoordinates());
                                     put = g[b.getX() + 1][b.getY()];
+                                    g[b.getX() + 1][b.getY()].setDirIntoBlock(1);
+                                    put.setDirIntoBlock(1);//north into block
                                     if(!startLocs.contains(put)){startLocs.push(put);}
                                 }
                             }
-                            if (b.getX() < h - 1) {//check below
+                            if (b.getX() < h - 1) {//check above
                                 System.out.println("AND x < h-1");
                                 if (b.getX() > 0 && (g[b.getX() - 1][b.getY()].getType() == 1 || g[b.getX() - 1][b.getY()].getType() == 8)) {
                                     System.out.println("pushing " + g[b.getX() - 1][b.getY()].getCoordinates());
                                     put = g[b.getX() - 1][b.getY()];
+                                    g[b.getX() - 1][b.getY()].setDirIntoBlock(2);
+                                    put.setDirIntoBlock(2);//south into block
                                     if(!startLocs.contains(put)){startLocs.push(put);}
                                 }
                             }
                         } else if (b.getY() == w - 2 && b.getX() > 0 && b.getY() < h - 1) {//deal with IN east perim
                             System.out.println("Y == w-2");
-                            if (g[b.getX()][b.getY() - 1].getType() == 1 || g[b.getX()][b.getY() - 1].getType() == 8) {//check right
+                            if (g[b.getX()][b.getY() - 1].getType() == 1 || g[b.getX()][b.getY() - 1].getType() == 8) {//check left
                                 System.out.println("pushing " + g[b.getX()][b.getY() - 1].getCoordinates());
                                 put = g[b.getX()][b.getY() - 1];
+                                g[b.getX()][b.getY() - 1].setDirIntoBlock(3);
+                                put.setDirIntoBlock(3);//east into block
                                 if(!startLocs.contains(put)){startLocs.push(put);}
                             }
-                            if (b.getX() > 0) {//check above
+                            if (b.getX() > 0) {//check below
                                 System.out.println("AND X > 1");
                                 if (b.getX() < h - 1 && (g[b.getX() + 1][b.getY()].getType() == 1 || g[b.getX() + 1][b.getY()].getType() == 8)) {
                                     System.out.println("pushing " + g[b.getX() + 1][b.getY()].getCoordinates());
                                     put = g[b.getX() + 1][b.getY()];
+                                    g[b.getX() + 1][b.getY()].setDirIntoBlock(1);
+                                    put.setDirIntoBlock(1);//north into block
                                     if(!startLocs.contains(put)){startLocs.push(put);}
                                 }
                             }
-                            if (b.getY() < h - 1) {//check below
+                            if (b.getY() < h - 1) {//check above it
                                 System.out.println("Y < h-1");
                                 if (b.getX() > 0 && (g[b.getX() - 1][b.getY()].getType() == 1 || g[b.getX() - 1][b.getY()].getType() == 8)) {
                                     System.out.println("pushing " + g[b.getX() - 1][b.getY()].getCoordinates());
                                     put = g[b.getX() - 1][b.getY()];
+                                    g[b.getX() - 1][b.getY()].setDirIntoBlock(2);
+                                    put.setDirIntoBlock(2);//south into block
                                     if(!startLocs.contains(put)){startLocs.push(put);}
                                 }
                             }
                         } else {//Determined not ON any perimeter. Check all the four corners around it
                             System.out.println("ITs not on the perimeter nor in it");
-                            if (g[b.getX() + 1][b.getY()].getType() == 1 || g[b.getX() + 1][b.getY()].getType() == 8) {//store it below
+                            if (g[b.getX() + 1][b.getY()].getType() == 1 || g[b.getX() + 1][b.getY()].getType() == 8) {//check below it
                                 System.out.println("pushing " + g[b.getX() + 1][b.getY()].getCoordinates());
                                 put = g[b.getX() + 1][b.getY()];
+                                g[b.getX() + 1][b.getY()].setDirIntoBlock(1);
+                                put.setDirIntoBlock(1);//north into it
                                 if(!startLocs.contains(put)){startLocs.push(put);}
                             }
-                            if (g[b.getX() - 1][b.getY()].getType() == 1 || g[b.getX() - 1][b.getY()].getType() == 8) {//store it above
+                            if (g[b.getX() - 1][b.getY()].getType() == 1 || g[b.getX() - 1][b.getY()].getType() == 8) {//check above it
                                 System.out.println("pushing " + g[b.getX() - 1][b.getY()].getCoordinates());
                                 put = g[b.getX() - 1][b.getY()];
+                                g[b.getX() - 1][b.getY()].setDirIntoBlock(2);
+                                put.setDirIntoBlock(2);//south into it
                                 if(!startLocs.contains(put)){startLocs.push(put);}
                             }
                             if (g[b.getX()][b.getY() + 1].getType() == 1 || g[b.getX()][b.getY() + 1].getType() == 8) {//store it right
                                 System.out.println("pushing " + g[b.getX()][b.getY() + 1].getCoordinates());
                                 put = g[b.getX()][b.getY() + 1];
+                                g[b.getX()][b.getY() + 1].setDirIntoBlock(4);
+                                put.setDirIntoBlock(4);//west into it
                                 if(!startLocs.contains(put)){startLocs.push(put);}
                             }
                             if (g[b.getX()][b.getY() - 1].getType() == 1 || g[b.getX()][b.getY() - 1].getType() == 8) {//store it left
                                 System.out.println("pushing " + g[b.getX()][b.getY() - 1].getCoordinates());
                                 put = g[b.getX()][b.getY() - 1];
+                                g[b.getX()][b.getY() - 1].setDirIntoBlock(3);
+                                put.setDirIntoBlock(3);//east into it
                                 if(!startLocs.contains(put)){startLocs.push(put);}
                             }
                         }
@@ -1386,6 +1426,74 @@ public class SwiftPathing {
             }
         }
         return startLocs;
+    }
+    
+    private static void backTraversalCrossCheck(ArrayList<ArrayList<Integer>> paths, Block[][]g,int xS, int yS, int xF, int yF){
+        int minMovesSoFar = 99999;
+        Block[] compPath;
+        Block[] REALPATH = new Block[100];
+        Block block = g[xF][yF];
+        int startBlockId = g[xS][yS].getId();
+        ArrayList<Integer> currentPath = new ArrayList<Integer>();
+        //1.start at finish and (i.e the block in the stack who's ID = finishBlockId and add that to the path.
+        //2.whichever direction the field dirIntoBlock reads, traverse the opposite until a block from S appears. 
+            //3.when we find that first block, we know it came from here so store it into the path. then repeat 2.
+        //4.if at anypoint the block we're on = startBlockId store the block and terminate because we have worked backwards to the start
+        for(int i = 0; i<paths.size(); ++i){
+            currentPath = paths.get(i);//grab the first path sequence from the collection
+                        System.out.println("Trimming path "+i + "of size " + currentPath.size());
+            //the actual matrix g has the indicies marked where the possible dude locations are and the direction on how it go there
+            int index = 0;
+            compPath = new Block[100];//over inflate
+            for(int j = 0; j < compPath.length;++j){
+                System.out.print("initialize-");
+                compPath[j]=null;//initialize to default vals
+            }
+            compPath[index]=block;//obviously store the finish node
+            while(block.getId() != startBlockId){//stop once we reach the start
+                ++index;
+                                System.out.println("traversing from block:"+block.getId() + " who came from dir " +block.getDirIntoBlock() + "looking for ");
+                if(block.getDirIntoBlock()==1){//was north, go south
+                    do{
+                        System.out.println("check one south");
+                        //loop until we reach the first node in the opposite direction we came contained within the path
+                        block = g[block.getX()+1][block.getY()];//traverse downwards
+                    }while(!currentPath.contains(block.getId()));
+                    compPath[index]=block;
+                }else if(block.getDirIntoBlock()==2){//was south go north
+                     do{
+                         System.out.println("check one north");
+                        //loop until we reach the first node in the opposite direction we came contained within the path
+                        block = g[block.getX()-1][block.getY()];//traverse upwards
+                    }while(!currentPath.contains(block.getId()));
+                    compPath[index]=block;
+                }else if(block.getDirIntoBlock()==3){//was east go west
+                    do{
+                        System.out.println("check one west");
+                        //loop until we reach the first node in the opposite direction we came contained within the path
+                        block = g[block.getX()][block.getY()-1];//traverse left
+                    }while(!currentPath.contains(block.getId()));
+                    compPath[index]=block;
+                }else if(block.getDirIntoBlock()==4){//was west go east
+                    do{
+                        System.out.println("check one east");
+                        //loop until we reach the first node in the opposite direction we came contained within the path
+                        block = g[block.getX()][block.getY()+1];//traverse right
+                    }while(!currentPath.contains(block.getId()));
+                    compPath[index]=block;
+                }
+            }
+            System.out.println("broke out compPath.size = " + compPath.length+ "checking if < " + minMovesSoFar);
+            if(compPath.length < minMovesSoFar){
+                REALPATH = compPath;
+                minMovesSoFar = compPath.length;
+            }
+        }
+        System.out.print("DONE FINDING FINAL PATH, printing below. I so hope this freaking works!!!!!! ^_^\n\n"
+                + "Minimum Number Of Moves: " + REALPATH.length + "\nPath: ");
+        for(int i = 0; i < REALPATH.length; ++i){
+            System.out.print("("+REALPATH[i].getId()+")");
+        }
     }
     
     /*
@@ -1452,6 +1560,8 @@ public class SwiftPathing {
             System.exit(1);
         }
         System.out.println("YAS!!!!\t WE MADE IT OUT!!!!\nThe paths created are those below:\n\n");
+         ArrayList<ArrayList<Integer>> pathsContainingFinish = new ArrayList<ArrayList<Integer>>();
+
         for(ArrayList<Integer> A : paths){
             System.out.print("PATH: ");
             for(int n : A){
@@ -1459,15 +1569,21 @@ public class SwiftPathing {
             }
             System.out.println("\n");
         }
-        print(g);
-        System.out.println("pathPairs.size = " + pathPairs.size());
-        for(Map.Entry<Integer,ArrayList<Integer>> e : pathPairs.entrySet()){
-            System.out.print("Block ID: " + e.getKey() + " is connected to ");
-            for(int i : e.getValue()){
-                System.out.print("("+i+") ");
+        System.out.println("finishBlockID = finishBlockId:"+finishBlockId);
+        for(ArrayList<Integer> A : paths){
+            if(A.contains(finishBlockId)){
+                System.out.println("adding path to containig finish");
+                pathsContainingFinish.add(A);
             }
-            System.out.println("\n");
         }
+        try{
+        backTraversalCrossCheck(pathsContainingFinish, g, xS, yS, xF, yF);
+        }catch(Exception e){
+            System.out.println("fuck");
+            e.printStackTrace();
+            System.exit(1);
+        }
+        print(g);
     }
     
     private static Block getBlockById(int id, Block[][] g){
@@ -1493,8 +1609,6 @@ public class SwiftPathing {
     
     /*
         Each block in the grid has an ID
-        Copy old matrix into new one. 
-        Pop off items from the path Stack placing a -8 at each location unless the type at the location IS an 8, then it stays the same. This means this is the finish (exit condition) node.
     */
     private static HashMap<Integer, ArrayList<Integer>> constructGraph(Block[][] g, Stack<Block> S, int w, int h){
          HashMap<Integer, ArrayList<Integer>> pps = new HashMap<Integer, ArrayList<Integer>>();
@@ -1505,53 +1619,61 @@ public class SwiftPathing {
             ArrayList<Integer> pathPairs = new ArrayList<Integer>();
             
             //first determine which way NOT to check. i.e. in front of it
-            
+            //don't count in front of or behind it.
             //check for the first block north, south, east, and west that this block can see. Add itself and each connection to the hashmap
             //north - has to be greater than the top most row ie 1
-            if(b.getX()>1 && g[b.getX()-1][b.getY()].getType()!=0){//if there is a block right in front of, or next to it, dont count that as a path.
-                System.out.println("checking norths");
-                for(int i = b.getX()-1; i>=0; --i){
-                    if(g[i][b.getY()].getType()==0){
-                        //store it and break to check another direction
-                        System.out.println("found block " + g[i][b.getY()].getCoordinates());
-                        pathPairs.add(g[i+1][b.getY()].getId());
-                        break;
+            if (b.getDirIntoBlock() != 2) {//if the dude has to go south into this block don't check backwards (ie. north)
+                if (b.getX() > 1 && g[b.getX() - 1][b.getY()].getType() != 0) {//if there is a block right in front of, or next to it, dont count that as a path.
+                    System.out.println("checking norths");
+                    for (int i = b.getX() - 1; i >= 0; --i) {
+                        if (g[i][b.getY()].getType() == 0) {
+                            //store it and break to check another direction
+                            System.out.println("found block " + g[i][b.getY()].getCoordinates());
+                            pathPairs.add(g[i + 1][b.getY()].getId());
+                            break;
+                        }
                     }
                 }
             }
-            //south - has to be less than the bottom most row ie height-2
-            if(b.getX()<h-2 && g[b.getX()+1][b.getY()].getType()!=0){//if there is a block right in front of, or next to it, dont count that as a path.
-                System.out.println("checking south");
-                for(int i = b.getX()+1; i<h; ++i){
-                    if(g[i][b.getY()].getType()==0){
-                        //store it and break to check another direction
-                        System.out.println("found block " + g[i][b.getY()].getCoordinates());
-                        pathPairs.add(g[i-1][b.getY()].getId());
-                        break;
+            if (b.getDirIntoBlock() != 1) {//if the dude had to go northin into this block, dont go backwards (ie.south)
+                //south - has to be less than the bottom most row ie height-2
+                if (b.getX() < h - 2 && g[b.getX() + 1][b.getY()].getType() != 0) {//if there is a block right in front of, or next to it, dont count that as a path.
+                    System.out.println("checking south");
+                    for (int i = b.getX() + 1; i < h; ++i) {
+                        if (g[i][b.getY()].getType() == 0) {
+                            //store it and break to check another direction
+                            System.out.println("found block " + g[i][b.getY()].getCoordinates());
+                            pathPairs.add(g[i - 1][b.getY()].getId());
+                            break;
+                        }
                     }
                 }
             }
-            //east - has to be less than the rightmost column ie width-2
-            if(b.getY()<w-2 && g[b.getX()][b.getY()+1].getType()!=0){//if there is a block right in front of, or next to it, dont count that as a path.
-                System.out.println("checking east");
-                for(int i = b.getY()+1; i<w; ++i){
-                    if(g[b.getX()][i].getType()==0){
-                        //store it and break to check another direction
-                        System.out.println("found block " + g[b.getX()][i].getCoordinates());
-                        pathPairs.add(g[b.getX()][i-1].getId());
-                        break;
+            if (b.getDirIntoBlock() != 4) {//if the dude has to go west into this block, dont check backwards (ie. east)
+                //east - has to be less than the rightmost column ie width-2
+                if (b.getY() < w - 2 && g[b.getX()][b.getY() + 1].getType() != 0) {//if there is a block right in front of, or next to it, dont count that as a path.
+                    System.out.println("checking east");
+                    for (int i = b.getY() + 1; i < w; ++i) {
+                        if (g[b.getX()][i].getType() == 0) {
+                            //store it and break to check another direction
+                            System.out.println("found block " + g[b.getX()][i].getCoordinates());
+                            pathPairs.add(g[b.getX()][i - 1].getId());
+                            break;
+                        }
                     }
                 }
             }
-            //west - has to be greater than left most column ie 1
-            if(b.getY()>1 && g[b.getX()][b.getY()-1].getType()!=0){//if there is a block right in front of, or next to it, dont count that as a path.
-                System.out.println("checking west");
-                for(int i = b.getY()-1; i>=0; --i){
-                    if(g[b.getX()][i].getType()==0){
-                        //store it and break to check another direction
-                        System.out.println("found block " + g[b.getX()][i].getCoordinates());
-                        pathPairs.add(g[b.getX()][i+1].getId());
-                        break;
+            if (b.getDirIntoBlock() != 3) {//if the dude has to go east into this block, don't check behind it (ie. west)
+                //west - has to be greater than left most column ie 1
+                if (b.getY() > 1 && g[b.getX()][b.getY() - 1].getType() != 0) {//if there is a block right in front of, or next to it, dont count that as a path.
+                    System.out.println("checking west");
+                    for (int i = b.getY() - 1; i >= 0; --i) {
+                        if (g[b.getX()][i].getType() == 0) {
+                            //store it and break to check another direction
+                            System.out.println("found block " + g[b.getX()][i].getCoordinates());
+                            pathPairs.add(g[b.getX()][i + 1].getId());
+                            break;
+                        }
                     }
                 }
             }

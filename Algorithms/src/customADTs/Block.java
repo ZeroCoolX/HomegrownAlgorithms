@@ -15,7 +15,7 @@ public class Block {
     //x and y coordinates for the block
     private int x;
     private int y;
-    
+    private int dirIntoBlock;//1=n, 2=s, 3=e, 4=w
     private int id;
 
     /*
@@ -38,6 +38,15 @@ public class Block {
        this.x = x;
        this.y = y;
        this.type = type;this.id = ID;
+    }
+    
+    
+    public int getDirIntoBlock() {
+        return dirIntoBlock;
+    }
+
+    public void setDirIntoBlock(int dirIntoBlock) {
+        this.dirIntoBlock = dirIntoBlock;
     }
 
     public int getX() {
