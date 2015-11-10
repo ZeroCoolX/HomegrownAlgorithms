@@ -1008,12 +1008,12 @@ public class SwiftPathing {
         
          //not ready yet
         //backwardsTraversal(finalPath);
-        Stack<Block> S = getAllPossiblePathLocs(g, width, height);
+        Stack<Block> S = getAllPossiblePathLocs(g, width, height, xStart, yStart);
             System.out.print("Showing all blocks possible to be traversed Block: ");
             for(Block b : S){
                 System.out.print("["+b.getX() + ","+b.getY()+"] \nBlock: ");
             }
-        //depthFirstSearch(g, finalPath, xStart, yStart, width, height);
+        depthFirstSearch(g, S, xStart, yStart, width, height);
         
         //Collect blocks to place on the grid left to right, top to bottom in a hashmap. keys 1 to n, value block
         HashMap<Integer, Block> blocks = lineUpBlocks(g, height, width);
@@ -1225,11 +1225,11 @@ public class SwiftPathing {
     //if it is on the perimeter than just the nodes on the sides and opposite side of it
     //if it IS in the perimeter then just the node in front of it 
     //again all only if 1 or 8
-    private static Stack<Block> getAllPossiblePathLocs(Block[][] g, int w, int h){
+    private static Stack<Block> getAllPossiblePathLocs(Block[][] g, int w, int h, int xS, int yS){
         Stack<Block> startLocs = new Stack<Block>();
         for (int i = 0; i < g.length; ++i) {
             for (int j = 0; j < g[i].length; ++j) {
-                if(g[i][j].getType()==0){
+                if(g[i][j].getType()==0 || (i==xS && j==yS)){
                     Block b = g[i][j];
                     System.out.println("Processing " + b.getCoordinates());
                     Block put = null;
