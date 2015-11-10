@@ -222,11 +222,11 @@ public class SwiftPathing {
         while(levelsCompleted < numLevels){   
             //min moves will be in the range of [minMinMove,maxMinMove]
             int minNumMoves = randGen.nextInt(maxMinMove-minMinMove)+minMinMove;
-            
+            int idIncrementor = 0;
             //initialize whole grid to -1 (-1 signifies free spaces to place a block)
             for (int i = 0; i < grid.length; ++i) {
                 for (int j = 0; j < grid[i].length; ++j) {
-                    grid[i][j] = new Block(i,j,-1);
+                    grid[i][j] = new Block(i,j,-1, ++idIncrementor);
                 }
             }
                         print(grid);
@@ -296,9 +296,9 @@ public class SwiftPathing {
     private static StringBuilder populateGrid(Block[][] g, int x, int y, int moves, int width, int height, Random R, int wallUse) throws IllegalStateException, Exception {
         //Stores the generated XML for this particular level
         StringBuilder levelXML = new StringBuilder();
-        
+        Stack<Block> allBlocks = new Stack<Block>();
         Stack<Block> finalPath = new Stack<Block>();
-        finalPath.push(new Block(x, y, 8));
+        finalPath.push(new Block(x, y, 8, g[x][y].getId()));
         //stores the current block because it could potentially be the end
         int xFinish = x;
         int yFinish = y;
@@ -927,7 +927,7 @@ public class SwiftPathing {
                     //its technically a new direction so add it
                     if(!alreadySeen){
                         System.out.println("ADDING TO finalPath even tho we backtracked cuz did not find dupe");
-                        finalPath.push(new Block(xDir, yDir, 8));
+                        finalPath.push(new Block(xDir, yDir, 8, g[xDir][yDir].getId()));
                     }
                 }else if (counter+1 == moves && (xFinish == xStart || yFinish == yStart)) {
                     ++backtrackCounter;
@@ -943,7 +943,7 @@ public class SwiftPathing {
                     //its technically a new direction so add it
                     if(!alreadySeen){
                         System.out.println("ADDING TO finalPath even tho we backtracked cuz did not find dupe");
-                        finalPath.push(new Block(xDir, yDir, 8));
+                        finalPath.push(new Block(xDir, yDir, 8, g[xDir][yDir].getId()));
                     }
                 } else if (backtracked) {
                     System.out.println("we backtracked thus don't increment counter");
@@ -959,7 +959,7 @@ public class SwiftPathing {
                     //its technically a new direction so add it
                     if(!alreadySeen){
                         System.out.println("ADDING TO finalPath even tho we backtracked cuz did not find dupe");
-                        finalPath.push(new Block(xDir, yDir, 8));
+                        finalPath.push(new Block(xDir, yDir, 8, g[xDir][yDir].getId()));
                     }else{
                         finalPath.pop();
                     }
@@ -980,10 +980,10 @@ public class SwiftPathing {
                     //its technically a new direction so add it
                     if(!alreadySeen){
                         System.out.println("ADDING TO finalPath even tho we backtracked cuz did not find dupe");
-                        finalPath.push(new Block(xDir, yDir, 8));
+                        finalPath.push(new Block(xDir, yDir, 8, g[xDir][yDir].getId()));
                     }
                 } else {
-                    finalPath.push(new Block(xDir, yDir, 8));
+                    finalPath.push(new Block(xDir, yDir, 8, g[xDir][yDir].getId()));
                     ++counter;
                     //print for logging purposes
                     System.out.println("PRINTING and pushing ["+xDir+","+yDir+"]");
@@ -1003,9 +1003,12 @@ public class SwiftPathing {
             for(Block b : finalPath){
                 System.out.print("["+b.getX() + ","+b.getY()+"] \nGo to BLOCK: ");
             }
+            
+        //Stack<Block> allBlocks = getAllPossiblePathLocs(g);
         
          //not ready yet
         //backwardsTraversal(finalPath);
+        depthFirstSearch(g, finalPath, xStart, yStart, width, height);
         
         //Collect blocks to place on the grid left to right, top to bottom in a hashmap. keys 1 to n, value block
         HashMap<Integer, Block> blocks = lineUpBlocks(g, height, width);
@@ -1041,105 +1044,105 @@ public class SwiftPathing {
                 }
             }
         }*/
-        try{
-            int halfWayMark = width/2;
-                        //go through each block in the hashmap and...good luck
-                        String codeBlock = "";
-                        Block lastSeenBlock = null;
-                        int blocksPerRow = 1;
-                        for(int k = 1; k<=blocks.size();++k){
-                            //we know the first block will be topmost left or top rightmost
-                            codeBlock += viewStart + "\n"
-                                + fullAssetDataName(assetData.ID) + ((k==xFinish&&k==yFinish)?(constFinish):(constObstacle + (k))) + qm + "\n"
-                                + fullAssetDataName(assetData.WDTH) + qm + "\n"
-                                + fullAssetDataName(assetData.HGTH) + qm + "\n"
-                                + fullAssetDataName(assetData.BKRND) + fullAssetName(((k==xFinish&&k==yFinish)?assets.P_FIN:assets.P_OBST)) + qm + "\n";
-                            Block currentBlock = blocks.get(k);
-                            if(k==1){//this is the beginning so top left
-                                //alignParentTop, alignParentLeft
-                                if(currentBlock.getY()!=1){//its the rightmost
-                                    codeBlock+= (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
-                                    codeBlock+= (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
-                                }else{
-                                    codeBlock+= (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
-                                    codeBlock+= (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
-                                }
-                            }else{
-                                //if(currentBlock.getX() < halfWayMark){//to the left of the middle
-                                    if(currentBlock.getX() == lastSeenBlock.getX()){//this block is on the same row of the last placed block
-                                        ++blocksPerRow;
-                                        //we know its to the right of it so
-                                        boolean marginLeft = false;//if true pushes it right
-                                        int marginNeeded = 0;
-                                        if(currentBlock.getY()<lastSeenBlock.getY()){
-                                            marginLeft = false;
-                                            marginNeeded = (lastSeenBlock.getY()-currentBlock.getY());
-                                        }else{
-                                            marginLeft = true;
-                                            marginNeeded = (currentBlock.getY()-lastSeenBlock.getY());
-                                        }
-                                        if(marginNeeded >= 1){
-                                            codeBlock += (fullRelativeName(marginLeft?relativeLayouts.TO_RT_OF:relativeLayouts.TO_LT_OF)+constObstacle+obNum+qm+"\n");
-                                            if(marginNeeded>=2){
-                                                codeBlock += (fullRelativeName(marginLeft?relativeLayouts.MGN_LT:relativeLayouts.MGN_RT)+constDimen+(marginNeeded>2?marginNeeded:"")+qm+"\n");//move it right one width
-                                            }
-                                        }
-                                    }else{//logically its the first block one row below the last block because otherwise its X value would be on the same plane as the last block
-                                        if(currentBlock.getY()!=1){//cannot do this on the first one
-                                            int curX = currentBlock.getX();
-                                            int curY = currentBlock.getY();
-                                            //check above it
-                                            if(g[curX-1][curY].getType() == 0){
-                                                codeBlock += (fullRelativeName(relativeLayouts.BLW)+constObstacle+getObstacleNum(blocks, curX-1, curY)+qm+"\n");
-                                            }else{//we need to find the closest one one level above it
-                                                Block closeBlock = findClosestBlockAbove(g, g[curX-1][curY], width);
-                                                //sadly there was no blocks on the row above this one
-                                                int inc = 1;
-                                                while(closeBlock == null){//theres no way we CANT find a block
-                                                    closeBlock = findClosestBlockAbove(g, g[curX-(1+inc)][curY], width);
-                                                    ++inc;
-                                                }
-                                                //alright we found a block above it.
-                                                int xDist = currentBlock.getX() - closeBlock.getX();
-                                                int yDist = 0;
-                                                boolean marginLeft = false;//if true moves it right
-                                                if(currentBlock.getY() < closeBlock.getY()){
-                                                    marginLeft = true;
-                                                    yDist = closeBlock.getY() - currentBlock.getY();
-                                                }else{
-                                                    marginLeft = false;//moves it left
-                                                    yDist = currentBlock.getY() - closeBlock.getY();
-                                                }
-                                                codeBlock += (fullRelativeName(relativeLayouts.BLW)+constObstacle+getObstacleNum(blocks, closeBlock.getX(), closeBlock.getY())+qm+"\n");
-                                                codeBlock += (fullRelativeName(relativeLayouts.MGN_TP)+constDimen+(xDist>2?xDist:"")+qm+"\n");//move it below the block
-                                                codeBlock += (fullRelativeName(marginLeft?relativeLayouts.MGN_LT:relativeLayouts.MGN_RT)+constDimen+yDist+qm+"\n");//move it right one width
-                                            }
-                                        }
-                                    }
-                               // }else{//to the right of the middle
-                                
-                               // }
-                            }
-                            //last line of codeblock must be ending view tag
-                            codeBlock += viewEnd + "\n";
-                            lastSeenBlock = blocks.get(k);
-                            levelXML.append(codeBlock);
-                            codeBlock = "";
-                            ++obNum;
+        try {
+            int halfWayMark = width / 2;
+            //go through each block in the hashmap and...good luck
+            String codeBlock = "";
+            Block lastSeenBlock = null;
+            int blocksPerRow = 1;
+            for (int k = 1; k <= blocks.size(); ++k) {
+                //we know the first block will be topmost left or top rightmost
+                codeBlock += viewStart + "\n"
+                        + fullAssetDataName(assetData.ID) + ((k == xFinish && k == yFinish) ? (constFinish) : (constObstacle + (k))) + qm + "\n"
+                        + fullAssetDataName(assetData.WDTH) + qm + "\n"
+                        + fullAssetDataName(assetData.HGTH) + qm + "\n"
+                        + fullAssetDataName(assetData.BKRND) + fullAssetName(((k == xFinish && k == yFinish) ? assets.P_FIN : assets.P_OBST)) + qm + "\n";
+                Block currentBlock = blocks.get(k);
+                if (k == 1) {//this is the beginning so top left
+                    //alignParentTop, alignParentLeft
+                    if (currentBlock.getY() != 1) {//its the rightmost
+                        codeBlock += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+                        codeBlock += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
+                    } else {
+                        codeBlock += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+                        codeBlock += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
+                    }
+                } else {
+                    //if(currentBlock.getX() < halfWayMark){//to the left of the middle
+                    if (currentBlock.getX() == lastSeenBlock.getX()) {//this block is on the same row of the last placed block
+                        ++blocksPerRow;
+                        //we know its to the right of it so
+                        boolean marginLeft = false;//if true pushes it right
+                        int marginNeeded = 0;
+                        if (currentBlock.getY() < lastSeenBlock.getY()) {
+                            marginLeft = false;
+                            marginNeeded = (lastSeenBlock.getY() - currentBlock.getY());
+                        } else {
+                            marginLeft = true;
+                            marginNeeded = (currentBlock.getY() - lastSeenBlock.getY());
                         }
-                        
-        //Lastly we just need to append the runner - dude - onto the XML
-        levelXML.append(
-                viewStart + "\n"
-                + fullAssetDataName(assetData.ID) + constRunner + qm + "\n"
-                + fullAssetDataName(assetData.WDTH) + qm + "\n"
-                + fullAssetDataName(assetData.HGTH) + qm + "\n"
-                + fullAssetDataName(assetData.BKRND) + fullAssetName(assets.P_DUD) + qm + "\n"
-                + viewEnd + "\n"
-        );
-        }catch(Exception e){
+                        if (marginNeeded >= 1) {
+                            codeBlock += (fullRelativeName(marginLeft ? relativeLayouts.TO_RT_OF : relativeLayouts.TO_LT_OF) + constObstacle + obNum + qm + "\n");
+                            if (marginNeeded >= 2) {
+                                codeBlock += (fullRelativeName(marginLeft ? relativeLayouts.MGN_LT : relativeLayouts.MGN_RT) + constDimen + (marginNeeded > 2 ? marginNeeded : "") + qm + "\n");//move it right one width
+                            }
+                        }
+                    } else {//logically its the first block one row below the last block because otherwise its X value would be on the same plane as the last block
+                        if (currentBlock.getY() != 1) {//cannot do this on the first one
+                            int curX = currentBlock.getX();
+                            int curY = currentBlock.getY();
+                            //check above it
+                            if (g[curX - 1][curY].getType() == 0) {
+                                codeBlock += (fullRelativeName(relativeLayouts.BLW) + constObstacle + getObstacleNum(blocks, curX - 1, curY) + qm + "\n");
+                            } else {//we need to find the closest one one level above it
+                                Block closeBlock = findClosestBlockAbove(g, g[curX - 1][curY], width);
+                                //sadly there was no blocks on the row above this one
+                                int inc = 1;
+                                while (closeBlock == null) {//theres no way we CANT find a block
+                                    closeBlock = findClosestBlockAbove(g, g[curX - (1 + inc)][curY], width);
+                                    ++inc;
+                                }
+                                //alright we found a block above it.
+                                int xDist = currentBlock.getX() - closeBlock.getX();
+                                int yDist = 0;
+                                boolean marginLeft = false;//if true moves it right
+                                if (currentBlock.getY() < closeBlock.getY()) {
+                                    marginLeft = true;
+                                    yDist = closeBlock.getY() - currentBlock.getY();
+                                } else {
+                                    marginLeft = false;//moves it left
+                                    yDist = currentBlock.getY() - closeBlock.getY();
+                                }
+                                codeBlock += (fullRelativeName(relativeLayouts.BLW) + constObstacle + getObstacleNum(blocks, closeBlock.getX(), closeBlock.getY()) + qm + "\n");
+                                codeBlock += (fullRelativeName(relativeLayouts.MGN_TP) + constDimen + (xDist > 2 ? xDist : "") + qm + "\n");//move it below the block
+                                codeBlock += (fullRelativeName(marginLeft ? relativeLayouts.MGN_LT : relativeLayouts.MGN_RT) + constDimen + yDist + qm + "\n");//move it right one width
+                            }
+                        }
+                    }
+                               // }else{//to the right of the middle
+
+                    // }
+                }
+                //last line of codeblock must be ending view tag
+                codeBlock += viewEnd + "\n";
+                lastSeenBlock = blocks.get(k);
+                levelXML.append(codeBlock);
+                codeBlock = "";
+                ++obNum;
+            }
+
+            //Lastly we just need to append the runner - dude - onto the XML
+            levelXML.append(
+                    viewStart + "\n"
+                    + fullAssetDataName(assetData.ID) + constRunner + qm + "\n"
+                    + fullAssetDataName(assetData.WDTH) + qm + "\n"
+                    + fullAssetDataName(assetData.HGTH) + qm + "\n"
+                    + fullAssetDataName(assetData.BKRND) + fullAssetName(assets.P_DUD) + qm + "\n"
+                    + viewEnd + "\n"
+            );
+        } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("FUCK!");
+            System.out.println("Failure");
             System.exit(1);
         }
         return levelXML;
@@ -1184,10 +1187,10 @@ public class SwiftPathing {
         int blockNum = 1;
         //check the top left and right blocks for a starter
         if(g[1][1].getType()==-1){
-            blockLines.put(blockNum, new Block(1, 1, 0));
+            blockLines.put(blockNum, new Block(1, 1, 0, 1));
             ++blockNum;
         }else if(g[1][width-2].getType()==-1){
-            blockLines.put(blockNum, new Block(1, width-2, 0));
+            blockLines.put(blockNum, new Block(1, width-2, 0, 1));
             ++blockNum;
         }
         for (int i = 0; i < g.length; ++i) {
@@ -1213,6 +1216,205 @@ public class SwiftPathing {
         return blockLines;
     }
     
+    //stopping at every 0 - if its not on the perimeter, push onto the stack each block either north, south, east, or west of it that has a 1 or an 8
+    //if it is on the perimeter than just the nodes on the sides and opposite side of it
+    //if it IS in the perimeter then just the node in front of it 
+    //again all only if 1 or 8
+    private static Stack<Block> getAllPossiblePathLocs(Block[][] g, int w, int h){
+        Stack<Block> allPossiblePathStartLocs = new Stack<Block>();
+        for (int i = 0; i < g.length; ++i) {
+            for (int j = 0; j < g[i].length; ++j) {
+                if(g[i][j].getType()==0){
+                    Block b = g[i][j];
+                    //big kahuna
+                    if(b.getX() == 0){//deal with IN north perimeter
+                    
+                    }else if(b.getX() == h-1){//deal with IN south perim
+                        
+                    }else if(b.getY() == 0){//deal with IN west perimeter
+                    
+                    }else if(b.getY() == w-1){//deal with IN east perim
+
+                    } else {//Determined not IN any perimeter. check if ON the perim
+                        if (b.getX() == 1) {//deal with IN north perimeter
+
+                        } else if (b.getX() == h - 1) {//deal with IN south perim
+
+                        } else if (b.getY() == 1) {//deal with IN west perimeter
+
+                        } else if (b.getY() == w - 1) {//deal with IN east perim
+
+                        }else{//Determined not ON any perimeter. Check all the four corners around it
+                        
+                        }
+                    }
+                    
+                    
+                }
+            }
+        }
+        return null;
+    }
+    
+    /*
+    Algorithm:
+        1.Pick the start node. Pick an edge to travel across. This means pick a direction for which there is another block. The edge cannot be contained in a hashmap of edge/node pairs (this would mean it was already traversed).
+        2.If there are no edge to traverse and this is the start node algorithm terminates
+        3.If there are no possible directions to go on the selected block, backtrack one node to the previous one and pick a different direction. repeat.
+        4.IF there IS another possible direction to go on the selected block traverse the edge, and add it to the path.
+        5.IF the current node (one space in front of the block we're on) is the finish node copy the path to completed paths and backtrack to the previous node. Go to step 2.        
+    */
+    private static void depthFirstSearch(Block[][]g, Stack<Block> S, int xS, int yS, int w, int h){
+        //the key = block.id and the value is a collection of other keys this block can get to
+        //this will be the large "bucket" that stores each path. A path is an arraylist with nodes in order of traversal
+        ArrayList<ArrayList<Integer>> paths = new ArrayList<ArrayList<Integer>>();
+        HashMap<Integer, ArrayList<Integer>> pathPairs = constructGraph(g, S, w, h);
+        int blockId = g[xS][yS].getId();
+        int startBlockId = blockId;
+        ArrayList<Integer> currentPath = new ArrayList<Integer>();
+        int failCheck = 0;
+                print2(g);
+
+        try{
+        do{
+            ++failCheck;
+            if(failCheck>500){
+                System.out.println("INFINTE LOOP failure");
+                System.exit(1);
+            }
+            System.out.println("traverse from block " + blockId);
+            //choose a direction from the arrayList and to to that block
+            if(blockId == startBlockId && !hasMoreEdges(blockId, pathPairs)){
+                System.out.println("Made our way back, leaving this place");
+                //exit state - we have traversed every direction
+                break;
+            }else if(!hasMoreEdges(blockId, pathPairs)){
+                System.out.println("STOP. there are no more ");
+                //reached the end of a certain path. add the path into the bucket collection and backtrack one node
+                paths.add(currentPath);
+                currentPath.remove(currentPath.size()-1);//remove the last node
+                blockId = currentPath.get(currentPath.size()-1);//backtrack one node
+            }else{
+                System.out.println("");
+                ArrayList<Integer> blockPairs = pathPairs.get(blockId);//grab all possible directions to go
+                System.out.println("traversing to another block!");
+                int nextBlockId = blockPairs.remove(blockPairs.size()-1);//this is in effect selecting one out of all the directions to go
+                System.out.println("nextBlock = " + nextBlockId);
+                pathPairs.put(blockId, blockPairs);//put the list of paths back into the hashmap
+                currentPath.add(nextBlockId);//store the node we traversed to
+                blockId = nextBlockId;//move the current block to that block
+            }
+        }while(true);
+        }catch(Exception e){
+            System.out.println("Failure");
+            e.printStackTrace();
+            System.exit(1);
+        }
+        System.out.println("YAS!!!!\t WE MADE IT OUT!!!!\nThe paths created are those below:\n\n");
+        for(ArrayList<Integer> A : paths){
+            System.out.println("PATH:");
+            for(int n : A){
+                System.out.println("Node: " + n);
+            }
+        }
+        print(g);
+        System.out.println("pathPairs.size = " + pathPairs.size());
+        for(Map.Entry<Integer,ArrayList<Integer>> e : pathPairs.entrySet()){
+            System.out.print("Block ID: " + e.getKey() + " is connected to ");
+            for(int i : e.getValue()){
+                System.out.print("("+i+") ");
+            }
+            System.out.println("\n");
+        }
+    }
+    
+    private static Block getBlockById(int id, Block[][] g){
+        for (int i = 0; i < g.length; ++i) {
+            for (int j = 0; j < g[i].length; ++j) {
+                if(g[i][j].getId()==id){
+                    return g[i][j];
+                }
+            }
+        }
+        return null;
+    }
+    
+    private static boolean hasMoreEdges(int key, HashMap<Integer, ArrayList<Integer>> pps){
+        ArrayList<Integer> pairs = pps.get(key);
+        return pairs.size()!=0;
+    }
+    
+    /*
+        Each block in the grid has an ID
+        Copy old matrix into new one. 
+        Pop off items from the path Stack placing a -8 at each location unless the type at the location IS an 8, then it stays the same. This means this is the finish (exit condition) node.
+    */
+    private static HashMap<Integer, ArrayList<Integer>> constructGraph(Block[][] g, Stack<Block> S, int w, int h){
+         HashMap<Integer, ArrayList<Integer>> pps = new HashMap<Integer, ArrayList<Integer>>();
+
+        //populate the pathPairs hashmap
+        for(Block b : S){
+            System.out.println("checking b:"+b.getCoordinates());
+            ArrayList<Integer> pathPairs = new ArrayList<Integer>();
+            
+            //first determine which way NOT to check. i.e. in front of it
+            
+            //check for the first block north, south, east, and west that this block can see. Add itself and each connection to the hashmap
+            //north - has to be greater than the top most row ie 1
+            if(b.getX()>1 && g[b.getX()-1][b.getY()].getType()!=0){//if there is a block right in front of, or next to it, dont count that as a path.
+                System.out.println("checking norths");
+                for(int i = b.getX()-1; i>0; --i){
+                    if(g[i][b.getY()].getType()==0){
+                        //store it and break to check another direction
+                        System.out.println("found block " + g[i][b.getY()].getCoordinates());
+                        pathPairs.add(g[i+1][b.getY()].getId());
+                        break;
+                    }
+                }
+            }
+            //south - has to be less than the bottom most row ie height-2
+            if(b.getX()<h-2 && g[b.getX()+1][b.getY()].getType()!=0){//if there is a block right in front of, or next to it, dont count that as a path.
+                System.out.println("checking south");
+                for(int i = b.getX()+1; i<h-1; ++i){
+                    if(g[i][b.getY()].getType()==0){
+                        //store it and break to check another direction
+                        System.out.println("found block " + g[i][b.getY()].getCoordinates());
+                        pathPairs.add(g[i-1][b.getY()].getId());
+                        break;
+                    }
+                }
+            }
+            //east - has to be less than the rightmost column ie width-2
+            if(b.getY()<w-2 && g[b.getX()][b.getY()+1].getType()!=0){//if there is a block right in front of, or next to it, dont count that as a path.
+                System.out.println("checking east");
+                for(int i = b.getY()+1; i<w-1; ++i){
+                    if(g[b.getX()][i].getType()==0){
+                        //store it and break to check another direction
+                        System.out.println("found block " + g[b.getX()][i].getCoordinates());
+                        pathPairs.add(g[b.getX()][i-1].getId());
+                        break;
+                    }
+                }
+            }
+            //west - has to be greater than left most column ie 1
+            if(b.getY()>1 && g[b.getX()][b.getY()-1].getType()!=0){//if there is a block right in front of, or next to it, dont count that as a path.
+                System.out.println("checking west");
+                for(int i = b.getY()-1; i>0; --i){
+                    if(g[b.getX()][i].getType()==0){
+                        //store it and break to check another direction
+                        System.out.println("found block " + g[b.getX()][i].getCoordinates());
+                        pathPairs.add(g[b.getX()][i+1].getId());
+                        break;
+                    }
+                }
+            }
+            //store the block ID and collection of every block it can connect to into the hashmap.
+            System.out.println("storing block "+b.getId()+" with " + pathPairs.size()+" block pairs into pps");
+            pps.put(b.getId(), pathPairs);
+        }
+        System.out.println("Returning pps with a size of " + pps.size());
+        return pps;
+    }
     
     
     //Not 100% accurate
@@ -1692,7 +1894,14 @@ public class SwiftPathing {
             System.out.print("\n");
         }
     }
+    private static void print2(Block[][] g) {
+        for (int i = 0; i < g.length; ++i) {
+            for (int j = 0; j < g[i].length; ++j) {
+                System.out.print(g[i][j].getId() + "\t");
+            }
+            System.out.print("\n");
+        }
+    }
 
 }
-
 

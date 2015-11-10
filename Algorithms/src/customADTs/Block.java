@@ -5,6 +5,7 @@
  */
 package customADTs;
 
+
 /**
  *
  * @author dewit
@@ -14,6 +15,9 @@ public class Block {
     //x and y coordinates for the block
     private int x;
     private int y;
+    
+    private int id;
+
     /*
     Indicates what type of block this is:
         0 - regular obstacle
@@ -30,10 +34,10 @@ public class Block {
     */
     private int type;
     
-    public Block(int x, int y, int type){
+    public Block(int x, int y, int type, int ID){
        this.x = x;
        this.y = y;
-       this.type = type;
+       this.type = type;this.id = ID;
     }
 
     public int getX() {
@@ -64,4 +68,13 @@ public class Block {
         return "("+x+","+y+")";
     }
     
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+    
 }
+
