@@ -1013,7 +1013,9 @@ public class SwiftPathing {
             for(Block b : S){
                 System.out.print("["+b.getX() + ","+b.getY()+"] \nBlock: ");
             }
-        depthFirstSearch(g, S, xStart, yStart, width, height);
+            
+        Block finish = finalPath.peek();
+        depthFirstSearch(g, S, xStart, yStart, width, height, finish.getX(), finish.getY());
         
         //Collect blocks to place on the grid left to right, top to bottom in a hashmap. keys 1 to n, value block
         HashMap<Integer, Block> blocks = lineUpBlocks(g, height, width);
@@ -1394,34 +1396,39 @@ public class SwiftPathing {
         4.IF there IS another possible direction to go on the selected block traverse the edge, and add it to the path.
         5.IF the current node (one space in front of the block we're on) is the finish node copy the path to completed paths and backtrack to the previous node. Go to step 2.        
     */
-    private static void depthFirstSearch(Block[][]g, Stack<Block> S, int xS, int yS, int w, int h){
+    private static void depthFirstSearch(Block[][]g, Stack<Block> S, int xS, int yS, int w, int h, int xF, int yF){
         //the key = block.id and the value is a collection of other keys this block can get to
         //this will be the large "bucket" that stores each path. A path is an arraylist with nodes in order of traversal
         ArrayList<ArrayList<Integer>> paths = new ArrayList<ArrayList<Integer>>();
         HashMap<Integer, ArrayList<Integer>> pathPairs = constructGraph(g, S, w, h);
         int blockId = g[xS][yS].getId();
+        int finishBlockId = g[xF][yF].getId();
         int startBlockId = blockId;
         ArrayList<Integer> currentPath = new ArrayList<Integer>();
+        currentPath.add(blockId);
         int failCheck = 0;
                 print2(g);
-
         try{
         do{
-            ++failCheck;
-            if(failCheck>500){
+            /*++failCheck;
+            if(failCheck>1000000){
                 System.out.println("INFINTE LOOP failure");
                 System.exit(1);
-            }
+            }*/
             System.out.println("traverse from block " + blockId);
             //choose a direction from the arrayList and to to that block
             if(blockId == startBlockId && !hasMoreEdges(blockId, pathPairs)){
                 System.out.println("Made our way back, leaving this place");
                 //exit state - we have traversed every direction
                 break;
-            }else if(!hasMoreEdges(blockId, pathPairs)){
+            }else if(!hasMoreEdges(blockId, pathPairs) || blockId == finishBlockId){
                 System.out.println("STOP. there are no more ");
                 //reached the end of a certain path. add the path into the bucket collection and backtrack one node
-                paths.add(currentPath);
+                ArrayList<Integer> storedPath = new ArrayList<Integer>();
+                for(int i = 0; i<currentPath.size(); ++i){
+                    storedPath.add(currentPath.get(i));
+                }
+                paths.add(storedPath);
                 currentPath.remove(currentPath.size()-1);//remove the last node
                 blockId = currentPath.get(currentPath.size()-1);//backtrack one node
             }else{
@@ -1434,6 +1441,10 @@ public class SwiftPathing {
                 currentPath.add(nextBlockId);//store the node we traversed to
                 blockId = nextBlockId;//move the current block to that block
             }
+            System.out.println("Path so far: ");
+            for(int n : currentPath){
+                System.out.print("("+n+")");
+            }
         }while(true);
         }catch(Exception e){
             System.out.println("Failure");
@@ -1442,10 +1453,11 @@ public class SwiftPathing {
         }
         System.out.println("YAS!!!!\t WE MADE IT OUT!!!!\nThe paths created are those below:\n\n");
         for(ArrayList<Integer> A : paths){
-            System.out.println("PATH:");
+            System.out.print("PATH: ");
             for(int n : A){
-                System.out.println("Node: " + n);
+                System.out.print("(" + n + ")");
             }
+            System.out.println("\n");
         }
         print(g);
         System.out.println("pathPairs.size = " + pathPairs.size());
@@ -1471,7 +1483,12 @@ public class SwiftPathing {
     
     private static boolean hasMoreEdges(int key, HashMap<Integer, ArrayList<Integer>> pps){
         ArrayList<Integer> pairs = pps.get(key);
-        return pairs.size()!=0;
+        if(pairs == null){
+            return false;
+        }else if(pairs.isEmpty()){
+            return false;
+        }
+        return true;
     }
     
     /*
@@ -1540,6 +1557,10 @@ public class SwiftPathing {
             }
             //store the block ID and collection of every block it can connect to into the hashmap.
             System.out.println("storing block "+b.getId()+" with " + pathPairs.size()+" block pairs into pps");
+            if(pathPairs.size() == 1){
+            //add it twice
+                pathPairs.add(pathPairs.get(0));
+            }
             pps.put(b.getId(), pathPairs);
         }
         System.out.println("Returning pps with a size of " + pps.size());
