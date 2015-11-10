@@ -1229,6 +1229,7 @@ public class SwiftPathing {
         Stack<Block> startLocs = new Stack<Block>();
         for (int i = 0; i < g.length; ++i) {
             for (int j = 0; j < g[i].length; ++j) {
+                if(i==xS && j==yS){startLocs.push(g[xS][yS]);}
                 if(g[i][j].getType()==0 || (i==xS && j==yS)){
                     Block b = g[i][j];
                     System.out.println("Processing " + b.getCoordinates());
@@ -1492,7 +1493,7 @@ public class SwiftPathing {
             //north - has to be greater than the top most row ie 1
             if(b.getX()>1 && g[b.getX()-1][b.getY()].getType()!=0){//if there is a block right in front of, or next to it, dont count that as a path.
                 System.out.println("checking norths");
-                for(int i = b.getX()-1; i>0; --i){
+                for(int i = b.getX()-1; i>=0; --i){
                     if(g[i][b.getY()].getType()==0){
                         //store it and break to check another direction
                         System.out.println("found block " + g[i][b.getY()].getCoordinates());
@@ -1504,7 +1505,7 @@ public class SwiftPathing {
             //south - has to be less than the bottom most row ie height-2
             if(b.getX()<h-2 && g[b.getX()+1][b.getY()].getType()!=0){//if there is a block right in front of, or next to it, dont count that as a path.
                 System.out.println("checking south");
-                for(int i = b.getX()+1; i<h-1; ++i){
+                for(int i = b.getX()+1; i<h; ++i){
                     if(g[i][b.getY()].getType()==0){
                         //store it and break to check another direction
                         System.out.println("found block " + g[i][b.getY()].getCoordinates());
@@ -1516,7 +1517,7 @@ public class SwiftPathing {
             //east - has to be less than the rightmost column ie width-2
             if(b.getY()<w-2 && g[b.getX()][b.getY()+1].getType()!=0){//if there is a block right in front of, or next to it, dont count that as a path.
                 System.out.println("checking east");
-                for(int i = b.getY()+1; i<w-1; ++i){
+                for(int i = b.getY()+1; i<w; ++i){
                     if(g[b.getX()][i].getType()==0){
                         //store it and break to check another direction
                         System.out.println("found block " + g[b.getX()][i].getCoordinates());
@@ -1528,7 +1529,7 @@ public class SwiftPathing {
             //west - has to be greater than left most column ie 1
             if(b.getY()>1 && g[b.getX()][b.getY()-1].getType()!=0){//if there is a block right in front of, or next to it, dont count that as a path.
                 System.out.println("checking west");
-                for(int i = b.getY()-1; i>0; --i){
+                for(int i = b.getY()-1; i>=0; --i){
                     if(g[b.getX()][i].getType()==0){
                         //store it and break to check another direction
                         System.out.println("found block " + g[b.getX()][i].getCoordinates());
