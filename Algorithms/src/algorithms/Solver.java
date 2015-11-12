@@ -94,7 +94,7 @@ public class Solver implements Runnable {
                 EmptyBlock emptyBlock = new EmptyBlock(currentCoordinate);
                 emptyBlock.setPosition(currentCoordinate);
                 map.put(currentCoordinate, emptyBlock);
-                if ((i != 0 && a != 0) && Math.random() * 100 > 40) {
+                if ((i != 0 && a != 0) && Math.random() * 100 > 60) {
                     RockBlock rockBlock = new RockBlock();
                     rockBlock.setPosition(currentCoordinate);
                     map.put(currentCoordinate, rockBlock);
@@ -810,137 +810,139 @@ public class Solver implements Runnable {
         //Current block being written
         Block block = null;
         String view = "";
-        //Last seen block
-        Block lastSeenBlock = null;
         HashMap<Coordinate, Block> avaliableBlocks;
-
+        
+        
+        //before doing anything we know we can store the mover
+        block = (MovingBlock) (map.get(new Coordinate(0, 0)));
+        block.setPlaced(true);
+        //write block heading
+        view += (fullAssetDataName(assetData.ID) + (constRunner) + qm + "\n");//variable name
+        view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+        view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+        view += (fullAssetDataName(assetData.BKRND) + fullAssetName((assets.P_DUD)) + qm + "\n");//const background with respect to the blocktype
+        //for now we know he will always start in the top left
+        view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+        view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
+        view+=(viewEnd + "\n");
+        levelXML.append(view);
+        view = "";
         //obstacle ID so each view block has their own identifier
         int obId = 1;
 
-        for(int i = 0; i<maxY; ++i){//increments columns
-            for(int j = 0; j < maxX; ++j){//increments rows
-                view+=(viewStart + "\n");
+        for(int i = 0; i<maxY; ++i){//increments rows
+            for(int j = 0; j < maxX; ++j){//increments rocolumnsws
                 //go through each block starting from the top left to the bottom right
                 System.out.println("First block is: "+map.get(new Coordinate(j,i)).getClass().toString());
-                if(map.get(new Coordinate(j,i)) instanceof RockBlock){
-                    block = (Block)(map.get(new Coordinate(j,i)));
-                    block.setId(obId++);//used for variable naming
-                    block.setPlaced(true);
-                    //write block heading
-                    view+=(fullAssetDataName(assetData.ID) +(constObstacle + block.getId()) + qm + "\n");//variable name
-                    view+=(fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
-                    view+=(fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
-                    view+=(fullAssetDataName(assetData.BKRND) + fullAssetName((assets.P_OBST)) + qm + "\n");//const background with respect to the blocktype
+                
+                if(map.get(new Coordinate(j,i)) instanceof Block && !(map.get(new Coordinate(j,i)) instanceof EmptyBlock) && map.get(new Coordinate(j,i)).isPlaced()){//only process the blocks already placed!
+                    //block is already placed and thus has the necessary data to be used at a reference
+                    Block ref = map.get(new Coordinate(j,i));
                     //holds all the avaliable blocks this block could possible use as a reference
                     avaliableBlocks = validRefs(block.getPosition());
                     System.out.println("Size: "+avaliableBlocks.size());
                     //should never be null but catch to be safe
-                    try{
-                        Block ref = null;
-                        for(Map.Entry<Coordinate,Block> entry : avaliableBlocks.entrySet()){
+                    try {
+                        //for every non placed block in range of ref placed block place all those blocks
+                        for (Map.Entry<Coordinate, Block> entry : avaliableBlocks.entrySet()) {
+                            view+=(viewStart + "\n");
                             //just need to grab the first one
-                            if(entry.getValue() instanceof Block && !(entry.getValue() instanceof EmptyBlock)){
-                                ref = (Block)entry.getValue();
-                                break;
+                            if (entry.getValue() instanceof Block && !(entry.getValue() instanceof EmptyBlock)) {
+                                //found the first of avaliableBlocks.size()
+                                block = entry.getValue();
+                                block.setId(obId++);//used for variable naming
+                                block.setPlaced(true);
+                                //write block heading
+                                view+=(fullAssetDataName(assetData.ID) + (ref instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId())) + qm + "\n");//variable name
+                                view+=(fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+                                view+=(fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+                                view+=(fullAssetDataName(assetData.BKRND) + (ref instanceof FinishBlock ? (fullAssetName((assets.P_FIN))) : (fullAssetName((assets.P_OBST)))) + qm + "\n");//const background with respect to the blocktype
+                                //current block - reference < 0 its either left of the ref or above it
+                                int yDist = block.getPosition().getY() - ref.getPosition().getY();
+                                int xDist = block.getPosition().getX() - ref.getPosition().getX();
+
+                                //if either of the distances are 0 this means they either share the same X or the same Y plane
+                                if (xDist == 0 || yDist == 0) {
+                                    if (yDist == 0) {
+                                        if (xDist < 0) {//block is to the left of the reference
+                                            //we know its left so put left but check if we need margin
+                                            view += (fullRelativeName(relativeLayouts.TO_LT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                            if (Math.abs(xDist) == 2) {
+                                                view += (fullRelativeName(relativeLayouts.MGN_RT) + constDimen + qm + "\n");//margin right moves the block left
+                                            }
+                                        } else {//its to the right, it can never be equal
+                                            //we know its right so put right but check if we need margin
+                                            view += (fullRelativeName(relativeLayouts.TO_RT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                            if (Math.abs(yDist) == 2) {
+                                                view += (fullRelativeName(relativeLayouts.MGN_LT) + constDimen + qm + "\n");//margin left moves the block right
+                                            }
+                                        }
+                                    } else {//if its not xDist we know its yDist==0 otherwise we'd never have gottten in here
+                                        if (yDist < 0) {//block is above  reference
+                                            view += (fullRelativeName(relativeLayouts.ABV) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                            if (Math.abs(yDist) == 2) {
+                                                view += (fullRelativeName(relativeLayouts.MGN_BTM) + constDimen + qm + "\n");//margin bottom moves the block up
+                                            }
+                                        } else {//its below, it can never be equal
+                                            view += (fullRelativeName(relativeLayouts.BLW) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                            if (Math.abs(yDist) == 2) {
+                                                view += (fullRelativeName(relativeLayouts.MGN_TP) + constDimen + qm + "\n");//margin top moves the block down
+                                            }
+                                        }
+                                    }
+                                } else {//this means we're in some diagonal direction
+                                    //xDist < 0 means current block is left of reference, likewise xDist > 0 means current block is right of reference
+                                    //yDist < 0 means current block is above reference, likewise yDist > 0 means current block is below reference
+                                    if (xDist < 0) {//block is to the left of the reference
+                                        //we know its left so put left but check if we need margin
+                                        view += (fullRelativeName(relativeLayouts.TO_LT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                        if (Math.abs(xDist) == 2) {
+                                            view += (fullRelativeName(relativeLayouts.MGN_RT) + constDimen + qm + "\n");//margin right moves the block left
+                                        }
+                                    } else {//its to the right, it can never be equal
+                                        //we know its right so put right but check if we need margin
+                                        view += (fullRelativeName(relativeLayouts.TO_RT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                        if (Math.abs(xDist) == 2) {
+                                            view += (fullRelativeName(relativeLayouts.MGN_LT) + constDimen + qm + "\n");//margin left moves the block right
+                                        }
+                                    }
+                                    if (yDist < 0) {//block is above  reference
+                                        view += (fullRelativeName(relativeLayouts.ABV) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                        if (Math.abs(yDist) == 2) {
+                                            view += (fullRelativeName(relativeLayouts.MGN_BTM) + constDimen + qm + "\n");//margin bottom moves the block up
+                                        }
+                                    } else {//its below, it can never be equal
+                                        view += (fullRelativeName(relativeLayouts.BLW) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                        if (Math.abs(yDist) == 2) {
+                                            view += (fullRelativeName(relativeLayouts.MGN_TP) + constDimen + qm + "\n");//margin top moves the block down
+                                        }
+                                    }
+                                }
+                                view += (viewEnd + "\n");
+                                levelXML.append(view);
+                                view = "";
                             }
                         }
-                        //current block - reference < 0 its either left of the ref or above it
-                        int yDist = block.getPosition().getY() - ref.getPosition().getY();
-                        int xDist = block.getPosition().getX() - ref.getPosition().getX();
-
-                        //if either of the distances are 0 this means they either share the same X or the same Y plane
-                        if(xDist == 0 || yDist == 0){
-                            if (xDist == 0) {
-                                if (yDist < 0) {//block is to the left of the reference
-                                    //we know its left so put left but check if we need margin
-                                    view += (fullRelativeName(relativeLayouts.TO_LT_OF) + constObstacle + ref.getId() + qm + "\n");
-                                    if (Math.abs(yDist) == 2) {
-                                        view += (fullRelativeName(relativeLayouts.MGN_RT) + constDimen + qm + "\n");//margin right moves the block left
-                                    }
-                                } else {//its to the right, it can never be equal
-                                    //we know its right so put right but check if we need margin
-                                    view += (fullRelativeName(relativeLayouts.TO_RT_OF) + constObstacle + ref.getId() + qm + "\n");
-                                    if (Math.abs(yDist) == 2) {
-                                        view += (fullRelativeName(relativeLayouts.MGN_LT) + constDimen + qm + "\n");//margin left moves the block right
-                                    }
-                                }
-                            } else {//if its not xDist we know its yDist==0 otherwise we'd never have gottten in here
-                                if (xDist < 0) {//block is above  reference
-                                    view += (fullRelativeName(relativeLayouts.ABV) + constObstacle + ref.getId() + qm + "\n");
-                                    if (Math.abs(xDist) == 2) {
-                                        view += (fullRelativeName(relativeLayouts.MGN_BTM) + constDimen + qm + "\n");//margin bottom moves the block up
-                                    }
-                                } else {//its below, it can never be equal
-                                    view += (fullRelativeName(relativeLayouts.BLW) + constObstacle + ref.getId() + qm + "\n");
-                                    if (Math.abs(xDist) == 2) {
-                                        view += (fullRelativeName(relativeLayouts.MGN_TP) + constDimen + qm + "\n");//margin top moves the block down
-                                    }
-                                }
-                            }
-                        } else {//this means we're in some diagonal direction
-                            //xDist < 0 means current block is left of reference, likewise xDist > 0 means current block is right of reference
-                            //yDist < 0 means current block is above reference, likewise yDist > 0 means current block is below reference
-                            if (yDist < 0) {//block is to the left of the reference
-                                //we know its left so put left but check if we need margin
-                                view += (fullRelativeName(relativeLayouts.TO_LT_OF) + constObstacle + ref.getId() + qm + "\n");
-                                if (Math.abs(yDist) == 2) {
-                                    view += (fullRelativeName(relativeLayouts.MGN_RT) + constDimen + qm + "\n");//margin right moves the block left
-                                }
-                            } else {//its to the right, it can never be equal
-                                //we know its right so put right but check if we need margin
-                                view += (fullRelativeName(relativeLayouts.TO_RT_OF) + constObstacle + ref.getId() + qm + "\n");
-                                if (Math.abs(yDist) == 2) {
-                                    view += (fullRelativeName(relativeLayouts.MGN_LT) + constDimen + qm + "\n");//margin left moves the block right
-                                }
-                            }
-                            if (xDist < 0) {//block is above  reference
-                                view += (fullRelativeName(relativeLayouts.ABV) + constObstacle + ref.getId() + qm + "\n");
-                                if (Math.abs(xDist) == 2) {
-                                    view += (fullRelativeName(relativeLayouts.MGN_BTM) + constDimen + qm + "\n");//margin bottom moves the block up
-                                }
-                            } else {//its below, it can never be equal
-                                view += (fullRelativeName(relativeLayouts.BLW) + constObstacle + ref.getId() + qm + "\n");
-                                if (Math.abs(xDist) == 2) {
-                                    view += (fullRelativeName(relativeLayouts.MGN_TP) + constDimen + qm + "\n");//margin top moves the block down
-                                }
-                            }
-                        }
-
-                    }catch(NullPointerException npe){
+                    } catch (NullPointerException npe) {
+                        System.out.println("XML so far!\n\n" + levelXML.toString());
                         System.out.println("Error: " + npe.getMessage());
                         npe.printStackTrace();
                         System.exit(1);
-                    }catch(Exception e){
+                    } catch (Exception e) {
+                        System.out.println("XML so far!\n\n" + levelXML.toString());
                         System.out.println("Unknown Error: " + e.getMessage());
                         e.printStackTrace();
                         System.exit(1);
                     }
 
 
-                }else if(map.get(new Coordinate(j,i)) instanceof FinishBlock){
-                    block = (FinishBlock)(map.get(new Coordinate(j,i)));
-                }else if(map.get(new Coordinate(j,i)) instanceof MovingBlock){
-                    block = (MovingBlock)(map.get(new Coordinate(j,i)));
-                    block.setId(obId++);//used for variable naming
-                    block.setPlaced(true);
-                    //write block heading
-                    view+=(fullAssetDataName(assetData.ID) +(constRunner + (block.getId())) + qm + "\n");//variable name
-                    view+=(fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
-                    view+=(fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
-                    view+=(fullAssetDataName(assetData.BKRND) + fullAssetName((assets.P_DUD)) + qm + "\n");//const background with respect to the blocktype
-                    //for now we know he will always start in the top left
-                    view+=(fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
-                    view+=(fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
                 }
-                //last line of xml View block must be ending view tag
-                view+=(viewEnd + "\n");
-                levelXML.append(view);
-                lastSeenBlock = block;
             }
         }
         return levelXML;
     }
 
+    //Generates a list of all blocks within range of a given coordinate 
     private HashMap<Coordinate, Block> validRefs(Object coordinate){
         HashMap<Coordinate, Block> validrefs = new HashMap<Coordinate, Block>();
         Coordinate coord = null;
@@ -952,13 +954,17 @@ public class Solver implements Runnable {
         int x = coord.getX();
         int y = coord.getY();
         System.out.println(coord);
-                /*
-                effectively checks the coordinates:
-                */
+
+        /*  I RECOGNIZE the code below is repetitive as hell. But I tried being clever..with the commented out code...and it failed missing some blocks, so in
+            the interest of time I linearly wrote the blocks necessary to check. The code within this method works awesomely. Sure its ugly atm but I don't care.
+            I will fix it later.
+        */
+        
         //check horizontal
-        boolean hor = true;
+        /*boolean hor = true;
         boolean useInc = false;
         int inc = 1;
+        
         for (int i = 1; i < 3; ++i) {
             if (hor) {//horizontal - only check the index if its even a valid index
                 System.out.println("checking: " + new Coordinate(x + (useInc ? inc : 0), y + i).toString());
@@ -974,7 +980,7 @@ public class Solver implements Runnable {
                             }
                         }
                     }
-                }/* b(x, y+1) b(x, y+2), b(x+1, y+1) b(x+1, y+2)*/
+                }// b(x, y+1) b(x, y+2), b(x+1, y+1) b(x+1, y+2)
                 System.out.println("checking: " + new Coordinate(x + (useInc ? inc : 0), y - i).toString());
                 if (isValidCoord(x + (useInc ? inc : 0), y - i) ) {
                     System.out.println("valid!");
@@ -988,7 +994,7 @@ public class Solver implements Runnable {
                             }
                         }
                     }
-                }/* b(x, y-1) b(x, y-2), b(x+1, y-1) b(x+1, y-2)*/
+                }// b(x, y-1) b(x, y-2), b(x+1, y-1) b(x+1, y-2)
                 if (i == 2) {
                     hor = false;
                     i = 1;
@@ -1007,7 +1013,7 @@ public class Solver implements Runnable {
                             }
                         }
                     }
-                }/* b(x+1, y) b(x+2, y) b-repeated(x+1, y+1) b(x+2, y+1)*/
+                }//b(x+1, y) b(x+2, y) b-repeated(x+1, y+1) b(x+2, y+1)
                 System.out.println("checking: " + new Coordinate(x - i, y + (useInc ? inc : 0)).toString());
                 if (isValidCoord(x - i, y + (useInc ? inc : 0))) {
                     System.out.println("is valid!");
@@ -1021,7 +1027,7 @@ public class Solver implements Runnable {
                             }
                         }
                     }
-                }/* b(x-1, y) b(x-2, y) b(x-1, y+1) b(x-2, y+1)*/
+                }// b(x-1, y) b(x-2, y) b(x-1, y+1) b(x-2, y+1)
                 if (i == 2) {
                     if (!useInc) {
                         hor = true;
@@ -1032,71 +1038,309 @@ public class Solver implements Runnable {
                     }
                 }
             }
-        }
+        }*/
+        //^^^^tried getting all fancy. Just ended up screwing up the math
+        
         //check the randoms that didn't get checked - and only if its  valid
                 /*
                 b[x+2][y-1],b[x-1][y-2],b[x-1][y+2],b[x-2][y-1],b[x-1][y-1]
                 */
-        if (isValidCoord(x+2, y-1)) {
+        Coordinate co = new Coordinate(x - 1, y);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
             System.out.println("valid!");
-            if(map.get(new Coordinate(x+2, y-1)) instanceof Block){
+            if (map.get(co) instanceof Block) {
                 System.out.println("im a block!");
-                if(!(map.get(new Coordinate(x+2, y-1)) instanceof EmptyBlock)){
+                if (!(map.get(co) instanceof EmptyBlock)) {
                     System.out.println("not empty!");
-                    if(map.get(new Coordinate(x+2, y-1)).isPlaced()){
+                    if (!map.get(co).isPlaced()) {
                         System.out.println("placing it!");
-                        validrefs.put(new Coordinate(x+2, y-1), map.get(new Coordinate(x+2, y-1)));
+                        validrefs.put(co, map.get(co));
                     }
                 }
             }
         }
-        System.out.println("checking: " + new Coordinate(x-1, y-2).toString());
-        if (isValidCoord(x-1, y-2)  ) {
+        co = new Coordinate(x + 1, y);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
             System.out.println("valid!");
-            if(map.get(new Coordinate(x-1, y-2)) instanceof Block){
-                System.out.println("block!");
-                if(!(map.get(new Coordinate(x-1, y-2)) instanceof EmptyBlock)){
-                    System.out.println("not empty");
-                    if(map.get(new Coordinate(x-1, y-2)).isPlaced()){
-                        System.out.println("placing!");
-                        validrefs.put(new Coordinate(x-1, y-2), map.get(new Coordinate(x-1, y-2)));
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
                     }
                 }
             }
         }
-        System.out.println("checking: " +  new Coordinate(x-1, y+2).toString());
-        if (isValidCoord(x-1, y+2) ) {
+        co = new Coordinate(x, y + 1);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
             System.out.println("valid!");
-            if(map.get(new Coordinate(x-1, y+2)) instanceof Block ){
-                System.out.println("block");
-               if(!(map.get(new Coordinate(x-1, y+2)) instanceof EmptyBlock)){
-                   System.out.println("not empty");
-                   if(map.get(new Coordinate(x-1, y+2)).isPlaced()){
-                       System.out.println("placing");
-                       validrefs.put(new Coordinate(x-1, y+2), map.get(new Coordinate(x-1, y+2)));
-                   }
-               }
-            }
-        }
-                System.out.println("checking: " +  new Coordinate(x-2, y-1));
-        if (isValidCoord(x-2, y-1) ) {
-            System.out.println("vcalid");
-            if( map.get(new Coordinate(x-2, y-1)) instanceof Block ){
-                System.out.println("block");
-                if(!(map.get(new Coordinate(x-2, y-1)) instanceof EmptyBlock) ){
-                    System.out.println("empty not");
-                    if( map.get(new Coordinate(x-2, y-1)).isPlaced()){
-                        System.out.println("placing");
-                        validrefs.put(new Coordinate(x-2, y-1),  map.get(new Coordinate(x-2, y-1)));
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
                     }
                 }
             }
         }
-        if (isValidCoord(x-1, y-1) ) {
-            if(map.get(new Coordinate(x-1, y-1)) instanceof Block){
-                if(!(map.get(new Coordinate(x-1, y-1)) instanceof EmptyBlock)){
-                    if(map.get(new Coordinate(x-1, y-1)).isPlaced()){
-                        validrefs.put(new Coordinate(x-1, y-1), map.get(new Coordinate(x-1, y-1)) );
+        co = new Coordinate(x, y - 1);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
+            System.out.println("valid!");
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
+                    }
+                }
+            }
+        }
+        co = new Coordinate(x + 1, y + 1);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
+            System.out.println("valid!");
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
+                    }
+                }
+            }
+        }
+        co = new Coordinate(x - 1, y + 1);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
+            System.out.println("valid!");
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
+                    }
+                }
+            }
+        }
+        co = new Coordinate(x + 1, y - 1);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
+            System.out.println("valid!");
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
+                    }
+                }
+            }
+        }
+        co = new Coordinate(x - 1, y - 1);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
+            System.out.println("valid!");
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
+                    }
+                }
+            }
+        }
+        co = new Coordinate(x - 2, y);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
+            System.out.println("valid!");
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
+                    }
+                }
+            }
+        }
+        co = new Coordinate(x - 2, y + 1);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
+            System.out.println("valid!");
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
+                    }
+                }
+            }
+        }
+        co = new Coordinate(x - 2, y - 1);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
+            System.out.println("valid!");
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
+                    }
+                }
+            }
+        }
+        co = new Coordinate(x, y + 2);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
+            System.out.println("valid!");
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
+                    }
+                }
+            }
+        }
+        co = new Coordinate(x - 1, y + 2);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
+            System.out.println("valid!");
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
+                    }
+                }
+            }
+        }
+        co = new Coordinate(x + 1, y + 2);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
+            System.out.println("valid!");
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
+                    }
+                }
+            }
+        }
+        co = new Coordinate(x, y - 2);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
+            System.out.println("valid!");
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
+                    }
+                }
+            }
+        }
+        co = new Coordinate(x - 1, y - 2);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
+            System.out.println("valid!");
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
+                    }
+                }
+            }
+        }
+        co = new Coordinate(x + 1, y - 2);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
+            System.out.println("valid!");
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
+                    }
+                }
+            }
+        }
+        co = new Coordinate(x + 2, y);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
+            System.out.println("valid!");
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
+                    }
+                }
+            }
+        }
+        co = new Coordinate(x + 2, y + 1);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
+            System.out.println("valid!");
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
+                    }
+                }
+            }
+        }
+        co = new Coordinate(x + 2, y - 1);
+        System.out.println("checking : " + co.toString());
+        if (isValidCoord(co)) {
+            System.out.println("valid!");
+            if (map.get(co) instanceof Block) {
+                System.out.println("im a block!");
+                if (!(map.get(co) instanceof EmptyBlock)) {
+                    System.out.println("not empty!");
+                    if (!map.get(co).isPlaced()) {
+                        System.out.println("placing it!");
+                        validrefs.put(co, map.get(co));
                     }
                 }
             }
@@ -1104,8 +1348,8 @@ public class Solver implements Runnable {
         return validrefs;
     }
 
-    private boolean isValidCoord(int x, int y){
-        System.out.println("returning " + (x<maxX && x>=0 && y<maxY && y>=0) + "for valid coord");
-        return (x<maxX && x>=0 && y<maxY && y>=0);
+    private boolean isValidCoord(Coordinate c){
+        System.out.println("returning " + (c.getX()<maxX && c.getX()>=0 && c.getY()<maxY && c.getY()>=0) + "for valid coord");
+        return (c.getX()<maxX && c.getX()>=0 && c.getY()<maxY && c.getY()>=0);
     }
 }
