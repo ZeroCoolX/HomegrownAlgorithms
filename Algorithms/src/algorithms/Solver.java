@@ -894,11 +894,11 @@ public class Solver implements Runnable {
             //for (Map.Entry<Coordinate, Block> mapBlock : map.entrySet()) {
                 System.out.println("WRITTEN " + writtenBlocks + " so far building our way up to " + numRocks);
                 //go through each block starting from the top left to the bottom right
-                System.out.println("First block is: " + mapBlock.getValue().getClass().toString() + " with coordinates : " + mapBlock.getValue().getPosition());
+                System.out.println("First block is: " + map.get(new Coordinate(j, i)).getClass().toString() + " with coordinates : " +map.get(new Coordinate(j, i)).getPosition());
 
-                if (mapBlock.getValue() instanceof Block && !(mapBlock.getValue() instanceof EmptyBlock) && mapBlock.getValue().isPlaced()) {//only process the blocks already placed!
+                if (map.get(new Coordinate(j, i)) instanceof Block && !(map.get(new Coordinate(j, i)) instanceof EmptyBlock) && map.get(new Coordinate(j, i)).isPlaced()) {//only process the blocks already placed!
                     //block is already placed and thus has the necessary data to be used at a reference
-                    Block ref = mapBlock.getValue();
+                    Block ref = map.get(new Coordinate(j, i));
                     //holds all the avaliable blocks this block could possible use as a reference
                     System.out.println("Obtaining valid references for block: " +block.getPosition() );
                     avaliableBlocks = validRefs(block.getPosition());
