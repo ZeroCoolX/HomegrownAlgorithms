@@ -889,9 +889,9 @@ public class Solver implements Runnable {
         int placeAllPossibleBlocks = 0;
         //allows for retracing to see is we missed any
         while (writtenBlocks < numRocks) {
-            //for (int i = 0; i < maxY; ++i) {//increments rows
-            //  for (int j = 0; j < maxX; ++j) {//increments rocolumnsws
-            for (Map.Entry<Coordinate, Block> mapBlock : map.entrySet()) {
+            for (int i = 0; i < maxY; ++i) {//increments rows
+              for (int j = 0; j < maxX; ++j) {//increments rocolumnsws
+            //for (Map.Entry<Coordinate, Block> mapBlock : map.entrySet()) {
                 System.out.println("WRITTEN " + writtenBlocks + " so far building our way up to " + numRocks);
                 //go through each block starting from the top left to the bottom right
                 System.out.println("First block is: " + mapBlock.getValue().getClass().toString() + " with coordinates : " + mapBlock.getValue().getPosition());
@@ -1001,9 +1001,9 @@ public class Solver implements Runnable {
                     }
 
                 }
+            //}
             }
-            //}
-            //}
+            }
             ++placeAllPossibleBlocks;
             System.out.println("Retracing map for the " + placeAllPossibleBlocks + " time");
             if (placeAllPossibleBlocks > 10) {
