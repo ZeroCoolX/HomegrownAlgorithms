@@ -887,74 +887,48 @@ public class Solver implements Runnable {
         //obstacle ID so each view block has their own identifier
         int obId = 1;
         int placeAllPossibleBlocks = 0;
+        //allows for retracing to see is we missed any
         while (writtenBlocks < numRocks) {
-            for (int i = 0; i < maxY; ++i) {//increments rows
-                for (int j = 0; j < maxX; ++j) {//increments rocolumnsws
-                    System.out.println("WRITTEN " + writtenBlocks + " so far building our way up to " + numRocks);
-                    //go through each block starting from the top left to the bottom right
-                    System.out.println("First block is: " + map.get(new Coordinate(j, i)).getClass().toString());
+            //for (int i = 0; i < maxY; ++i) {//increments rows
+            //  for (int j = 0; j < maxX; ++j) {//increments rocolumnsws
+            for (Map.Entry<Coordinate, Block> mapBlock : map.entrySet()) {
+                System.out.println("WRITTEN " + writtenBlocks + " so far building our way up to " + numRocks);
+                //go through each block starting from the top left to the bottom right
+                System.out.println("First block is: " + mapBlock.getValue().getClass().toString() + " with coordinates : " + mapBlock.getValue().getPosition());
 
-                    if (map.get(new Coordinate(j, i)) instanceof Block && !(map.get(new Coordinate(j, i)) instanceof EmptyBlock) && map.get(new Coordinate(j, i)).isPlaced()) {//only process the blocks already placed!
-                        //block is already placed and thus has the necessary data to be used at a reference
-                        Block ref = map.get(new Coordinate(j, i));
-                        //holds all the avaliable blocks this block could possible use as a reference
-                        avaliableBlocks = validRefs(block.getPosition());
-                        System.out.println("Size: " + avaliableBlocks.size());
-                        //should never be null but catch to be safe
-                        try {
-                            //for every non placed block in range of ref placed block place all those blocks
-                            for (Map.Entry<Coordinate, Block> entry : avaliableBlocks.entrySet()) {
-                                System.out.println("Processing block: " + entry.getValue().getPosition());
-                                view += (viewStart + "\n");
-                                //just need to grab the first one
-                                if (entry.getValue() instanceof Block && !(entry.getValue() instanceof EmptyBlock)) {
-                                    //found the first of avaliableBlocks.size()
-                                    block = entry.getValue();
-                                    block.setId(obId++);//used for variable naming
-                                    block.setPlaced(true);
-                                    ++writtenBlocks;
-                                    System.out.println("Placing block on map: " + block.getPosition());
-                                    //write block heading
-                                    view += (fullAssetDataName(assetData.ID) + (ref instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId())) + qm + "\n");//variable name
-                                    view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
-                                    view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
-                                    view += (fullAssetDataName(assetData.BKRND) + (ref instanceof FinishBlock ? (fullAssetName((assets.P_FIN))) : (fullAssetName((assets.P_OBST)))) + qm + "\n");//const background with respect to the blocktype
-                                    //current block - reference < 0 its either left of the ref or above it
-                                    int yDist = block.getPosition().getY() - ref.getPosition().getY();
-                                    int xDist = block.getPosition().getX() - ref.getPosition().getX();
+                if (mapBlock.getValue() instanceof Block && !(mapBlock.getValue() instanceof EmptyBlock) && mapBlock.getValue().isPlaced()) {//only process the blocks already placed!
+                    //block is already placed and thus has the necessary data to be used at a reference
+                    Block ref = mapBlock.getValue();
+                    //holds all the avaliable blocks this block could possible use as a reference
+                    System.out.println("Obtaining valid references for block: " +block.getPosition() );
+                    avaliableBlocks = validRefs(block.getPosition());
+                    System.out.println("Size: " + avaliableBlocks.size());
+                    //should never be null but catch to be safe
+                    try {
+                        //for every non placed block in range of ref placed block place all those blocks
+                        for (Map.Entry<Coordinate, Block> entry : avaliableBlocks.entrySet()) {
+                            System.out.println("Processing block: " + entry.getValue().getPosition());
+                            view += (viewStart + "\n");
+                            //just need to grab the first one
+                            if (entry.getValue() instanceof Block && !(entry.getValue() instanceof EmptyBlock)) {
+                                //found the first of avaliableBlocks.size()
+                                block = entry.getValue();
+                                block.setId(obId++);//used for variable naming
+                                block.setPlaced(true);
+                                ++writtenBlocks;
+                                System.out.println("Placing block on map: " + block.getPosition());
+                                //write block heading
+                                view += (fullAssetDataName(assetData.ID) + (ref instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId())) + qm + "\n");//variable name
+                                view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+                                view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+                                view += (fullAssetDataName(assetData.BKRND) + (ref instanceof FinishBlock ? (fullAssetName((assets.P_FIN))) : (fullAssetName((assets.P_OBST)))) + qm + "\n");//const background with respect to the blocktype
+                                //current block - reference < 0 its either left of the ref or above it
+                                int yDist = block.getPosition().getY() - ref.getPosition().getY();
+                                int xDist = block.getPosition().getX() - ref.getPosition().getX();
 
-                                    //if either of the distances are 0 this means they either share the same X or the same Y plane
-                                    if (xDist == 0 || yDist == 0) {
-                                        if (yDist == 0) {
-                                            if (xDist < 0) {//block is to the left of the reference
-                                                //we know its left so put left but check if we need margin
-                                                view += (fullRelativeName(relativeLayouts.TO_LT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                                if (Math.abs(xDist) == 2) {
-                                                    view += (fullRelativeName(relativeLayouts.MGN_RT) + constDimen + qm + "\n");//margin right moves the block left
-                                                }
-                                            } else {//its to the right, it can never be equal
-                                                //we know its right so put right but check if we need margin
-                                                view += (fullRelativeName(relativeLayouts.TO_RT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                                if (Math.abs(yDist) == 2) {
-                                                    view += (fullRelativeName(relativeLayouts.MGN_LT) + constDimen + qm + "\n");//margin left moves the block right
-                                                }
-                                            }
-                                        } else {//if its not xDist we know its yDist==0 otherwise we'd never have gottten in here
-                                            if (yDist < 0) {//block is above  reference
-                                                view += (fullRelativeName(relativeLayouts.ABV) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                                if (Math.abs(yDist) == 2) {
-                                                    view += (fullRelativeName(relativeLayouts.MGN_BTM) + constDimen + qm + "\n");//margin bottom moves the block up
-                                                }
-                                            } else {//its below, it can never be equal
-                                                view += (fullRelativeName(relativeLayouts.BLW) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                                if (Math.abs(yDist) == 2) {
-                                                    view += (fullRelativeName(relativeLayouts.MGN_TP) + constDimen + qm + "\n");//margin top moves the block down
-                                                }
-                                            }
-                                        }
-                                    } else {//this means we're in some diagonal direction
-                                        //xDist < 0 means current block is left of reference, likewise xDist > 0 means current block is right of reference
-                                        //yDist < 0 means current block is above reference, likewise yDist > 0 means current block is below reference
+                                //if either of the distances are 0 this means they either share the same X or the same Y plane
+                                if (xDist == 0 || yDist == 0) {
+                                    if (yDist == 0) {
                                         if (xDist < 0) {//block is to the left of the reference
                                             //we know its left so put left but check if we need margin
                                             view += (fullRelativeName(relativeLayouts.TO_LT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
@@ -964,10 +938,11 @@ public class Solver implements Runnable {
                                         } else {//its to the right, it can never be equal
                                             //we know its right so put right but check if we need margin
                                             view += (fullRelativeName(relativeLayouts.TO_RT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                            if (Math.abs(xDist) == 2) {
+                                            if (Math.abs(yDist) == 2) {
                                                 view += (fullRelativeName(relativeLayouts.MGN_LT) + constDimen + qm + "\n");//margin left moves the block right
                                             }
                                         }
+                                    } else {//if its not xDist we know its yDist==0 otherwise we'd never have gottten in here
                                         if (yDist < 0) {//block is above  reference
                                             view += (fullRelativeName(relativeLayouts.ABV) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
                                             if (Math.abs(yDist) == 2) {
@@ -980,36 +955,69 @@ public class Solver implements Runnable {
                                             }
                                         }
                                     }
-                                    view += (viewEnd + "\n");
-                                    levelXML.append(view);
-                                    view = "";
+                                } else {//this means we're in some diagonal direction
+                                    //xDist < 0 means current block is left of reference, likewise xDist > 0 means current block is right of reference
+                                    //yDist < 0 means current block is above reference, likewise yDist > 0 means current block is below reference
+                                    if (xDist < 0) {//block is to the left of the reference
+                                        //we know its left so put left but check if we need margin
+                                        view += (fullRelativeName(relativeLayouts.TO_LT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                        if (Math.abs(xDist) == 2) {
+                                            view += (fullRelativeName(relativeLayouts.MGN_RT) + constDimen + qm + "\n");//margin right moves the block left
+                                        }
+                                    } else {//its to the right, it can never be equal
+                                        //we know its right so put right but check if we need margin
+                                        view += (fullRelativeName(relativeLayouts.TO_RT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                        if (Math.abs(xDist) == 2) {
+                                            view += (fullRelativeName(relativeLayouts.MGN_LT) + constDimen + qm + "\n");//margin left moves the block right
+                                        }
+                                    }
+                                    if (yDist < 0) {//block is above  reference
+                                        view += (fullRelativeName(relativeLayouts.ABV) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                        if (Math.abs(yDist) == 2) {
+                                            view += (fullRelativeName(relativeLayouts.MGN_BTM) + constDimen + qm + "\n");//margin bottom moves the block up
+                                        }
+                                    } else {//its below, it can never be equal
+                                        view += (fullRelativeName(relativeLayouts.BLW) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                        if (Math.abs(yDist) == 2) {
+                                            view += (fullRelativeName(relativeLayouts.MGN_TP) + constDimen + qm + "\n");//margin top moves the block down
+                                        }
+                                    }
                                 }
+                                view += (viewEnd + "\n");
+                                levelXML.append(view);
+                                view = "";
                             }
-                        } catch (NullPointerException npe) {
-                            System.out.println("XML so far!\n\n" + levelXML.toString());
-                            System.out.println("Error: " + npe.getMessage());
-                            npe.printStackTrace();
-                            System.exit(1);
-                        } catch (Exception e) {
-                            System.out.println("XML so far!\n\n" + levelXML.toString());
-                            System.out.println("Unknown Error: " + e.getMessage());
-                            e.printStackTrace();
-                            System.exit(1);
                         }
-
+                    } catch (NullPointerException npe) {
+                        System.out.println("XML so far!\n\n" + levelXML.toString());
+                        System.out.println("Error: " + npe.getMessage());
+                        npe.printStackTrace();
+                        System.exit(1);
+                    } catch (Exception e) {
+                        System.out.println("XML so far!\n\n" + levelXML.toString());
+                        System.out.println("Unknown Error: " + e.getMessage());
+                        e.printStackTrace();
+                        System.exit(1);
                     }
+
                 }
             }
+            //}
+            //}
             ++placeAllPossibleBlocks;
             System.out.println("Retracing map for the " + placeAllPossibleBlocks + " time");
-            if(placeAllPossibleBlocks > 25){
-                //if we have traversed from (0,0) to (w-1,h-1) 25+ times this means we've placed all the blocks we can. 
+            if (placeAllPossibleBlocks > 10) {
+                //if we have traversed from (0,0) to (w-1,h-1) 10+ times this means we've placed all the blocks we can. 
                 //The blocks that are left and unreachable and must be placed using the filler!
                 break;
             }
         }
-        System.out.println("Successfully Placed " + writtenBlocks + " blocks and was unable to place (due to unreachable location) " + (numRocks-writtenBlocks) + " locations");
+        System.out.println("Successfully Placed " + writtenBlocks + " blocks and was unable to place (due to unreachable location) " + (numRocks - writtenBlocks) + " locations");
         return levelXML;
+    }
+    
+    private Block placeFiller(Coordinate coord){
+    return null;
     }
 
     //Generates a list of all blocks within range of a given coordinate 
