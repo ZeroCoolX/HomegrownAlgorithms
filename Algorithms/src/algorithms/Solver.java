@@ -22,7 +22,7 @@ public class Solver implements Runnable {
     private static int minMoves = 7;
     private static int maxMoves = 30;
     private static int retryCount = 0;
-
+    
     private static boolean superDebug = false;
     private static boolean showPath = true;
 
@@ -796,6 +796,33 @@ public class Solver implements Runnable {
                 return "error";
         }
     }
+    
+    private Stack<Coordinate> calculateRange(Coordinate c){
+        int x = c.getX();
+        int y = c.getY();
+        Stack<Coordinate> range = new Stack<Coordinate>();
+        range.push(new Coordinate(x - 1, y));
+        range.push(new Coordinate(x + 1, y));
+        range.push(new Coordinate(x, y + 1));
+        range.push(new Coordinate(x, y - 1));
+        range.push(new Coordinate(x + 1, y + 1));
+        range.push(new Coordinate(x - 1, y + 1));
+        range.push(new Coordinate(x + 1, y - 1));
+        range.push(new Coordinate(x - 1, y - 1));
+        range.push(new Coordinate(x - 2, y));
+        range.push(new Coordinate(x - 2, y + 1));
+        range.push(new Coordinate(x - 2, y - 1));
+        range.push(new Coordinate(x, y + 2));
+        range.push(new Coordinate(x - 1, y + 2));
+        range.push(new Coordinate(x + 1, y + 2));
+        range.push(new Coordinate(x, y - 2));
+        range.push(new Coordinate(x - 1, y - 2));
+        range.push(new Coordinate(x + 1, y - 2));
+        range.push(new Coordinate(x + 2, y));
+        range.push(new Coordinate(x + 2, y + 1));
+        range.push(new Coordinate(x + 2, y - 1));
+        return range;
+    }
 
     private StringBuilder build(){
         //constant xml file header
@@ -845,6 +872,7 @@ public class Solver implements Runnable {
                     try {
                         //for every non placed block in range of ref placed block place all those blocks
                         for (Map.Entry<Coordinate, Block> entry : avaliableBlocks.entrySet()) {
+                            System.out.println("Processing block: " + entry.getValue().getPosition());
                             view+=(viewStart + "\n");
                             //just need to grab the first one
                             if (entry.getValue() instanceof Block && !(entry.getValue() instanceof EmptyBlock)) {
@@ -852,6 +880,7 @@ public class Solver implements Runnable {
                                 block = entry.getValue();
                                 block.setId(obId++);//used for variable naming
                                 block.setPlaced(true);
+                                System.out.println("Placing block on map: " + block.getPosition());
                                 //write block heading
                                 view+=(fullAssetDataName(assetData.ID) + (ref instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId())) + qm + "\n");//variable name
                                 view+=(fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
@@ -951,11 +980,27 @@ public class Solver implements Runnable {
         }else{
             return null;//show not happen but just in case
         }
-        int x = coord.getX();
-        int y = coord.getY();
         System.out.println(coord);
-
-        /*  I RECOGNIZE the code below is repetitive as hell. But I tried being clever..with the commented out code...and it failed missing some blocks, so in
+        Stack<Coordinate> range = calculateRange(coord);
+        while (!range.isEmpty()) {
+            Coordinate co = range.pop();
+            System.out.println("checking : " + co.toString());
+            if (isValidCoord(co)) {
+                System.out.println("valid!");
+                if (map.get(co) instanceof Block) {
+                    System.out.println("im a block!");
+                    if (!(map.get(co) instanceof EmptyBlock)) {
+                        System.out.println("not empty!");
+                        if (!map.get(co).isPlaced()) {
+                            System.out.println("placing it!");
+                            validrefs.put(co, map.get(co));
+                        }
+                    }
+                }
+            }
+        }
+        return validrefs;
+        /*  I RECOGNIZE the code below is a bit repetitive . But I tried being clever..with the commented out code...and it failed missing some blocks, so in
             the interest of time I linearly wrote the blocks necessary to check. The code within this method works awesomely. Sure its ugly atm but I don't care.
             I will fix it later.
         */
@@ -1045,307 +1090,6 @@ public class Solver implements Runnable {
                 /*
                 b[x+2][y-1],b[x-1][y-2],b[x-1][y+2],b[x-2][y-1],b[x-1][y-1]
                 */
-        Coordinate co = new Coordinate(x - 1, y);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x + 1, y);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x, y + 1);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x, y - 1);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x + 1, y + 1);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x - 1, y + 1);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x + 1, y - 1);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x - 1, y - 1);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x - 2, y);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x - 2, y + 1);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x - 2, y - 1);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x, y + 2);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x - 1, y + 2);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x + 1, y + 2);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x, y - 2);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x - 1, y - 2);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x + 1, y - 2);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x + 2, y);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x + 2, y + 1);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        co = new Coordinate(x + 2, y - 1);
-        System.out.println("checking : " + co.toString());
-        if (isValidCoord(co)) {
-            System.out.println("valid!");
-            if (map.get(co) instanceof Block) {
-                System.out.println("im a block!");
-                if (!(map.get(co) instanceof EmptyBlock)) {
-                    System.out.println("not empty!");
-                    if (!map.get(co).isPlaced()) {
-                        System.out.println("placing it!");
-                        validrefs.put(co, map.get(co));
-                    }
-                }
-            }
-        }
-        return validrefs;
     }
 
     private boolean isValidCoord(Coordinate c){
