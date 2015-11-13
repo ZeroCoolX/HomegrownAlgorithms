@@ -18,7 +18,7 @@ public class Solver implements Runnable {
     private static List<Long> execTimes = Collections.synchronizedList(new ArrayList<Long>());
     private static boolean foundGoodMap = false;
     private static int maxX = 11;
-    private static int maxY = 17;
+    private static int maxY = 15;
     private static int minMoves = 7;
     private static int maxMoves = 30;
     private static int retryCount = 0;
@@ -95,7 +95,7 @@ public class Solver implements Runnable {
                 EmptyBlock emptyBlock = new EmptyBlock(currentCoordinate);
                 emptyBlock.setPosition(currentCoordinate);
                 map.put(currentCoordinate, emptyBlock);
-                if ((i != 0 && a != 0) && Math.random() * 100 > 60) {
+                if ((i != 0 && a != 0) && Math.random() * 100 > 85) {
                     RockBlock rockBlock = new RockBlock();
                     rockBlock.setPosition(currentCoordinate);
                     map.put(currentCoordinate, rockBlock);
@@ -683,7 +683,7 @@ public class Solver implements Runnable {
     private static final String dimenFile = "=\"@dimen/";
     private static final String drawFile="=\"@drawable/";
     private static final String qm = "\"";
-    private static final String tr="=\"true";
+    private static final String tr="=true";
     //constant names for variable names. Sequentially increasing numbers are just appended onto them for each new instance
     private static final String constObstacle = "obstacle";
     private static final String constRunner = "dude";
@@ -826,7 +826,7 @@ public class Solver implements Runnable {
         }
     }
     
-    private Stack<Coordinate> calculateRange(Coordinate c){
+    private Stack<Coordinate> calculateRangeInner(Coordinate c){
         int x = c.getX();
         int y = c.getY();
         Stack<Coordinate> range = new Stack<Coordinate>();
@@ -852,6 +852,21 @@ public class Solver implements Runnable {
         range.push(new Coordinate(x + 2, y - 1));
         return range;
     }
+    
+    private Stack<Coordinate> calculateRange(Coordinate c){
+        int x = c.getX();
+        int y = c.getY();
+        Stack<Coordinate> range = new Stack<Coordinate>();
+        range.push(new Coordinate(x + 1, y));
+        range.push(new Coordinate(x - 1, y));
+        range.push(new Coordinate(x + 2, y));
+        range.push(new Coordinate(x - 2, y));
+        range.push(new Coordinate(x, y + 1));
+        range.push(new Coordinate(x, y - 1));
+        range.push(new Coordinate(x, y + 2));
+        range.push(new Coordinate(x, y - 2));
+        return range;
+    }
 
     private StringBuilder build() {
         //constant xml file header
@@ -862,7 +877,7 @@ public class Solver implements Runnable {
         levelXML.append(viewEnd + "\n");
 
         //store xml block for runner because it needs to be appended at the end, but
-        String runnerXML = "";
+        String runnerView = "";
         //Current block being written
         Block block = null;
         String view = "";
@@ -873,20 +888,238 @@ public class Solver implements Runnable {
         block = (MovingBlock) (map.get(new Coordinate(0, 0)));
         block.setPlaced(true);
         //write block heading
-        view += (fullAssetDataName(assetData.ID) + (constRunner) + qm + "\n");//variable name
-        view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
-        view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
-        view += (fullAssetDataName(assetData.BKRND) + fullAssetName((assets.P_DUD)) + qm + "\n");//const background with respect to the blocktype
+        runnerView += viewStart + "\n";
+        runnerView += (fullAssetDataName(assetData.ID) + (constRunner) + qm + "\n");//variable name
+        runnerView += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+        runnerView += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+        runnerView += (fullAssetDataName(assetData.BKRND) + fullAssetName((assets.P_DUD)) + qm + "\n");//const background with respect to the blocktype
         //for now we know he will always start in the top left
-        view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
-        view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
-        view += (viewEnd + "\n");
-        levelXML.append(view);
+        runnerView += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+        runnerView += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
+        runnerView += (viewEnd + "\n");
         ++writtenBlocks;
         view = "";
         //obstacle ID so each view block has their own identifier
         int obId = 1;
         int placeAllPossibleBlocks = 0;
+        
+        //place possible known blocks
+        /*
+        place middle left, top, right, down if present
+        place actual middle if present.
+        */
+        //all four corners if present
+        
+        //also place some other blocks for easier building
+        if(map.get(new Coordinate(maxX-1, maxY-1)) instanceof EmptyBlock){
+            map.put(new Coordinate(maxX-1, maxY-1), new RockBlock());
+            map.get(new Coordinate(maxX-1, maxY-1)).setPosition(new Coordinate(maxX-1, maxY-1));
+            block = map.get(new Coordinate(maxX-1, maxY-1));
+            block.setPlaced(true);
+            block.setId(obId);
+            ++obId;
+            //write block heading
+            view += viewStart + "\n";
+            view += (fullAssetDataName(assetData.ID) + (constObstacle + block.getId()) + qm + "\n");//variable name
+            view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+            view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+            view += (fullAssetDataName(assetData.BKRND) + (fullAssetName((assets.P_OBST))) + qm + "\n");//const background with respect to the blocktype
+            //for now we know he will always start in the top left
+            view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
+            view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
+            view += (viewEnd + "\n");
+        }
+        
+/******************CONSTANT LOCATIONS******************/
+        block = map.get(new Coordinate(0, 0));
+        if (block instanceof Block && !(block instanceof EmptyBlock)) {//top left
+            System.out.println("Processing block: " + block.getPosition());
+            view += (viewStart + "\n");
+            block.setId(obId);//used for variable naming
+            obId++;
+            block.setPlaced(true);
+            System.out.println("Placing block on map: " + block.getPosition());
+            //write block heading
+            view += (fullAssetDataName(assetData.ID) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId()))) + qm + "\n");//variable name
+            view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+            view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+            view += (fullAssetDataName(assetData.BKRND) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (fullAssetName((assets.P_FIN))) : (fullAssetName((assets.P_OBST))))) + qm + "\n");//const background with respect to the blocktype
+            view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+            view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
+            view += (viewEnd + "\n");
+            levelXML.append(view);
+            view = "";
+            ++writtenBlocks;
+        }
+        block = map.get(new Coordinate(maxX-1, maxY-1));
+        if (block instanceof Block && !(block instanceof EmptyBlock)) {//bottom right
+            System.out.println("Processing block: " + block.getPosition());
+            view += (viewStart + "\n");
+            block.setId(obId);//used for variable naming
+            obId++;
+            block.setPlaced(true);
+            System.out.println("Placing block on map: " + block.getPosition());
+            //write block heading
+            view += (fullAssetDataName(assetData.ID) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId()))) + qm + "\n");//variable name
+            view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+            view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+            view += (fullAssetDataName(assetData.BKRND) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (fullAssetName((assets.P_FIN))) : (fullAssetName((assets.P_OBST))))) + qm + "\n");//const background with respect to the blocktype
+            view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
+            view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
+            view += (viewEnd + "\n");
+            levelXML.append(view);
+            view = "";
+            ++writtenBlocks;
+        }
+        block = map.get(new Coordinate(0, maxY-1));
+        if (block instanceof Block && !(block instanceof EmptyBlock)) {//top right
+            System.out.println("Processing block: " + block.getPosition());
+            view += (viewStart + "\n");
+            block.setId(obId);//used for variable naming
+            obId++;
+            block.setPlaced(true);
+            System.out.println("Placing block on map: " + block.getPosition());
+            //write block heading
+            view += (fullAssetDataName(assetData.ID) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId()))) + qm + "\n");//variable name
+            view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+            view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+            view += (fullAssetDataName(assetData.BKRND) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (fullAssetName((assets.P_FIN))) : (fullAssetName((assets.P_OBST))))) + qm + "\n");//const background with respect to the blocktype
+            view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+            view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
+            view += (viewEnd + "\n");
+            levelXML.append(view);
+            view = "";
+            ++writtenBlocks;
+        }
+        block = map.get(new Coordinate(maxX-1, 0));
+        if (block instanceof Block && !(block instanceof EmptyBlock)) {//bottom left
+            System.out.println("Processing block: " + block.getPosition());
+            view += (viewStart + "\n");
+            block.setId(obId);//used for variable naming
+            obId++;
+            block.setPlaced(true);
+            System.out.println("Placing block on map: " + block.getPosition());
+            //write block heading
+            view += (fullAssetDataName(assetData.ID) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId()))) + qm + "\n");//variable name
+            view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+            view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+            view += (fullAssetDataName(assetData.BKRND) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (fullAssetName((assets.P_FIN))) : (fullAssetName((assets.P_OBST))))) + qm + "\n");//const background with respect to the blocktype
+            view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
+            view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
+            view += (viewEnd + "\n");
+            levelXML.append(view);
+            view = "";
+            ++writtenBlocks;
+        }
+        //check centers left, right, up, down, and exact middle
+        int midX = maxX/2;
+        int midY = maxY/2;
+        block = map.get(new Coordinate(0, midY));
+        if (block instanceof Block && !(block instanceof EmptyBlock)) {//top middle
+            System.out.println("Processing block: " + block.getPosition());
+            view += (viewStart + "\n");
+            block.setId(obId);//used for variable naming
+            block.setPlaced(true);
+            obId++;
+            System.out.println("Placing block on map: " + block.getPosition());
+            //write block heading
+            view += (fullAssetDataName(assetData.ID) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId()))) + qm + "\n");//variable name
+            view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+            view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+            view += (fullAssetDataName(assetData.BKRND) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (fullAssetName((assets.P_FIN))) : (fullAssetName((assets.P_OBST))))) + qm + "\n");//const background with respect to the blocktype
+            view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+            view += (fullAbsoluteName(absoluteLayouts.CENT_HOR) + tr + qm + "\n");
+            view += (viewEnd + "\n");
+            levelXML.append(view);
+            view = "";
+            ++writtenBlocks;
+        }
+        block = map.get(new Coordinate(midX, 0));
+        if (block instanceof Block && !(block instanceof EmptyBlock)) {//bottom middle
+            System.out.println("Processing block: " + block.getPosition());
+            view += (viewStart + "\n");
+            block.setId(obId);//used for variable naming
+            obId++;
+            block.setPlaced(true);
+            System.out.println("Placing block on map: " + block.getPosition());
+            //write block heading
+            view += (fullAssetDataName(assetData.ID) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId()))) + qm + "\n");//variable name
+            view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+            view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+            view += (fullAssetDataName(assetData.BKRND) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (fullAssetName((assets.P_FIN))) : (fullAssetName((assets.P_OBST))))) + qm + "\n");//const background with respect to the blocktype
+            view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
+            view += (fullAbsoluteName(absoluteLayouts.CENT_HOR) + tr + qm + "\n");
+            view += (viewEnd + "\n");
+            levelXML.append(view);
+            view = "";
+            ++writtenBlocks;
+        }
+        block = map.get(new Coordinate(maxX-1, midY));
+        if (block instanceof Block && !(block instanceof EmptyBlock)) {//middle right
+            System.out.println("Processing block: " + block.getPosition());
+            view += (viewStart + "\n");
+            block.setId(obId);//used for variable naming
+            obId++;
+            block.setPlaced(true);
+            System.out.println("Placing block on map: " + block.getPosition());
+            //write block heading
+            view += (fullAssetDataName(assetData.ID) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId()))) + qm + "\n");//variable name
+            view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+            view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+            view += (fullAssetDataName(assetData.BKRND) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (fullAssetName((assets.P_FIN))) : (fullAssetName((assets.P_OBST))))) + qm + "\n");//const background with respect to the blocktype
+            view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
+            view += (fullAbsoluteName(absoluteLayouts.CENT_VERT) + tr + qm + "\n");
+            view += (viewEnd + "\n");
+            levelXML.append(view);
+            view = "";
+            ++writtenBlocks;
+        }
+        block = map.get(new Coordinate(0, midY));
+        if (block instanceof Block && !(block instanceof EmptyBlock)) {//middle left
+            System.out.println("Processing block: " + block.getPosition());
+            view += (viewStart + "\n");
+            block.setId(obId);//used for variable naming
+            obId++;
+            block.setPlaced(true);
+            System.out.println("Placing block on map: " + block.getPosition());
+            //write block heading
+            view += (fullAssetDataName(assetData.ID) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId()))) + qm + "\n");//variable name
+            view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+            view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+            view += (fullAssetDataName(assetData.BKRND) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (fullAssetName((assets.P_FIN))) : (fullAssetName((assets.P_OBST))))) + qm + "\n");//const background with respect to the blocktype
+            view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
+            view += (fullAbsoluteName(absoluteLayouts.CENT_VERT) + tr + qm + "\n");
+            view += (viewEnd + "\n");
+            levelXML.append(view);
+            view = "";
+            ++writtenBlocks;
+        }
+        block = map.get(new Coordinate(midX, midY));
+        if (block instanceof Block && !(block instanceof EmptyBlock)) {//middle EXACTLY!!!!
+            System.out.println("Processing block: " + block.getPosition());
+            view += (viewStart + "\n");
+            block.setId(obId);//used for variable naming
+            obId++;
+            block.setPlaced(true);
+            System.out.println("Placing block on map: " + block.getPosition());
+            //write block heading
+            view += (fullAssetDataName(assetData.ID) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId()))) + qm + "\n");//variable name
+            view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+            view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+            view += (fullAssetDataName(assetData.BKRND) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (fullAssetName((assets.P_FIN))) : (fullAssetName((assets.P_OBST))))) + qm + "\n");//const background with respect to the blocktype
+            view += (fullAbsoluteName(absoluteLayouts.CENT_VERT) + tr + qm + "\n");
+            view += (fullAbsoluteName(absoluteLayouts.CENT_HOR) + tr + qm + "\n");
+            view += (viewEnd + "\n");
+            levelXML.append(view);
+            view = "";
+            ++writtenBlocks;
+        }
+/******************CONSTANT LOCATIONS******************/
+        
+        /*
+            Alright. Now we need to first do the same checks as before in case there are any blocks within the "margin avaliable" range
+        */
+        
         //allows for retracing to see is we missed any
         while (writtenBlocks < numRocks) {
             for (int i = 0; i < maxY; ++i) {//increments rows
@@ -897,39 +1130,70 @@ public class Solver implements Runnable {
                     //go through each block starting from the top left to the bottom right
                     System.out.println("First block is: " + map.get(new Coordinate(j, i)).getClass().toString() + " with coordinates : " + map.get(new Coordinate(j, i)).getPosition());
 
-                    if (map.get(new Coordinate(j, i)) instanceof Block && !(map.get(new Coordinate(j, i)) instanceof EmptyBlock) && map.get(new Coordinate(j, i)).isPlaced()) {//only process the blocks already placed!
+                    if (map.get(new Coordinate(j, i)) instanceof Block && !(map.get(new Coordinate(j, i)) instanceof EmptyBlock) && !(map.get(new Coordinate(j, i)).isPlaced())) {//only try and place blocks not placeds
                         //block is already placed and thus has the necessary data to be used at a reference
-                        Block ref = map.get(new Coordinate(j, i));
+                        block = map.get(new Coordinate(j, i));
                         //holds all the avaliable blocks this block could possible use as a reference
                         System.out.println("Obtaining valid references for block: " + block.getPosition());
-                        avaliableBlocks = validRefs(ref.getPosition());
+                        avaliableBlocks = validRefs(block.getPosition(), 2);
                         System.out.println("Size: " + avaliableBlocks.size());
                         //should never be null but catch to be safe
                         try {
-                            //for every non placed block in range of ref placed block place all those blocks
-                            for (Map.Entry<Coordinate, Block> entry : avaliableBlocks.entrySet()) {
-                                System.out.println("Processing block: " + entry.getValue().getPosition());
-                                view += (viewStart + "\n");
-                                //just need to grab the first one
-                                if (entry.getValue() instanceof Block && !(entry.getValue() instanceof EmptyBlock)) {
-                                    //found the first of avaliableBlocks.size()
-                                    block = entry.getValue();
-                                    block.setId(obId++);//used for variable naming
-                                    block.setPlaced(true);
-                                    ++writtenBlocks;
-                                    System.out.println("Placing block on map: " + block.getPosition());
-                                    //write block heading
-                                    view += (fullAssetDataName(assetData.ID) + (ref instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId())) + qm + "\n");//variable name
-                                    view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
-                                    view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
-                                    view += (fullAssetDataName(assetData.BKRND) + (ref instanceof FinishBlock ? (fullAssetName((assets.P_FIN))) : (fullAssetName((assets.P_OBST)))) + qm + "\n");//const background with respect to the blocktype
-                                    //current block - reference < 0 its either left of the ref or above it
-                                    int yDist = block.getPosition().getY() - ref.getPosition().getY();
-                                    int xDist = block.getPosition().getX() - ref.getPosition().getX();
+                            if (avaliableBlocks.size() > 0) {//if there are at least 1 avaliable blocks we're good to use that as a reference! otherwise we gotta search further
+                                //for every non placed block in range of ref placed block place all those blocks
+                                for (Map.Entry<Coordinate, Block> entry : avaliableBlocks.entrySet()) {
+                                    System.out.println("Processing block: " + entry.getValue().getPosition());
+                                    view += (viewStart + "\n");
+                                    //just need to grab the first one
+                                    if (entry.getValue() instanceof Block && !(entry.getValue() instanceof EmptyBlock)) {
+                                        //found the first of avaliableBlocks.size()
+                                        Block ref = entry.getValue();
+                                        block.setId(obId);//used for variable naming
+                                        obId++;
+                                        block.setPlaced(true);
+                                        ++writtenBlocks;
+                                        System.out.println("Placing block on map: " + block.getPosition());
+                                        //write block heading
+                                        view += (fullAssetDataName(assetData.ID) + (block instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId())) + qm + "\n");//variable name
+                                        view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+                                        view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+                                        view += (fullAssetDataName(assetData.BKRND) + (block instanceof FinishBlock ? (fullAssetName((assets.P_FIN))) : (fullAssetName((assets.P_OBST)))) + qm + "\n");//const background with respect to the blocktype
+                                        //current block - reference < 0 its either left of the ref or above it
+                                        int yDist = block.getPosition().getY() - ref.getPosition().getY();
+                                        int xDist = block.getPosition().getX() - ref.getPosition().getX();
 
-                                    //if either of the distances are 0 this means they either share the same X or the same Y plane
-                                    if (xDist == 0 || yDist == 0) {
-                                        if (yDist == 0) {
+                                        //if either of the distances are 0 this means they either share the same X or the same Y plane
+                                        if (xDist == 0 || yDist == 0) {
+                                            if (yDist == 0) {
+                                                if (xDist < 0) {//block is to the left of the reference
+                                                    //we know its left so put left but check if we need margin
+                                                    view += (fullRelativeName(relativeLayouts.TO_LT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                                    if (Math.abs(xDist) == 2) {
+                                                        view += (fullRelativeName(relativeLayouts.MGN_RT) + constDimen + qm + "\n");//margin right moves the block left
+                                                    }
+                                                } else {//its to the right, it can never be equal
+                                                    //we know its right so put right but check if we need margin
+                                                    view += (fullRelativeName(relativeLayouts.TO_RT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                                    if (Math.abs(yDist) == 2) {
+                                                        view += (fullRelativeName(relativeLayouts.MGN_LT) + constDimen + qm + "\n");//margin left moves the block right
+                                                    }
+                                                }
+                                            } else {//if its not xDist we know its yDist==0 otherwise we'd never have gottten in here
+                                                if (yDist < 0) {//block is above  reference
+                                                    view += (fullRelativeName(relativeLayouts.ABV) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                                    if (Math.abs(yDist) == 2) {
+                                                        view += (fullRelativeName(relativeLayouts.MGN_BTM) + constDimen + qm + "\n");//margin bottom moves the block up
+                                                    }
+                                                } else {//its below, it can never be equal
+                                                    view += (fullRelativeName(relativeLayouts.BLW) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                                    if (Math.abs(yDist) == 2) {
+                                                        view += (fullRelativeName(relativeLayouts.MGN_TP) + constDimen + qm + "\n");//margin top moves the block down
+                                                    }
+                                                }
+                                            }
+                                        } else {//this means we're in some diagonal direction
+                                            //xDist < 0 means current block is left of reference, likewise xDist > 0 means current block is right of reference
+                                            //yDist < 0 means current block is above reference, likewise yDist > 0 means current block is below reference
                                             if (xDist < 0) {//block is to the left of the reference
                                                 //we know its left so put left but check if we need margin
                                                 view += (fullRelativeName(relativeLayouts.TO_LT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
@@ -939,11 +1203,10 @@ public class Solver implements Runnable {
                                             } else {//its to the right, it can never be equal
                                                 //we know its right so put right but check if we need margin
                                                 view += (fullRelativeName(relativeLayouts.TO_RT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                                if (Math.abs(yDist) == 2) {
+                                                if (Math.abs(xDist) == 2) {
                                                     view += (fullRelativeName(relativeLayouts.MGN_LT) + constDimen + qm + "\n");//margin left moves the block right
                                                 }
                                             }
-                                        } else {//if its not xDist we know its yDist==0 otherwise we'd never have gottten in here
                                             if (yDist < 0) {//block is above  reference
                                                 view += (fullRelativeName(relativeLayouts.ABV) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
                                                 if (Math.abs(yDist) == 2) {
@@ -956,37 +1219,80 @@ public class Solver implements Runnable {
                                                 }
                                             }
                                         }
-                                    } else {//this means we're in some diagonal direction
-                                        //xDist < 0 means current block is left of reference, likewise xDist > 0 means current block is right of reference
-                                        //yDist < 0 means current block is above reference, likewise yDist > 0 means current block is below reference
-                                        if (xDist < 0) {//block is to the left of the reference
-                                            //we know its left so put left but check if we need margin
-                                            view += (fullRelativeName(relativeLayouts.TO_LT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                            if (Math.abs(xDist) == 2) {
-                                                view += (fullRelativeName(relativeLayouts.MGN_RT) + constDimen + qm + "\n");//margin right moves the block left
-                                            }
-                                        } else {//its to the right, it can never be equal
-                                            //we know its right so put right but check if we need margin
-                                            view += (fullRelativeName(relativeLayouts.TO_RT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                            if (Math.abs(xDist) == 2) {
-                                                view += (fullRelativeName(relativeLayouts.MGN_LT) + constDimen + qm + "\n");//margin left moves the block right
-                                            }
-                                        }
-                                        if (yDist < 0) {//block is above  reference
-                                            view += (fullRelativeName(relativeLayouts.ABV) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                            if (Math.abs(yDist) == 2) {
-                                                view += (fullRelativeName(relativeLayouts.MGN_BTM) + constDimen + qm + "\n");//margin bottom moves the block up
-                                            }
-                                        } else {//its below, it can never be equal
-                                            view += (fullRelativeName(relativeLayouts.BLW) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                            if (Math.abs(yDist) == 2) {
-                                                view += (fullRelativeName(relativeLayouts.MGN_TP) + constDimen + qm + "\n");//margin top moves the block down
-                                            }
+                                        view += (viewEnd + "\n");
+                                        levelXML.append(view);
+                                        view = "";
+                                    }
+                                    //we only needed to process one of them
+                                    break;
+                                }
+                            }else {
+                                //if there were no blocks in the immediate range we need to check accross the entire map 
+                                //holds all the avaliable blocks this block could possible use as a reference
+                                System.out.println("Obtaining valid references for block: " + block.getPosition() + " version 2");
+                                //max amount could be 8 items. if its 0...gtfo
+                                avaliableBlocks = validRefs(block.getPosition(), 2);
+                                System.out.println("Size: " + avaliableBlocks.size());
+                                if(avaliableBlocks.size() > 0){
+                                    //we need to find a horizontal reference and a vertical reference from the list
+                                    Block horRef = null;
+                                    Block vertRef = null;
+                                    boolean hFound = false;
+                                    boolean vFound = false;
+                                    int vertref = (block.getPosition().getX()); 
+                                    int horref = (block.getPosition().getY());
+                                    for (Map.Entry<Coordinate, Block> entry : avaliableBlocks.entrySet()) {
+                                        Coordinate co = entry.getKey();
+                                        System.out.println("Checking reference: " + co);
+                                        if(!vFound && (co.getX() == vertref-1 || co.getX() == vertref+1)){//this is the vertical reference, store the block and move on
+                                            System.out.println("storing vertical reference: " + co);
+                                            vertRef = entry.getValue();
+                                            vFound = true;
+                                        }else if(!hFound && (co.getY() == horref-1 || co.getY() == horref+1)){//this is the horizontal reference, store the block and move on
+                                            System.out.println("storing vertical reference: " + co);
+                                            horRef = entry.getValue();
+                                            hFound = true;
                                         }
                                     }
-                                    view += (viewEnd + "\n");
-                                    levelXML.append(view);
-                                    view = "";
+                                    //once we have the two references, just write the block using the two references
+                                    if(vFound && hFound){
+                                        view += (viewStart + "\n");
+                                        block.setId(obId);//used for variable naming
+                                        obId++;
+                                        block.setPlaced(true);
+                                        ++writtenBlocks;
+                                        //write block heading
+                                        view += (fullAssetDataName(assetData.ID) + (block instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId())) + qm + "\n");//variable name
+                                        view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+                                        view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+                                        view += (fullAssetDataName(assetData.BKRND) + (block instanceof FinishBlock ? (fullAssetName((assets.P_FIN))) : (fullAssetName((assets.P_OBST)))) + qm + "\n");//const background with respect to the blocktype
+                                        //block.x < vref.x - left      block.x > vref.x - right
+                                        int xDist = block.getPosition().getX() - vertRef.getPosition().getX();
+                                        int yDist = block.getPosition().getY() - vertRef.getPosition().getY();
+                                        view += (fullRelativeName((xDist < 0)?relativeLayouts.TO_LT_OF:relativeLayouts.TO_RT_OF) + (vertRef instanceof MovingBlock ? (constRunner) : (vertRef instanceof FinishBlock ? (constFinish) : (constObstacle + vertRef.getId()))) + qm + "\n");
+                                        //block.y < hor.y - up      block.x > hor.x - down
+                                        view += (fullRelativeName((yDist < 0)?relativeLayouts.ABV:relativeLayouts.BLW) + (horRef instanceof MovingBlock ? (constRunner) : (horRef instanceof FinishBlock ? (constFinish) : (constObstacle + horRef.getId()))) + qm + "\n"); 
+                                        if(Math.abs(xDist)==2){//need to add margin left or right
+                                            if(xDist < 0){
+                                                view += (fullRelativeName(relativeLayouts.MGN_RT) + constDimen + qm + "\n");//margin bottom moves the block up
+                                            }else{
+                                                view += (fullRelativeName(relativeLayouts.MGN_LT) + constDimen + qm + "\n");//margin bottom moves the block up
+                                            }
+                                        }
+                                        if(Math.abs(yDist)==2){//need to add margin up or down
+                                            if(yDist < 0){
+                                                view += (fullRelativeName(relativeLayouts.MGN_BTM) + constDimen + qm + "\n");//margin bottom moves the block up
+                                            }else{
+                                                view += (fullRelativeName(relativeLayouts.MGN_TP) + constDimen + qm + "\n");//margin bottom moves the block up
+                                            }
+                                        }
+                                        view += (viewEnd + "\n");
+                                        levelXML.append(view);
+                                        view = "";
+                                    }else{
+                                        System.out.println("was IN version 2 but couldn't find two references!!!");
+                                    }
+                                    //if two references were not found, skip this block and move on
                                 }
                             }
                         } catch (NullPointerException npe) {
@@ -1016,129 +1322,99 @@ public class Solver implements Runnable {
         return levelXML;
     }
     
-    private Block placeFiller(Coordinate coord){
-    return null;
-    }
 
     //Generates a list of all blocks within range of a given coordinate 
-    private HashMap<Coordinate, Block> validRefs(Object coordinate){
+    /*
+        get the first block already placed  in the coordinates (x+1, y^) (x+1, yv) (x-1, y^) (x-1, yv) (<x, y+1) (<x, y+1) (x>, y-1) (x>, y-1)
+    */
+    private HashMap<Coordinate, Block> validRefs(Object coordinate, int version) {
         HashMap<Coordinate, Block> validrefs = new HashMap<Coordinate, Block>();
         Coordinate coord = null;
-        if(coordinate instanceof Coordinate){
-            coord = (Coordinate)coordinate;
-        }else{
+        if (coordinate instanceof Coordinate) {
+            coord = (Coordinate) coordinate;
+        } else {
             return null;//show not happen but just in case
         }
         System.out.println(coord);
-        Stack<Coordinate> range = calculateRange(coord);
-        while (!range.isEmpty()) {
-            Coordinate co = range.pop();
-            System.out.println("checking : " + co.toString());
-            if (isValidCoord(co)) {
-                System.out.println("valid!");
-                if (map.get(co) instanceof Block) {
-                    System.out.println("im a block!");
-                    if (!(map.get(co) instanceof EmptyBlock)) {
-                        System.out.println("not empty!");
-                        if (!map.get(co).isPlaced()) {
-                            System.out.println("placing it!");
-                            validrefs.put(co, map.get(co));
+        Stack<Coordinate> range = (version == 1 ? calculateRange(coord) : calculateRangeInner(coord));
+        int useX = 0;
+        if (version == 1) {
+            while (!range.isEmpty()) {//x+1, x-1, y+1, y-1
+                ++useX;
+                Coordinate co = range.pop();//pop increment y dec y pop inc y dec y pop inc x dec x pop inc x dec x
+                Coordinate co2 = co;
+                while ((useX > 4 ? co2.getX() : co2.getY()) >= 0) {
+                    if(useX > 4){
+                        System.out.println("decrementing x");
+                        co2.increment(-1, 0);//decrement X
+                    }else{
+                        System.out.println("decrementing y");
+                        co2.increment(0, -1);//decrement Y
+                    }
+                    System.out.println("checking : " + co2.toString());
+                    if (isValidCoord(co2)) {
+                        System.out.println("valid!");
+                        if (map.get(co2) instanceof Block) {
+                            System.out.println("im a block!");
+                            if (!(map.get(co2) instanceof EmptyBlock)) {
+                                System.out.println("not empty!");
+                                if (map.get(co2).isPlaced()) {
+                                    System.out.println("placing it!");
+                                    validrefs.put(co2, map.get(co2));
+                                    //found one so break!
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                co2 = co;
+                while ((useX > 4 ? co2.getX() : co2.getY()) < (useX > 4 ? maxX : maxY)) {
+                    if(useX > 4){
+                        System.out.println("decrementing x");
+                        co2.increment(1, 0);//increment X
+                    }else{
+                        System.out.println("decrementing y");
+                        co2.increment(0, 1);//increment Y
+                    }
+                    System.out.println("checking : " + co2.toString());
+                    if (isValidCoord(co2)) {
+                        System.out.println("valid!");
+                        if (map.get(co2) instanceof Block) {
+                            System.out.println("im a block!");
+                            if (!(map.get(co2) instanceof EmptyBlock)) {
+                                System.out.println("not empty!");
+                                if (map.get(co2).isPlaced()) {
+                                    System.out.println("placing it!");
+                                    validrefs.put(co2, map.get(co2));
+                                    //found one so break!
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            while (!range.isEmpty()) {
+                Coordinate co = range.pop();
+                System.out.println("checking : " + co.toString());
+                if (isValidCoord(co)) {
+                    System.out.println("valid!");
+                    if (map.get(co) instanceof Block) {
+                        System.out.println("im a block!");
+                        if (!(map.get(co) instanceof EmptyBlock)) {
+                            System.out.println("not empty!");
+                            if (map.get(co).isPlaced()) {
+                                System.out.println("placing it!");
+                                validrefs.put(co, map.get(co));
+                            }
                         }
                     }
                 }
             }
         }
         return validrefs;
-        /*  I RECOGNIZE the code below is a bit repetitive . But I tried being clever..with the commented out code...and it failed missing some blocks, so in
-            the interest of time I linearly wrote the blocks necessary to check. The code within this method works awesomely. Sure its ugly atm but I don't care.
-            I will fix it later.
-        */
-        
-        //check horizontal
-        /*boolean hor = true;
-        boolean useInc = false;
-        int inc = 1;
-        
-        for (int i = 1; i < 3; ++i) {
-            if (hor) {//horizontal - only check the index if its even a valid index
-                System.out.println("checking: " + new Coordinate(x + (useInc ? inc : 0), y + i).toString());
-                if (isValidCoord(x + (useInc ? inc : 0), y + i)) {
-                    System.out.println("valid!");
-                    if(map.get(new Coordinate(x + (useInc ? inc : 0), y + i)) instanceof Block){
-                        System.out.println("instance of block!");
-                        if(!(map.get(new Coordinate(x + (useInc ? inc : 0), y + i)) instanceof EmptyBlock) ){
-                            System.out.println("and NOT instance of EmptyBllock!");
-                            if(map.get(new Coordinate(x + (useInc ? inc : 0), y + i)).isPlaced()){
-                                System.out.println("isPlaced");
-                                   validrefs.put(new Coordinate(x + (useInc ? inc : 0), y + i), map.get(new Coordinate(x + (useInc ? inc : 0), y + i)));
-                            }
-                        }
-                    }
-                }// b(x, y+1) b(x, y+2), b(x+1, y+1) b(x+1, y+2)
-                System.out.println("checking: " + new Coordinate(x + (useInc ? inc : 0), y - i).toString());
-                if (isValidCoord(x + (useInc ? inc : 0), y - i) ) {
-                    System.out.println("valid!");
-                    if(map.get(new Coordinate(x + (useInc ? inc : 0), y - i)) instanceof Block){
-                        System.out.println("instance of block!");
-                        if(!(map.get(new Coordinate(x + (useInc ? inc : 0), y - i)) instanceof EmptyBlock)){
-                            System.out.println("and NOT EmptyBlock");
-                            if(map.get(new Coordinate(x + (useInc ? inc : 0), y - i)).isPlaced()){
-                                System.out.println("isPlaced");
-                                validrefs.put(new Coordinate(x + (useInc ? inc : 0), y - i), map.get(new Coordinate(x + (useInc ? inc : 0), y - i)));
-                            }
-                        }
-                    }
-                }// b(x, y-1) b(x, y-2), b(x+1, y-1) b(x+1, y-2)
-                if (i == 2) {
-                    hor = false;
-                    i = 1;
-                }
-            } else {//vertical - only check the index if its even a valid index
-                System.out.println("checking: " + new Coordinate(x + i, y + (useInc ? inc : 0)).toString());
-                if (isValidCoord(x + i, y + (useInc ? inc : 0))) {
-                    System.out.println("is valid!");
-                    if(map.get(new Coordinate(x + i, y + (useInc ? inc : 0))) instanceof Block){
-                        System.out.println("is a block!");
-                        if(!(map.get(new Coordinate(x + i, y + (useInc ? inc : 0))) instanceof EmptyBlock) ){
-                            System.out.println("not empty!");
-                            if(map.get(new Coordinate(x + i, y + (useInc ? inc : 0))).isPlaced()){
-                                System.out.println("isPlaced!");
-                                validrefs.put(new Coordinate(x + i, y + (useInc ? inc : 0)),  map.get(new Coordinate(x + i, y + (useInc ? inc : 0))));
-                            }
-                        }
-                    }
-                }//b(x+1, y) b(x+2, y) b-repeated(x+1, y+1) b(x+2, y+1)
-                System.out.println("checking: " + new Coordinate(x - i, y + (useInc ? inc : 0)).toString());
-                if (isValidCoord(x - i, y + (useInc ? inc : 0))) {
-                    System.out.println("is valid!");
-                    if(map.get(new Coordinate(x - i, y + (useInc ? inc : 0))) instanceof Block){
-                        System.out.println("is a block!");
-                        if(!(map.get(new Coordinate(x - i, y + (useInc ? inc : 0))) instanceof EmptyBlock) ){
-                            System.out.println("not empty!");
-                            if(map.get(new Coordinate(x - i, y + (useInc ? inc : 0))).isPlaced()){
-                                System.out.println("is placed!");
-                                validrefs.put(new Coordinate(x - i, y + (useInc ? inc : 0)), map.get(new Coordinate(x - i, y + (useInc ? inc : 0))));
-                            }
-                        }
-                    }
-                }// b(x-1, y) b(x-2, y) b(x-1, y+1) b(x-2, y+1)
-                if (i == 2) {
-                    if (!useInc) {
-                        hor = true;
-                        i = 1;
-                        useInc = true;
-                    } else {
-                        break;
-                    }
-                }
-            }
-        }*/
-        //^^^^tried getting all fancy. Just ended up screwing up the math
-        
-        //check the randoms that didn't get checked - and only if its  valid
-                /*
-                b[x+2][y-1],b[x-1][y-2],b[x-1][y+2],b[x-2][y-1],b[x-1][y-1]
-                */
     }
 
     private boolean isValidCoord(Coordinate c){
