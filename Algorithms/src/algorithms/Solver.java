@@ -69,8 +69,7 @@ public class Solver implements Runnable {
 
         levelXML = new StringBuilder();
         System.out.println("Printing!!\n\n\n\n\n");
-        build();
-        System.out.println(build().toString());
+        System.out.println(build(false).toString());
     }
 
     public boolean createAndSolve() {
@@ -103,7 +102,8 @@ public class Solver implements Runnable {
         int moltenCount = 0;
         int portalCount = 0;
 
-        int randomNum = ThreadLocalRandom.current().nextInt(50, 95 + 1); // Try out different block densities between 25% & 90%
+        //int randomNum = ThreadLocalRandom.current().nextInt(50, 95 + 1); // Try out different block densities between 25% & 90% 
+        int randomNum = ThreadLocalRandom.current().nextInt(85, 95 + 1); //<--trying less dense 25% and 75%?
         if (!recreateMap) {
             for (int i = 0; i < maxY; i++) { // Generate 25x25 map
                 for (int a = 0; a < maxX; a++) {
@@ -1200,16 +1200,14 @@ public class Solver implements Runnable {
         return returnView;
     }
 
-    private StringBuilder build() {
+    private StringBuilder build(boolean debug) {
         //store xml block for runner because it needs to be appended at the end, but
         String runnerView = "";
         //Current block being written
         Block block = null;
         String view = "";
         HashMap<Coordinate, Block> avaliableBlocks;
-        int writtenBlocks = 0;
         //obstacle ID so each view block has their own identifier
-        int placeAllPossibleBlocks = 0;
 
         /**
          * ****************CONSTANT LOCATIONS***************** place all
@@ -1217,18 +1215,18 @@ public class Solver implements Runnable {
          */
         block = map.get(new Coordinate(0, 0));//we know this one it real
         if (block instanceof Block && !inPath(block.getPosition())) {//top left
-            System.out.println("Processing block: " + block.getPosition());
+            if(debug){System.out.println("Processing block: " + block.getPosition());}
             block.setId(obId);//used for variable naming
             obId++;
             block.setPlaced(true);
             block.setHorRef(block.getPosition());
             block.setVerRef(block.getPosition());
-            System.out.println("Placing block on map: " + block.getPosition());
+            if(debug){System.out.println("Placing block on map: " + block.getPosition());}
             ++numBlocksToWrite;
         }
         block = map.get(new Coordinate(maxX - 1, maxY - 1));
         if (block instanceof Block && !inPath(block.getPosition())) {//bottom right
-            System.out.println("Processing block: " + block.getPosition());
+            if(debug){System.out.println("Processing block: " + block.getPosition());}
             if (block instanceof EmptyBlock) {//otherwise, if this spot is an empty block ,lets place one there as an ancor!
                 MoltenBlock constBlock = new MoltenBlock(block.getPosition());
                 map.put(constBlock.getPosition(), constBlock);
@@ -1239,7 +1237,7 @@ public class Solver implements Runnable {
             block.setPlaced(true);
             block.setHorRef(block.getPosition());
             block.setVerRef(block.getPosition());
-            System.out.println("Placing block on map: " + block.getPosition());
+            if(debug){System.out.println("Placing block on map: " + block.getPosition());}
             ++numBlocksToWrite;
         }
         block = map.get(new Coordinate(0, maxY - 1));
@@ -1249,18 +1247,18 @@ public class Solver implements Runnable {
                 map.put(constBlock.getPosition(), constBlock);
                 block = constBlock;
             }
-            System.out.println("Processing block: " + block.getPosition());
+            if(debug){System.out.println("Processing block: " + block.getPosition());}
             block.setId(obId);//used for variable naming
             obId++;
             block.setPlaced(true);
             block.setHorRef(block.getPosition());
             block.setVerRef(block.getPosition());
-            System.out.println("Placing block on map: " + block.getPosition());
+            if(debug){System.out.println("Placing block on map: " + block.getPosition());}
             ++numBlocksToWrite;
         }
         block = map.get(new Coordinate(maxX - 1, 0));
         if (block instanceof Block && !(block instanceof EmptyBlock) && !inPath(block.getPosition())) {//bottom left
-            System.out.println("Processing block: " + block.getPosition());
+            if(debug){System.out.println("Processing block: " + block.getPosition());}
             if (block instanceof EmptyBlock) {
                 MoltenBlock constBlock = new MoltenBlock(block.getPosition());
                 map.put(constBlock.getPosition(), constBlock);
@@ -1271,7 +1269,7 @@ public class Solver implements Runnable {
             block.setPlaced(true);
             block.setHorRef(block.getPosition());
             block.setVerRef(block.getPosition());
-            System.out.println("Placing block on map: " + block.getPosition());
+            if(debug){System.out.println("Placing block on map: " + block.getPosition());}
             ++numBlocksToWrite;
         }
         //check centers left, right, up, down, and exact middle
@@ -1279,7 +1277,7 @@ public class Solver implements Runnable {
         int midY = (maxY - 1) / 2;
         block = map.get(new Coordinate(0, midY));
         if (block instanceof Block && !inPath(block.getPosition())) {//middle left
-            System.out.println("Processing block: " + block.getPosition());
+            if(debug){System.out.println("Processing block: " + block.getPosition());}
             if (block instanceof EmptyBlock) {
                 MoltenBlock constBlock = new MoltenBlock(block.getPosition());
                 map.put(constBlock.getPosition(), constBlock);
@@ -1290,7 +1288,7 @@ public class Solver implements Runnable {
             block.setHorRef(block.getPosition());
             block.setVerRef(block.getPosition());
             obId++;
-            System.out.println("Placing block on map: " + block.getPosition());
+            if(debug){System.out.println("Processing block: " + block.getPosition());}
             ++numBlocksToWrite;
         }
         block = map.get(new Coordinate(midX, 0));
@@ -1300,18 +1298,18 @@ public class Solver implements Runnable {
                 map.put(constBlock.getPosition(), constBlock);
                 block = constBlock;
             }
-            System.out.println("Processing block: " + block.getPosition());
+            if(debug){System.out.println("Processing block: " + block.getPosition());}
             block.setId(obId);//used for variable naming
             obId++;
             block.setPlaced(true);
             block.setHorRef(block.getPosition());
             block.setVerRef(block.getPosition());
-            System.out.println("Placing block on map: " + block.getPosition());
+            if(debug){System.out.println("Processing block: " + block.getPosition());}
             ++numBlocksToWrite;
         }
         block = map.get(new Coordinate(maxX - 1, midY));
         if (block instanceof Block && !inPath(block.getPosition())) {//middle right
-            System.out.println("Processing block: " + block.getPosition());
+            if(debug){System.out.println("Processing block: " + block.getPosition());}
             if (block instanceof EmptyBlock) {
                 MoltenBlock constBlock = new MoltenBlock(block.getPosition());
                 map.put(constBlock.getPosition(), constBlock);
@@ -1322,12 +1320,12 @@ public class Solver implements Runnable {
             block.setPlaced(true);
             block.setHorRef(block.getPosition());
             block.setVerRef(block.getPosition());
-            System.out.println("Placing block on map: " + block.getPosition());
+            if(debug){System.out.println("Processing block: " + block.getPosition());}
             ++numBlocksToWrite;
         }
         block = map.get(new Coordinate(0, midY));
         if (block instanceof Block && !inPath(block.getPosition())) {//middle left
-            System.out.println("Processing block: " + block.getPosition());
+            if(debug){System.out.println("Processing block: " + block.getPosition());}
             if (block instanceof EmptyBlock) {
                 MoltenBlock constBlock = new MoltenBlock(block.getPosition());
                 map.put(constBlock.getPosition(), constBlock);
@@ -1338,7 +1336,7 @@ public class Solver implements Runnable {
             block.setPlaced(true);
             block.setHorRef(block.getPosition());
             block.setVerRef(block.getPosition());
-            System.out.println("Placing block on map: " + block.getPosition());
+            if(debug){System.out.println("Processing block: " + block.getPosition());}
             ++numBlocksToWrite;
         }
         block = map.get(new Coordinate(midX, midY));
@@ -1348,25 +1346,26 @@ public class Solver implements Runnable {
                 map.put(constBlock.getPosition(), constBlock);
                 block = constBlock;
             }
-            System.out.println("Processing block: " + block.getPosition());
+            if(debug){System.out.println("Processing block: " + block.getPosition());}
             block.setId(obId);//used for variable naming
             obId++;
             block.setPlaced(true);
             block.setHorRef(block.getPosition());
             block.setVerRef(block.getPosition());
-            System.out.println("Placing block on map: " + block.getPosition());
+            if(debug){System.out.println("Processing block: " + block.getPosition());}
             ++numBlocksToWrite;
 
         }
-
-        System.out.println("Before running placing algorithms the following blocks were placed!");
-        for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
-            if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && ent.getValue().isPlaced()) {
-                System.out.println("Block:" + ent.getValue().getPosition() + " | Vref:" + ent.getValue().getVerRef() + " | Href:" + ent.getValue().getHorRef());
+        if(debug){
+            System.out.println("Before running placing algorithms the following blocks were placed!");
+            for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
+                if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && ent.getValue().isPlaced()) {
+                    System.out.println("Block:" + ent.getValue().getPosition() + " | Vref:" + ent.getValue().getVerRef() + " | Href:" + ent.getValue().getHorRef());
+                }
             }
         }
 
-        assignReferences();
+        assignReferences(debug);
         try {
             /**
              * ****************WRITING XML*****************
@@ -1381,9 +1380,9 @@ public class Solver implements Runnable {
             block = null;//just clear out for a new block
             //writtenBlocks <= numBlocksToWrite; 
             for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
-                System.out.println("attempting to write:" +ent.getKey());
+                if(debug){System.out.println("attempting to write:" +ent.getKey());}
                 if (ent.getValue() instanceof Block && ent.getValue() instanceof MovingBlock) {//we must save the runner for the very last view block appended
-                    System.out.println(""+ent.getKey() + " is the mover");
+                    if(debug){System.out.println(""+ent.getKey() + " is the mover");}
                     block = ent.getValue();
                     runnerView += (viewStart + "\n");
                     runnerView += (fullAssetDataName(assetData.ID) + constRunner + qm + "\n");//variable name
@@ -1391,9 +1390,8 @@ public class Solver implements Runnable {
                     runnerView += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
                     runnerView += (fullAssetDataName(assetData.BKRND) + constRunner + qm + "\n");//const background with respect to the blocktype
                     runnerView += (viewEnd + "\n");
-                    ++writtenBlocks;
-                } else if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock)) {//we don't write any EmptyBlocks
-                    System.out.println("We need to write: "+ent.getKey());
+                } else if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && ent.getValue().isPlaced()) {//we don't write any EmptyBlocks
+                    if(debug){System.out.println("We need to write: "+ent.getKey());}
                     block = ent.getValue();
                     view += (viewStart + "\n");
                     view += (fullAssetDataName(assetData.ID) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId()))) + qm + "\n");//variable name
@@ -1476,7 +1474,7 @@ public class Solver implements Runnable {
                         //Horizontal references are aligned top or bottom
                         Block refV = map.get(block.getVerRef());
                         Block refH = map.get(block.getHorRef());
-                        System.out.println("Attempting to reference block : " + block.getPosition() + " vertically with: " + block.getVerRef() + " and horizontally with: "+block.getHorRef());
+                        if(debug){System.out.println("Attempting to reference block : " + block.getPosition() + " vertically with: " + block.getVerRef() + " and horizontally with: "+block.getHorRef());}
                         //first set the vertical aligh so left or right
                         if (block.getPosition().getX() == refV.getPosition().getX()) {
                             //(arbitrairy so choose left always
@@ -1495,18 +1493,25 @@ public class Solver implements Runnable {
                     view += (viewEnd + "\n");
                     levelXML.append(view);
                     view = "";
-                    //we wrote one more block. Increment
-                    ++writtenBlocks;
                 }
             }
             levelXML.append(runnerView);
+            //after all is said and done print out all blocks that got placed
+            if(debug){
+                System.out.println("Displaying all placed blocks and references in format\nBlock:x | Vref:v | Href:h");
+                for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
+                    if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock)) {
+                        System.out.println("Block:" + ent.getValue().getPosition() + " | Vref:" + ent.getValue().getVerRef() + " | Href:" + ent.getValue().getHorRef());
+                    }
+                }
+            }
         } catch (NullPointerException npe) {
-            System.out.println("XML so far!\n\n" + levelXML.toString());
+            if(debug){System.out.println("XML so far!\n\n" + levelXML.toString());}
             System.out.println("Error: " + npe.getMessage());
             npe.printStackTrace();
             System.exit(1);
         } catch (Exception e) {
-            System.out.println("XML so far!\n\n" + levelXML.toString());
+            if(debug){System.out.println("XML so far!\n\n" + levelXML.toString());}
             System.out.println("Unknown Error: " + e.getMessage());
             e.printStackTrace();
             System.exit(1);
@@ -1515,9 +1520,9 @@ public class Solver implements Runnable {
     }
 
     //This is for all the little blocks that were unplacable due to a lack of valid references - but it is not the end for these brave souls!
-    private void applyPadding(Block unplacable) {
+    private void applyPadding(Block unplacable, boolean debug) {
         //we need a horizontal and a vertical reference
-        HashMap<Coordinate, Block> refs = validRefs(unplacable.getPosition(), 3);
+        HashMap<Coordinate, Block> refs = validRefs(unplacable.getPosition(), 3, debug);
         boolean vPlaced = false;
         boolean yPlaced = false;
         if (refs.size() > 1) {//we want it to be two every time
@@ -1550,7 +1555,7 @@ public class Solver implements Runnable {
             //now get valid refs for each of the new blocks and call it a day!
             for (int j = 0; j < 2; ++j) {
                 Block b = (j == 0 ? newBlock : newBlock2);
-                HashMap<Coordinate, Block> refs2 = validRefs(b.getPosition(), 1);
+                HashMap<Coordinate, Block> refs2 = validRefs(b.getPosition(), 1, debug);
                 if (refs2.size() > 1) {
                     Coordinate horRef = null;
                     Coordinate vertRef = null;
@@ -1561,14 +1566,14 @@ public class Solver implements Runnable {
                     for (Map.Entry<Coordinate, Block> entry : refs2.entrySet()) {
                         Coordinate co = entry.getKey();
                         Block refBlock = entry.getValue();
-                        System.out.println("Checking reference: " + co);
+                        if(debug){System.out.println("Checking reference: " + co);}
                         //make sure refBlock isn't also referencing this block : !(co.equals(refBlock.getVer/HorRef())) <-- if it is don't use it because of cyclicness
                         if (!vFound && !(co.equals(refBlock.getVerRef())) && (co.getX() == vertref || co.getX() == vertref - 1 || co.getX() == vertref + 1)) {//this is the vertical reference, store the block and move on, can be inline or offset by one
-                            System.out.println("storing vertical reference: " + co);
+                            if(debug){System.out.println("storing vertical reference: " + co);}
                             vertRef = entry.getKey();
                             vFound = true;
                         } else if (!hFound && !(co.equals(refBlock.getHorRef())) && (co.getY() == horref || co.getY() == horref - 1 || co.getY() == horref + 1)) {//this is the horizontal reference, store the block and move on can be inline, or offset by 1
-                            System.out.println("storing vertical reference: " + co);
+                            if(debug){System.out.println("storing vertical reference: " + co);}
                             horRef = entry.getKey();
                             hFound = true;
                         }
@@ -1586,12 +1591,12 @@ public class Solver implements Runnable {
             }
         } else {
             //check center and corners
-            System.out.println("FAILURE TO PAD!!!");
+            System.out.println("Padding FAILURE occurred - this block "+unplacable.getPosition()+"is impossible and should be deleted...");
         }
 
     }
 
-    private void assignReferences() {
+    private void assignReferences(boolean debug) {
         int placeAllPossibleBlocks = 0;
         int runTimes = 5;
         //its possible some blocks were skipped so we need to retrace 5 times to make sure all blocks are placed
@@ -1603,20 +1608,20 @@ public class Solver implements Runnable {
                     Coordinate curCoord = new Coordinate(j, i);
                     Block refBlock = map.get(curCoord);
                     if (refBlock instanceof Block && !(refBlock instanceof EmptyBlock) && (refBlock.isPlaced())) {//only process those blocks placed looking for all unplaced blocks in their range
-                        HashMap<Coordinate, Block> refs = validRefs(refBlock.getPosition(), 2);
+                        HashMap<Coordinate, Block> refs = validRefs(refBlock.getPosition(), 2, debug);
                         if (refs.size() > 0) {//this is your captain speaking. We have liftoff.
-                            System.out.println("assigning singular block references");
+                            if(debug){System.out.println("assigning singular block references");}
                             for (Map.Entry<Coordinate, Block> ent : refs.entrySet()) {
                                 toPlaceBlock = ent.getValue();
-                                System.out.println("processing block: " + toPlaceBlock.getPosition() + " trying to reference: " + refBlock.getPosition());
+                                if(debug){System.out.println("processing block: " + toPlaceBlock.getPosition() + " trying to reference: " + refBlock.getPosition());}
                                 toPlaceBlock.setId(obId);//used for variable naming
                                 obId++;
                                 toPlaceBlock.setPlaced(true);
                                 ++numBlocksToWrite;
-                                System.out.println("toPlaceBlock.isPlaced(): " + toPlaceBlock.isPlaced());
-                                System.out.println("map.get(toPlaceBlock.getPosition()).isPlaced(): " + map.get(toPlaceBlock.getPosition()).isPlaced());
+                                if(debug){System.out.println("toPlaceBlock.isPlaced(): " + toPlaceBlock.isPlaced());}
+                                if(debug){System.out.println("map.get(toPlaceBlock.getPosition()).isPlaced(): " + map.get(toPlaceBlock.getPosition()).isPlaced());}
                                 if (!(refBlock.getPosition().equals(toPlaceBlock.getVerRef()))) {
-                                    System.out.println("PLACING vert and hor the same since singular: " + refBlock.getPosition());
+                                    if(debug){System.out.println("PLACING vert and hor the same since singular: " + refBlock.getPosition());}
                                     toPlaceBlock.setVerRef(refBlock.getPosition());
                                     toPlaceBlock.setHorRef(refBlock.getPosition());
                                 }
@@ -1625,10 +1630,12 @@ public class Solver implements Runnable {
                     }
                 }
             }
-            System.out.println("Blocks placed after cluster runthrough: " + (placeAllPossibleBlocks + 1));
-            for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
-                if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && ent.getValue().isPlaced()) {
-                    System.out.println("Block:" + ent.getValue().getPosition() + " | Vref:" + ent.getValue().getVerRef() + " | Href:" + ent.getValue().getHorRef());
+            if(debug){
+                System.out.println("Blocks placed after cluster runthrough: " + (placeAllPossibleBlocks + 1));
+                for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
+                    if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && ent.getValue().isPlaced()) {
+                        System.out.println("Block:" + ent.getValue().getPosition() + " | Vref:" + ent.getValue().getVerRef() + " | Href:" + ent.getValue().getHorRef());
+                    }
                 }
             }
             /*ALRIGHT.
@@ -1644,8 +1651,8 @@ public class Solver implements Runnable {
                     Block blockToPlace = map.get(curCoord);
                     if (blockToPlace instanceof Block && !(blockToPlace instanceof EmptyBlock) && !(blockToPlace.isPlaced())) {//only process those blocks unplaced, looking for those placed blocks to use as refs
                         //we use a NON placed block as the 
-                        HashMap<Coordinate, Block> refs = validRefs(blockToPlace.getPosition(), 1);
-                        System.out.println("trying to assign bi-block references!\nrefs.size() = " + refs.size());
+                        HashMap<Coordinate, Block> refs = validRefs(blockToPlace.getPosition(), 1, debug);
+                        if(debug){System.out.println("trying to assign bi-block references!\nrefs.size() = " + refs.size());}
                         if (refs.size() > 1) {//need at least two blocks if not in the immediate range
                             Coordinate horRef = null;
                             Coordinate vertRef = null;
@@ -1657,15 +1664,15 @@ public class Solver implements Runnable {
                                 Block refBlock = ent.getValue();
                                 vertref = refBlock.getPosition().getX();
                                 horref = refBlock.getPosition().getY();
-                                System.out.println("Checking reference: " + refBlock.getPosition());
+                                if(debug){System.out.println("Checking reference: " + refBlock.getPosition());}
                                 //make sure the block were trying to place isnt already one of the blocks references <-- if it is don't use it because of cyclicness
                                 if (!vFound && !(blockToPlace.getPosition().equals(refBlock.getVerRef())) && (blockToPlace.getPosition().getX() == vertref || blockToPlace.getPosition().getX() == vertref - 1 || blockToPlace.getPosition().getX() == vertref + 1)) {//this is the vertical reference, store the block and move on, can be inline or offset by one
-                                    System.out.println("storing vertical reference: " + refBlock.getPosition());
+                                    if(debug){System.out.println("storing vertical reference: " + refBlock.getPosition());}
                                     vertRef = refBlock.getPosition();
                                     vFound = true;
                                 }
                                 if (!hFound && !(blockToPlace.getPosition().equals(refBlock.getHorRef())) && (blockToPlace.getPosition().getY() == horref || blockToPlace.getPosition().getY() == horref - 1 || blockToPlace.getPosition().getY() == horref + 1)) {//this is the horizontal reference, store the block and move on can be inline, or offset by 1
-                                    System.out.println("storing vertical reference: " + refBlock.getPosition());
+                                    if(debug){System.out.println("storing vertical reference: " + refBlock.getPosition());}
                                     horRef = ent.getKey();
                                     hFound = true;
                                 }
@@ -1683,16 +1690,16 @@ public class Solver implements Runnable {
                 }
             }
             ++placeAllPossibleBlocks;
-            System.out.println("Retracing map for the " + placeAllPossibleBlocks + " time");
+            if(debug){System.out.println("Retracing map for the " + placeAllPossibleBlocks + " time");}
             if (placeAllPossibleBlocks >= runTimes) {
                     //if we have traversed from (0,0) to (w-1,h-1) 5+ times this means we've placed all the blocks we can. 
                 //The blocks that are left and unreachable and must be placed using the padding but retrace once eachtime we pad!
                 boolean breakout = true;
                 for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
                     if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && !ent.getValue().isPlaced()) {
-                        System.out.println("Applying padding for block:" + ent.getKey());
+                        if(debug){System.out.println("Applying padding for block:" + ent.getKey());}
                         breakout = false;
-                        applyPadding(ent.getValue());
+                        applyPadding(ent.getValue(), debug);
                         --placeAllPossibleBlocks;
                         break;
                     }
@@ -1702,10 +1709,12 @@ public class Solver implements Runnable {
                 }
             }
         }
-        System.out.println("Displaying blocks and references in format\nBlock:x | Vref:v | Href:h");
-        for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
-            if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock)) {
-                System.out.println("Block:" + ent.getValue().getPosition() + " | Vref:" + ent.getValue().getVerRef() + " | Href:" + ent.getValue().getHorRef());
+        if(debug){
+            System.out.println("Displaying blocks and references in format\nBlock:x | Vref:v | Href:h");
+            for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
+                if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock)) {
+                    System.out.println("Block:" + ent.getValue().getPosition() + " | Vref:" + ent.getValue().getVerRef() + " | Href:" + ent.getValue().getHorRef());
+                }
             }
         }
         //now all blocks on the map have references
@@ -1713,7 +1722,7 @@ public class Solver implements Runnable {
 
     //Generates a list of all blocks within range of a given coordinate 
     // get the first block already placed  in the coordinates (x+1, y^) (x+1, yv) (x-1, y^) (x-1, yv) (<x, y+1) (<x, y+1) (x>, y-1) (x>, y-1)
-    private HashMap<Coordinate, Block> validRefs(Object coordinate, int version) {
+    private HashMap<Coordinate, Block> validRefs(Object coordinate, int version, boolean debug) {
         HashMap<Coordinate, Block> validrefs = new HashMap<Coordinate, Block>();
         Coordinate coord = null;
         if (coordinate instanceof Coordinate) {
@@ -1721,32 +1730,32 @@ public class Solver implements Runnable {
         } else {
             return null;//show not happen but just in case
         }
-        System.out.println("Getting refs for block: " + coord);
+        if(debug){System.out.println("Getting refs for block: " + coord);}
         Stack<Coordinate> range = (version == 1 ? calculateRange(coord) : calculateRangeInner(coord));
         int useX = 0;
         if (version == 1) {
-            System.out.println("using version 1");
+            if(debug){System.out.println("using version 1");}
             while (!range.isEmpty()) {//x+1, x-1, y+1, y-1
                 ++useX;
                 Coordinate co = range.pop();//pop increment y dec y pop inc y dec y pop inc x dec x pop inc x dec x
                 Coordinate co2 = new Coordinate(co.getX(), co.getY());
                 while ((useX > 4 ? co2.getX() : co2.getY()) > 0) {
                     if (useX > 4) {
-                        System.out.println("decrementing x");
+                        if(debug){System.out.println("decrementing x");}
                         co2.setX(co2.getX()-1);
                     } else {
-                        System.out.println("decrementing y");
+                        if(debug){System.out.println("decrementing y");}
                         co2.setY(co2.getY()-1);
                     }
-                    System.out.println("checking : " + co2.toString());
+                    if(debug){System.out.println("checking : " + co2.toString());}
                     if (isValidCoord(co2)) {
-                        System.out.println("valid!");
+                        if(debug){System.out.println("valid!");}
                         if (map.get(co2) instanceof Block) {
-                            System.out.println("im a block!");
+                            if(debug){System.out.println("im a block!");}
                             if (!(map.get(co2) instanceof EmptyBlock)) {
-                                System.out.println("not empty!");
+                                if(debug){System.out.println("not empty!");}
                                 if (map.get(co2).isPlaced()) {//ONLY grab placed items
-                                    System.out.println("placing it!");
+                                    if(debug){System.out.println("placing it!");}
                                     validrefs.put(co2, map.get(co2));
                                 }
                             }
@@ -1756,21 +1765,21 @@ public class Solver implements Runnable {
                 co2 = new Coordinate(co.getX(), co.getY());
                 while ((useX > 4 ? co2.getX() : co2.getY()) < (useX > 4 ? maxX-1 : maxY-1)) {
                     if (useX > 4) {
-                        System.out.println("incrementing x");
+                        if(debug){System.out.println("incrementing x");}
                         co2.increment(1, 0);//increment X
                     } else {
-                        System.out.println("incrementing y");
+                        if(debug){System.out.println("incrementing y");}
                         co2.increment(0, 1);//increment Y
                     }
-                    System.out.println("checking : " + co2.toString());
+                    if(debug){System.out.println("checking : " + co2.toString());}
                     if (isValidCoord(co2)) {
-                        System.out.println("valid!");
+                        if(debug){System.out.println("valid!");}
                         if (map.get(co2) instanceof Block) {
-                            System.out.println("im a block!");
+                            if(debug){System.out.println("im a block!");}
                             if (!(map.get(co2) instanceof EmptyBlock)) {
-                                System.out.println("not empty!");
+                                if(debug){System.out.println("not empty!");}
                                 if (map.get(co2).isPlaced()) {//ONLY grab placed items
-                                    System.out.println("placing it!");
+                                    if(debug){System.out.println("placing it!");}
                                     validrefs.put(co2, map.get(co2));
                                 }
                             }
@@ -1779,7 +1788,7 @@ public class Solver implements Runnable {
                 }
             }
         } else if (version == 2) {
-            System.out.println("using version 2");
+            if(debug){System.out.println("using version 2");}
             while (!range.isEmpty()) {
                 Coordinate co = range.pop();
                 //System.out.println("checking : " + co.toString());
@@ -1789,8 +1798,7 @@ public class Solver implements Runnable {
                         //System.out.println("im a block!");
                         if (!(map.get(co) instanceof EmptyBlock)) {
                             if (!map.get(co).isPlaced()) {//ONLY grab non placed items
-                                System.out.println("not empty!");
-                                System.out.println("placing it!");
+                                if(debug){System.out.println("not empty!");System.out.println("placing it!");}
                                 validrefs.put(co, map.get(co));
                             }
                         }
@@ -1798,7 +1806,7 @@ public class Solver implements Runnable {
                 }
             }
         } else {
-            System.out.println("using version 3");
+            if(debug){System.out.println("using version 3");}
             boolean vFound = false;
             boolean hFound = false;
             //verticals
@@ -1812,8 +1820,7 @@ public class Solver implements Runnable {
                             //System.out.println("im a block!");
                             if ((map.get(co) instanceof EmptyBlock)) {
                                 if (!inPath(co)) {
-                                    System.out.println("is empty and in the path!");
-                                    System.out.println("placing it!");
+                                    if(debug){System.out.println("is empty and in the path!");System.out.println("placing it!");}
                                     validrefs.put(co, map.get(co));
                                     vFound = true;
                                     break;
@@ -1833,8 +1840,7 @@ public class Solver implements Runnable {
                             //System.out.println("im a block!");
                             if ((map.get(co) instanceof EmptyBlock)) {
                                 if (!inPath(co)) {
-                                    System.out.println("is empty and in the path!");
-                                    System.out.println("placing it!");
+                                    if(debug){System.out.println("is empty and in the path!");System.out.println("placing it!");}
                                     validrefs.put(co, map.get(co));
                                     vFound = true;
                                     break;
@@ -1854,8 +1860,7 @@ public class Solver implements Runnable {
                             //System.out.println("im a block!");
                             if ((map.get(co) instanceof EmptyBlock)) {
                                 if (!inPath(co)) {
-                                    System.out.println("is empty and in the path!");
-                                    System.out.println("placing it!");
+                                    if(debug){System.out.println("is empty and in the path!");System.out.println("placing it!");}
                                     validrefs.put(co, map.get(co));
                                     hFound = true;
                                     break;
@@ -1875,8 +1880,7 @@ public class Solver implements Runnable {
                             //System.out.println("im a block!");
                             if ((map.get(co) instanceof EmptyBlock)) {
                                 if (!inPath(co)) {
-                                    System.out.println("is empty and in the path!");
-                                    System.out.println("placing it!");
+                                    if(debug){System.out.println("is empty and in the path!");System.out.println("placing it!");}
                                     validrefs.put(co, map.get(co));
                                     hFound = true;
                                     break;
@@ -1928,12 +1932,10 @@ public class Solver implements Runnable {
             cBefore = cAfter;
         }
         //if we made it all the way through the path return false because we are not in the path
-        System.out.println("NOT IN THE PATH");
         return false;
     }
 
     private boolean isValidCoord(Coordinate c) {
-        System.out.println("returning " + (c.getX() < maxX && c.getX() >= 0 && c.getY() < maxY && c.getY() >= 0) + "for valid coord");
         return (c.getX() < maxX && c.getX() >= 0 && c.getY() < maxY && c.getY() >= 0);
     }
 }
