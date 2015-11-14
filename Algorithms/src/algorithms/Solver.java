@@ -1,5 +1,7 @@
 package algorithms;
 
+import customADTs.XMLCreator;
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,7 +23,11 @@ public class Solver implements Runnable {
     private int numRocks;
     private int numBlocksToWrite = 0;
     private int obId = 0;
-
+    private int levelNum = 0;
+    private String levelGenre = "testing";//right now its hardcoded
+    private final File templateXML = new File("/Users/dewit/Documents/shift_files/level_files/level_template/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
+    private final File templateDir = new File("/Users/dewit/Documents/shift_files/level_files/level_template/");
+    
     private static boolean superDebug = false;
     private static boolean showPath = true;
 
@@ -68,8 +74,17 @@ public class Solver implements Runnable {
         map.put(start, block);
 
         levelXML = new StringBuilder();
-        System.out.println("Printing!!\n\n\n\n\n");
-        System.out.println(build(false).toString());
+        levelXML = build(false);
+        System.out.println(levelXML.toString());
+        System.out.println("\n\nCreating new level file...");
+        String levelName = "pack_"+levelGenre+"_level";
+        XMLCreator levelXMLFile = new XMLCreator(levelXML, levelName, templateXML,levelNum);
+        if(levelXMLFile.getLevel()!=null){
+            File levelFile = new File(levelXMLFile.getLevel().getAbsolutePath());
+            System.out.println("\n\nSuccessfully created new level file:\n\t"+levelFile.getAbsolutePath());
+        }else{
+            System.out.println("\n\nFile not created : unable to create file within:\n\t"+templateDir);
+        }
     }
 
     public boolean createAndSolve() {
@@ -1206,7 +1221,6 @@ public class Solver implements Runnable {
         //Current block being written
         Block block = null;
         String view = "";
-        HashMap<Coordinate, Block> avaliableBlocks;
         //obstacle ID so each view block has their own identifier
 
         /**
