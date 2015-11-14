@@ -891,13 +891,6 @@ public class Solver implements Runnable {
     }
 
     private StringBuilder build() {
-        //constant xml file header
-        levelXML.append(viewStart + "\n");
-        levelXML.append(fullAssetDataName(assetData.ID) + constGridName + qm + "\n");
-        levelXML.append(fullAssetDataName(assetData.PAR_WDTH) + qm + "\n");
-        levelXML.append(fullAssetDataName(assetData.PAR_HGTH) + qm + "\n");
-        levelXML.append(viewEnd + "\n");
-
         //store xml block for runner because it needs to be appended at the end, but
         String runnerView = "";
         //Current block being written
@@ -1176,9 +1169,27 @@ public class Solver implements Runnable {
         /**
          * ****************WRITING XML*****************
          */
+        //constant view blockbefore block placement
+        levelXML.append(viewStart + "\n");
+        levelXML.append(fullAssetDataName(assetData.ID) + constGridName + qm + "\n");
+        levelXML.append(fullAssetDataName(assetData.PAR_WDTH) + qm + "\n");
+        levelXML.append(fullAssetDataName(assetData.PAR_HGTH) + qm + "\n");
+        levelXML.append(viewEnd + "\n");
+        view = "";//just clear for a new view block
         while(writtenBlocks <= numBlocksToWrite){
-        
+            view += (viewStart + "\n");
+            view += (fullAssetDataName(assetData.ID) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId()))) + qm + "\n");//variable name
+            view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+            view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+            view += (fullAssetDataName(assetData.BKRND) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (fullAssetName((assets.P_FIN))) : (fullAssetName((assets.P_OBST))))) + qm + "\n");//const background with respect to the blocktype
+            view += (fullAbsoluteName(absoluteLayouts.CENT_VERT) + tr + qm + "\n");
+            view += (fullAbsoluteName(absoluteLayouts.CENT_HOR) + tr + qm + "\n");
+            view += (viewEnd + "\n");
+            levelXML.append(view);
+            view = "";
         }
+        levelXML.append(runnerView);
+        
 
         //allows for retracing to see is we missed any
         while (writtenBlocks < numBlocksToWrite) {
