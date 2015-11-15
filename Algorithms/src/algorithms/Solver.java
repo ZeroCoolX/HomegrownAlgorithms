@@ -1,7 +1,9 @@
 package algorithms;
 
-import customADTs.XMLCreator;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,7 +24,7 @@ public class Solver implements Runnable {
     private static int retryCount = 0;
     private int numRocks;
     private int numBlocksToWrite = 0;
-    private int obId = 0;
+    private int obId = 1;
     private int levelNum = 0;
     private String levelGenre = "testing";//right now its hardcoded
     private final File templateXML = new File("/Users/dewit/Documents/shift_files/level_files/level_template/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
@@ -74,7 +76,7 @@ public class Solver implements Runnable {
         map.put(start, block);
 
         levelXML = new StringBuilder();
-        levelXML = build(false);
+        levelXML = build(true);
         System.out.println(levelXML.toString());
         System.out.println("\n\nCreating new level file...");
         String levelName = "pack_"+levelGenre+"_level";
@@ -118,7 +120,7 @@ public class Solver implements Runnable {
         int portalCount = 0;
 
         //int randomNum = ThreadLocalRandom.current().nextInt(50, 95 + 1); // Try out different block densities between 25% & 90% 
-        int randomNum = ThreadLocalRandom.current().nextInt(85, 95 + 1); //<--trying less dense 25% and 75%?
+        int randomNum = ThreadLocalRandom.current().nextInt(92, 95 + 1); //<--trying less dense 25% and 75%?
         if (!recreateMap) {
             for (int i = 0; i < maxY; i++) { // Generate 25x25 map
                 for (int a = 0; a < maxX; a++) {
@@ -980,7 +982,7 @@ public class Solver implements Runnable {
     private static final String dimenFile = "=\"@dimen/";
     private static final String drawFile = "=\"@drawable/";
     private static final String qm = "\"";
-    private static final String tr = "=true";
+    private static final String tr = "=\"true";
     //constant names for variable names. Sequentially increasing numbers are just appended onto them for each new instance
     private static final String constObstacle = "obstacle";
     private static final String constRunner = "dude";
@@ -1077,17 +1079,17 @@ public class Solver implements Runnable {
     private static String fullAbsoluteName(absoluteLayouts layout) {
         switch (layout) {
             case CENT_VERT:
-                return layoutPrefix + "centerVertical" + qm;
+                return layoutPrefix + "centerVertical";
             case CENT_HOR:
-                return layoutPrefix + "centerHorizontal" + qm;
+                return layoutPrefix + "centerHorizontal";
             case A_PAR_RT:
-                return layoutPrefix + "alignParentRight" + qm;
+                return layoutPrefix + "alignParentRight";
             case A_PAR_LT:
-                return layoutPrefix + "alignParentLeft" + qm;
+                return layoutPrefix + "alignParentLeft";
             case A_PAR_TP:
-                return layoutPrefix + "alignParentTop" + qm;
+                return layoutPrefix + "alignParentTop";
             case A_PAR_BT:
-                return layoutPrefix + "alignParentBottom" + qm;
+                return layoutPrefix + "alignParentBottom";
             default:
                 //should never happen
                 return "error";
@@ -1402,7 +1404,7 @@ public class Solver implements Runnable {
                     runnerView += (fullAssetDataName(assetData.ID) + constRunner + qm + "\n");//variable name
                     runnerView += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
                     runnerView += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
-                    runnerView += (fullAssetDataName(assetData.BKRND) + constRunner + qm + "\n");//const background with respect to the blocktype
+                    runnerView += (fullAssetDataName(assetData.BKRND) + (fullAssetName(assets.P_DUD)) + qm + "\n");//const background with respect to the blocktype
                     runnerView += (viewEnd + "\n");
                 } else if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && ent.getValue().isPlaced()) {//we don't write any EmptyBlocks
                     if(debug){System.out.println("We need to write: "+ent.getKey());}
@@ -1411,7 +1413,7 @@ public class Solver implements Runnable {
                     view += (fullAssetDataName(assetData.ID) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId()))) + qm + "\n");//variable name
                     view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
                     view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
-                    view += (fullAssetDataName(assetData.BKRND) + (block instanceof MovingBlock ? (constRunner)
+                    view += (fullAssetDataName(assetData.BKRND) + (block instanceof MovingBlock ? (fullAssetName(assets.P_DUD))
                             : (block instanceof FinishBlock ? (fullAssetName(assets.P_FIN))
                                     : (block instanceof MoltenBlock ? (fullAssetName(assets.P_MOLT))
                                             : (block instanceof PortalBlock ? (fullAssetName(assets.P_PORT))
@@ -1424,20 +1426,24 @@ public class Solver implements Runnable {
                         view += getBaseBlockXML(block);
                     } else if (block.getHorRef().equals(block.getVerRef())) {//if the horizontal and vertical references are the same coordinate we know this is a reference by cluster
                         Block ref = map.get(block.getHorRef());//arbitrairy since the same
-                        int yDist = 0;// block.getPosition().getY() - ref.getPosition().getY();
-                        int xDist = 0;//block.getPosition().getX() - ref.getPosition().getX();
+                        System.out.println("checking block: "+block.getPosition()+"blockID: " + block.getId() + " with ref"+ref.getPosition()+"refID:" + ref.getId());
+                        int yDist = block.getPosition().getY() - ref.getPosition().getY();// block.getPosition().getY() - ref.getPosition().getY();
+                        int xDist = block.getPosition().getX() - ref.getPosition().getX();//block.getPosition().getX() - ref.getPosition().getX();
                         //if either of the distances are 0 this means they either share the same X or the same Y plane
+                        System.out.println("xDist = " + xDist + " yDist = " + yDist);
                         if (xDist == 0 || yDist == 0) {
                             if (yDist == 0) {
                                 if (xDist < 0) {//block is to the left of the reference
                                     //we know its left so put left but check if we need margin
                                     view += (fullRelativeName(relativeLayouts.TO_LT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                    view += (fullRelativeName(relativeLayouts.ALIGN_TP) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
                                     if (Math.abs(xDist) == 2) {
                                         view += (fullRelativeName(relativeLayouts.MGN_RT) + constDimen + qm + "\n");//margin right moves the block left
                                     }
                                 } else {//its to the right, it can never be equal
                                     //we know its right so put right but check if we need margin
                                     view += (fullRelativeName(relativeLayouts.TO_RT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                    view += (fullRelativeName(relativeLayouts.ALIGN_TP) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
                                     if (Math.abs(yDist) == 2) {
                                         view += (fullRelativeName(relativeLayouts.MGN_LT) + constDimen + qm + "\n");//margin left moves the block right
                                     }
@@ -1445,11 +1451,13 @@ public class Solver implements Runnable {
                             } else {//if its not xDist we know its yDist==0 otherwise we'd never have gottten in here
                                 if (yDist < 0) {//block is above  reference
                                     view += (fullRelativeName(relativeLayouts.ABV) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                    view += (fullRelativeName(relativeLayouts.ALIGN_LT) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
                                     if (Math.abs(yDist) == 2) {
                                         view += (fullRelativeName(relativeLayouts.MGN_BTM) + constDimen + qm + "\n");//margin bottom moves the block up
                                     }
                                 } else {//its below, it can never be equal
                                     view += (fullRelativeName(relativeLayouts.BLW) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                    view += (fullRelativeName(relativeLayouts.ALIGN_LT) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
                                     if (Math.abs(yDist) == 2) {
                                         view += (fullRelativeName(relativeLayouts.MGN_TP) + constDimen + qm + "\n");//margin top moves the block down
                                     }
@@ -1498,9 +1506,9 @@ public class Solver implements Runnable {
                         }
                         if (block.getPosition().getY() == refH.getPosition().getY()) {
                             //(arbitrairy so choose top)
-                            view += (fullRelativeName(relativeLayouts.ALIGN_TP) + (refV instanceof MovingBlock ? (constRunner) : (refV instanceof FinishBlock ? (constFinish) : (constObstacle + refV.getId()))) + qm + "\n");
+                            view += (fullRelativeName(relativeLayouts.ALIGN_TP) + (refH instanceof MovingBlock ? (constRunner) : (refH instanceof FinishBlock ? (constFinish) : (constObstacle + refH.getId()))) + qm + "\n");
                         } else {
-                            view += (fullRelativeName((block.getPosition().getY() < refV.getPosition().getY()) ? relativeLayouts.ABV : relativeLayouts.BLW) + (refV instanceof MovingBlock ? (constRunner) : (refV instanceof FinishBlock ? (constFinish) : (constObstacle + refV.getId()))) + qm + "\n");
+                            view += (fullRelativeName((block.getPosition().getY() < refH.getPosition().getY()) ? relativeLayouts.ABV : relativeLayouts.BLW) + (refH instanceof MovingBlock ? (constRunner) : (refH instanceof FinishBlock ? (constFinish) : (constObstacle + refH.getId()))) + qm + "\n");
                         }
                     }
                     //we handle const bases, clusters, and aligns. There is nothing else but to finish off the view block, append it and repeat
@@ -1515,7 +1523,7 @@ public class Solver implements Runnable {
                 System.out.println("Displaying all placed blocks and references in format\nBlock:x | Vref:v | Href:h");
                 for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
                     if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock)) {
-                        System.out.println("Block:" + ent.getValue().getPosition() + " | Vref:" + ent.getValue().getVerRef() + " | Href:" + ent.getValue().getHorRef());
+                        System.out.println("Block:" + ent.getValue().getPosition() + "Block ID: " + ent.getValue().getId() +" | Vref:" + ent.getValue().getVerRef() + " | Href:" + ent.getValue().getHorRef());
                     }
                 }
             }
@@ -1538,23 +1546,26 @@ public class Solver implements Runnable {
         //we need a horizontal and a vertical reference
         HashMap<Coordinate, Block> refs = validRefs(unplacable.getPosition(), 3, debug);
         boolean vPlaced = false;
-        boolean yPlaced = false;
+        boolean hPlaced = false;
         if (refs.size() > 1) {//we want it to be two every time
             RockBlock newBlock = null;
             RockBlock newBlock2 = null;
             for (Map.Entry<Coordinate, Block> ent : refs.entrySet()) {
                 //at most it will only have two object. hopefully it will have 2 objects always -__-
                 Block ref = ent.getValue();
-                if (unplacable.getPosition().getX() == ref.getPosition().getX()) {//if the x's are the same vertical ref
+                if (!vPlaced && unplacable.getPosition().getX() == ref.getPosition().getX()) {//if the x's are the same vertical ref
+                    System.out.println("setting reference:"+ref.getPosition());
                     unplacable.setVerRef(ref.getPosition());
                     vPlaced = true;
-                } else if (unplacable.getPosition().getY() == ref.getPosition().getY()) {
+                } else if (!hPlaced && unplacable.getPosition().getY() == ref.getPosition().getY()) {
+                    System.out.println("setting ref: " + ref.getPosition());
                     unplacable.setHorRef(ref.getPosition());
-                    yPlaced = true;
+                    hPlaced = true;
                 } else {
                     //uhhoh. If its not one of the above we have bigger problems.
+                    System.out.println("could not set!");
                 }
-                if (yPlaced && vPlaced) {
+                if (hPlaced && vPlaced) {
                     unplacable.setPlaced(true);
                     unplacable.setId(obId);//used for variable naming
                     obId++;
@@ -1952,4 +1963,95 @@ public class Solver implements Runnable {
     private boolean isValidCoord(Coordinate c) {
         return (c.getX() < maxX && c.getX() >= 0 && c.getY() < maxY && c.getY() >= 0);
     }
+    
+    
+    public class XMLCreator {
+    
+    private File level;
+
+    public File getLevel() {
+        return level;
+    }
+
+    public void setLevel(File level) {
+        level = level;
+    }
+    
+    
+    public XMLCreator(StringBuilder xml, String outputFileName, File templateXML, int levelNum){
+        level = populateLevelFile(xml, outputFileName, templateXML, levelNum);
+    }
+    
+    //create a new directory using outputFilename (exempt of the extension obviously), create new file in that dir, and write fullxml to it
+    private File populateLevelFile(StringBuilder xml, String outputFileName, File templateXML, int levelNum) {
+        File newLevel = null;
+        try {
+            String fContent = parseAndInject(xml, outputFileName, templateXML);
+            if (fContent.length() == 0 || fContent.equals("")) {
+                throw new IllegalStateException();
+            }
+            File levelsDir = new File("/Users/dewit/Documents/shift_files/level_files");
+            File newLevelDir = new File(levelsDir.getAbsolutePath() + "/" + outputFileName);
+            if (!levelsDir.exists()) {//it should always exist..
+                throw new IOException();//directory storing all levels does not exist?! O_O
+            }
+            if (!newLevelDir.exists()) {
+                if (!newLevelDir.mkdir()) {
+                    throw new IOException();//making a directory failed
+                }
+            }
+            while((new File(newLevelDir.getAbsolutePath() + "/" + outputFileName + (""+levelNum+"") +".xml")).exists()){
+                ++levelNum;
+            }
+            newLevel = new File(newLevelDir.getAbsolutePath() + "/" + outputFileName + (""+levelNum+"") +".xml");
+            FileWriter fw = new FileWriter(newLevel.getAbsoluteFile());
+            BufferedWriter bw = new BufferedWriter(fw);
+            bw.write(fContent);
+            bw.close();
+        } catch (IOException io) {
+            io.printStackTrace();
+        } catch (IllegalStateException is) {
+            is.printStackTrace();
+        } catch(Exception e){
+            //something ELSE went wrong..
+            e.printStackTrace();
+        }
+        return newLevel != null ? newLevel : null;
+    }
+    
+    //read through the given xml template until we reach the spot to add out level then continue filling in the rest and return the entire file contents
+    private String parseAndInject(StringBuilder xml, String outputFileName, File templateXML) {
+        StringBuilder fullFile = null;
+        try {
+            fullFile = new StringBuilder();
+            if (templateXML == null) {
+                throw new NullPointerException();//given xml template doesn't exist... -___-
+            }
+            try (Scanner scanner = new Scanner(templateXML)) {
+                while (scanner.hasNextLine()) {
+                    String line = scanner.nextLine();
+                    if (line.contains("~")) {//DELIMETER! - inject xml
+                        fullFile.append(xml.toString());
+                    } else {//otherwise keep writing the file as normal
+                        fullFile.append((line + "\n"));
+                    }
+                }
+                scanner.close();
+            } catch (IOException ioe) {
+                throw ioe;
+            }
+        } catch (IOException io) {
+            io.printStackTrace();
+        } catch (NullPointerException np) {
+            np.printStackTrace();
+        } catch (Exception e) {
+            //something ELSE went wrong..
+            e.printStackTrace();
+        }
+        return fullFile != null ? fullFile.toString() : "";
+    }
+}
+    
+    
+    
 }
