@@ -19,15 +19,17 @@ public class Solver implements Runnable {
     private static boolean recreateMap = false;
     private static int maxX = 11;
     private static int maxY = 15;
-    private static int minMoves = 10;
+    private static int minMoves = 12;
     private static int maxMoves = 20;
     private static int retryCount = 0;
     private int numRocks;
     private int numBlocksToWrite = 0;
-    private int levelNum = 0;
-    private String levelGenre = "testing";//right now its hardcoded
+    private static int levelNum = 1;
+    private static String levelGenre = "fire";//right now its hardcoded
     private final File templateXML = new File("/Users/dewit/Documents/shift_files/level_files/level_template/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
     private final File templateDir = new File("/Users/dewit/Documents/shift_files/level_files/level_template/");
+    //private final File templateXML = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
+    //private final File templateDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
     
     private static boolean superDebug = false;
     private static boolean showPath = true;
@@ -38,7 +40,8 @@ public class Solver implements Runnable {
 
     public static void main(String[] args) {
         Long totalTime = System.currentTimeMillis();
-        if (args.length > 0) {
+        /*if (args.length > 0) {
+            levelGenre = args[0];
             Solver s = new Solver();
             recreateMap = true;
             s.setMapFromString(args[0]);
@@ -47,6 +50,10 @@ public class Solver implements Runnable {
             Solver s = new Solver();
             s.run();
         }
+            levelGenre = args[0];
+        }*/
+            Solver s = new Solver();
+            s.run();
         long total = 0;
         for (Long t : execTimes) {
             total += t;
@@ -75,7 +82,7 @@ public class Solver implements Runnable {
         map.put(start, block);
 
         levelXML = new StringBuilder();
-        levelXML = build(true);
+        levelXML = build(false);
         System.out.println(levelXML.toString());
         System.out.println("\n\nCreating new level file...");
         String levelName = "pack_"+levelGenre+"_level";
@@ -119,7 +126,7 @@ public class Solver implements Runnable {
         int portalCount = 0;
 
         //int randomNum = ThreadLocalRandom.current().nextInt(50, 95 + 1); // Try out different block densities between 25% & 90% 
-        int randomNum = ThreadLocalRandom.current().nextInt(92, 95 + 1); //<--trying less dense 25% and 75%?
+        int randomNum = ThreadLocalRandom.current().nextInt(93, 95 + 1); //<--trying less dense 25% and 75%?
         if (!recreateMap) {
             for (int i = 0; i < maxY; i++) { // Generate 25x25 map
                 for (int a = 0; a < maxX; a++) {
@@ -141,7 +148,7 @@ public class Solver implements Runnable {
                         BubbleBlock bubbleBlock = new BubbleBlock(currentCoordinate);
                         map.put(currentCoordinate, bubbleBlock);
                         bubbleCount++;
-                    } else if (Math.random() * 100 > randomNum * 1.01) {
+                    } else if (Math.random() * 100 > randomNum * 1.02) {
                         MoltenBlock moltenBlock = new MoltenBlock(currentCoordinate);
                         map.put(currentCoordinate, moltenBlock);
                         moltenCount++;
@@ -1423,11 +1430,11 @@ public class Solver implements Runnable {
                         view += getBaseBlockXML(block);
                     } else if (block.getHorRef().equals(block.getVerRef())) {//if the horizontal and vertical references are the same coordinate we know this is a reference by cluster
                         Block ref = map.get(block.getHorRef());//arbitrairy since the same
-                        System.out.println("checking block: "+block.getPosition()+"blockID: " + block.getId() + " with ref"+ref.getPosition()+"refID:" + ref.getId());
+                        //System.out.println("checking block: "+block.getPosition()+"blockID: " + block.getId() + " with ref"+ref.getPosition()+"refID:" + ref.getId());
                         int yDist = block.getPosition().getY() - ref.getPosition().getY();// block.getPosition().getY() - ref.getPosition().getY();
                         int xDist = block.getPosition().getX() - ref.getPosition().getX();//block.getPosition().getX() - ref.getPosition().getX();
                         //if either of the distances are 0 this means they either share the same X or the same Y plane
-                        System.out.println("xDist = " + xDist + " yDist = " + yDist);
+                        //System.out.println("xDist = " + xDist + " yDist = " + yDist);
                         if (xDist == 0 || yDist == 0) {
                             if (yDist == 0) {
                                 if (xDist < 0) {//block is to the left of the reference
@@ -1516,12 +1523,12 @@ public class Solver implements Runnable {
             }
             levelXML.append(runnerView);
             //after all is said and done print out all blocks that got placed
-                System.out.println("Displaying all placed blocks and references in format\nBlock:x | Vref:v | Href:h");
-                for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
+                //System.out.println("Displaying all placed blocks and references in format\nBlock:x | Vref:v | Href:h");
+                if(debug){for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
                     if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock)) {
                     System.out.println("Block:" + ent.getValue().getPosition() +"Block ID:"+ent.getValue().getId()+ " | Vref:" + ent.getValue().getVerRef() + "Vref ID:"+ map.get(ent.getValue().getVerRef()).getId() +" | Href:" + ent.getValue().getHorRef()+ "Href ID:"+ map.get(ent.getValue().getHorRef()).getId());
                     }
-                }
+                }}
         } catch (NullPointerException npe) {
             if(debug){System.out.println("XML so far!\n\n" + levelXML.toString());}
             System.out.println("Error: " + npe.getMessage());
@@ -1559,16 +1566,16 @@ public class Solver implements Runnable {
                 //at most it will only have two object. hopefully it will have 2 objects always -__-
                 Block ref = ent.getValue();
                 if (!vPlaced && unplacable.getPosition().getX() == ref.getPosition().getX()) {//if the x's are the same vertical ref
-                    System.out.println("setting reference:"+ref.getPosition());
+                    //System.out.println("setting reference:"+ref.getPosition());
                     map.get(unplacable.getPosition()).setVerRef(map.get(ref.getPosition()).getPosition());
                     vPlaced = true;
                 } else if (!hPlaced && unplacable.getPosition().getY() == ref.getPosition().getY()) {
-                    System.out.println("setting ref: " + ref.getPosition());
+                    //System.out.println("setting ref: " + ref.getPosition());
                     map.get(unplacable.getPosition()).setHorRef(map.get(ref.getPosition()).getPosition());
                     hPlaced = true;
                 } else {
                     //uhhoh. If its not one of the above we have bigger problems.
-                    System.out.println("could not set!");
+                    //System.out.println("could not set!");
                 }
                 if (hPlaced && vPlaced) {
                     map.get(unplacable.getPosition()).setPlaced(true);
@@ -1707,7 +1714,7 @@ public class Solver implements Runnable {
                                     hFound = true;
                                 }
                                 if (vFound && hFound) {
-                                    System.out.println("setting placed to true for block: " + blockToPlace.getPosition());
+                                    //System.out.println("setting placed to true for block: " + blockToPlace.getPosition());
                                     map.get(blockToPlace.getPosition()).setPlaced(true);
                                     //blockToPlace.setId(obId);
                                     //++obId;
@@ -1912,21 +1919,21 @@ public class Solver implements Runnable {
                 }
             }
         } else {
-            if(true){System.out.println("using version 3");}
+            //if(true){System.out.println("using version 3");}
             boolean vFound = false;
             boolean hFound = false;
             //verticals
             if (!vFound) {
                 for (int i = coord.getX(); i >= 0; --i) {//check left first
                     Coordinate co = new Coordinate(i, coord.getY());
-                    System.out.println("checking : " + co.toString());
+                   // System.out.println("checking : " + co.toString());
                     if (isValidCoord(co)) {
                         //System.out.println("valid!");
                         if (map.get(co) instanceof Block) {
                             //System.out.println("im a block!");
                             if ((map.get(co) instanceof EmptyBlock)) {
                                 if (!inPath(co)) {
-                                    if(true){System.out.println("is empty and not in the path!");System.out.println("placing it!");}
+                                   // if(true){System.out.println("is empty and not in the path!");System.out.println("placing it!");}
                                     validrefs.put(map.get(co).getPosition(), map.get(co));
                                     vFound = true;
                                     break;
@@ -1939,14 +1946,14 @@ public class Solver implements Runnable {
             if (!vFound) {
                 for (int i = coord.getX(); i < maxX-1; ++i) {//check right first
                     Coordinate co = new Coordinate(i, coord.getY());
-                    System.out.println("checking : " + co.toString());
+                   // System.out.println("checking : " + co.toString());
                     if (isValidCoord(co)) {
                         //System.out.println("valid!");
                         if (map.get(co) instanceof Block) {
                             //System.out.println("im a block!");
                             if ((map.get(co) instanceof EmptyBlock)) {
                                 if (!inPath(co)) {
-                                    if(true){System.out.println("is empty and notin the path!");System.out.println("placing it!");}
+                                    //if(true){System.out.println("is empty and notin the path!");System.out.println("placing it!");}
                                     validrefs.put(map.get(co).getPosition(), map.get(co));
                                     vFound = true;
                                     break;
@@ -1966,7 +1973,7 @@ public class Solver implements Runnable {
                             //System.out.println("im a block!");
                             if ((map.get(co) instanceof EmptyBlock)) {
                                 if (!inPath(co)) {
-                                    if(true){System.out.println("is empty and not in the path!");System.out.println("placing it!");}
+                                    //if(true){System.out.println("is empty and not in the path!");System.out.println("placing it!");}
                                     validrefs.put(map.get(co).getPosition(), map.get(co));
                                     hFound = true;
                                     break;
@@ -1986,7 +1993,7 @@ public class Solver implements Runnable {
                             //System.out.println("im a block!");
                             if ((map.get(co) instanceof EmptyBlock)) {
                                 if (!inPath(co)) {
-                                    if(true){System.out.println("is empty and not in the path!");System.out.println("placing it!");}
+                                   // if(true){System.out.println("is empty and not in the path!");System.out.println("placing it!");}
                                     validrefs.put(map.get(co).getPosition(), map.get(co));
                                     hFound = true;
                                     break;
@@ -2076,6 +2083,7 @@ public class Solver implements Runnable {
             if (!levelsDir.exists()) {//it should always exist..
                 throw new IOException();//directory storing all levels does not exist?! O_O
             }
+            //removed for lucky 8
             if (!newLevelDir.exists()) {
                 if (!newLevelDir.mkdir()) {
                     throw new IOException();//making a directory failed
