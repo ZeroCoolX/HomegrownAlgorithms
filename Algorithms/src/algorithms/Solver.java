@@ -126,7 +126,7 @@ public class Solver implements Runnable {
         int portalCount = 0;
 
         //int randomNum = ThreadLocalRandom.current().nextInt(50, 95 + 1); // Try out different block densities between 25% & 90% 
-        int randomNum = ThreadLocalRandom.current().nextInt(93, 95 + 1); //<--trying less dense 25% and 75%?
+        int randomNum = ThreadLocalRandom.current().nextInt(91, 95 + 1); //<--trying less dense 25% and 75%?
         if (!recreateMap) {
             for (int i = 0; i < maxY; i++) { // Generate 25x25 map
                 for (int a = 0; a < maxX; a++) {
