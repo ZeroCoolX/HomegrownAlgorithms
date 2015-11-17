@@ -26,11 +26,19 @@ public class Solver implements Runnable {
     private int numRocks;
     private int numBlocksToWrite = 0;
     private static int levelNum = 1;
+<<<<<<< HEAD
     private static String levelGenre = "fire";//right now its hardcoded
     //private final File templateXML = new File("/Users/dewit/Documents/shift_files/level_files/level_template/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
     //private final File templateDir = new File("/Users/dewit/Documents/shift_files/level_files/level_template/");
     private final File templateXML = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
     private final File templateDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
+=======
+    private static String levelGenre = "";//right now its hardcoded
+    private final File templateXML = new File("/Users/dewit/Documents/shift_files/level_files/level_template/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
+    private final File templateDir = new File("/Users/dewit/Documents/shift_files/level_files/level_template/");
+    //private final File templateXML = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
+    //private final File templateDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
+>>>>>>> dd06e31539b3fe7daa2baf91afbd777717936637
     
     private static boolean superDebug = false;
     private static boolean showPath = true;
@@ -2209,8 +2217,9 @@ public class Solver implements Runnable {
                 throw new IllegalStateException();
             }
             
-            //File levelsDir = new File("/Users/dewit/Documents/shift_files/level_files");
-            File levelsDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
+
+            File levelsDir = new File("/Users/dewit/Documents/shift_files/level_files");
+            //File levelsDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
             File newLevelDir = new File(levelsDir.getAbsolutePath() + "/" + outputFileName);
             if (!levelsDir.exists()) {//it should always exist..
                 throw new IOException();//directory storing all levels does not exist?! O_O
