@@ -1,3 +1,4 @@
+
 package algorithms;
 
 import java.io.BufferedWriter;
@@ -26,10 +27,10 @@ public class Solver implements Runnable {
     private int numBlocksToWrite = 0;
     private static int levelNum = 1;
     private static String levelGenre = "fire";//right now its hardcoded
-    private final File templateXML = new File("/Users/dewit/Documents/shift_files/level_files/level_template/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
-    private final File templateDir = new File("/Users/dewit/Documents/shift_files/level_files/level_template/");
-    //private final File templateXML = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
-    //private final File templateDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
+    //private final File templateXML = new File("/Users/dewit/Documents/shift_files/level_files/level_template/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
+    //private final File templateDir = new File("/Users/dewit/Documents/shift_files/level_files/level_template/");
+    private final File templateXML = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
+    private final File templateDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
     
     private static boolean superDebug = false;
     private static boolean showPath = true;
@@ -40,8 +41,8 @@ public class Solver implements Runnable {
 
     public static void main(String[] args) {
         Long totalTime = System.currentTimeMillis();
-        /*if (args.length > 0) {
-            levelGenre = args[0];
+        if (args.length > 0) {
+            /*levelGenre = args[0];
             Solver s = new Solver();
             recreateMap = true;
             s.setMapFromString(args[0]);
@@ -49,9 +50,9 @@ public class Solver implements Runnable {
         } else {
             Solver s = new Solver();
             s.run();
-        }
-            levelGenre = args[0];
         }*/
+            levelGenre = args[0];
+        }
             Solver s = new Solver();
             s.run();
         long total = 0;
@@ -1149,18 +1150,6 @@ public class Solver implements Runnable {
         range.push(new Coordinate(x - 1, y + 1));
         range.push(new Coordinate(x + 1, y - 1));
         range.push(new Coordinate(x - 1, y - 1));
-        range.push(new Coordinate(x - 2, y));
-        range.push(new Coordinate(x - 2, y + 1));
-        range.push(new Coordinate(x - 2, y - 1));
-        range.push(new Coordinate(x, y + 2));
-        range.push(new Coordinate(x - 1, y + 2));
-        range.push(new Coordinate(x + 1, y + 2));
-        range.push(new Coordinate(x, y - 2));
-        range.push(new Coordinate(x - 1, y - 2));
-        range.push(new Coordinate(x + 1, y - 2));
-        range.push(new Coordinate(x + 2, y));
-        range.push(new Coordinate(x + 2, y + 1));
-        range.push(new Coordinate(x + 2, y - 1));
         return range;
     }
 
@@ -1439,30 +1428,90 @@ public class Solver implements Runnable {
                             if (yDist == 0) {
                                 if (xDist < 0) {//block is to the left of the reference
                                     //we know its left so put left but check if we need margin
-                                    view += (fullRelativeName(relativeLayouts.TO_LT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    view += (fullRelativeName(relativeLayouts.ALIGN_TP) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    if (Math.abs(xDist) == 2) {
+                                    //--------HORIZONTAL POSITION----------------
+                                    if(block.getPosition().getX() == 0){
+                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
+                                    }else {
+                                        view += (fullRelativeName(relativeLayouts.TO_LT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                    }
+                                    
+                                    //--------VERTICAL POSITION----------------
+                                    if(block.getPosition().getY() == 0){
+                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+                                    }else if(block.getPosition().getY() == maxY-1){
+                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
+                                    }else {
+                                        view += (fullRelativeName(relativeLayouts.ALIGN_TP) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                    }
+                                    
+                                    //--------MARGIN--------------
+                                    if (Math.abs(xDist) == 2 && block.getPosition().getX() != 0) {
                                         view += (fullRelativeName(relativeLayouts.MGN_RT) + constDimen + qm + "\n");//margin right moves the block left
                                     }
                                 } else {//its to the right, it can never be equal
                                     //we know its right so put right but check if we need margin
-                                    view += (fullRelativeName(relativeLayouts.TO_RT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    view += (fullRelativeName(relativeLayouts.ALIGN_TP) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    if (Math.abs(yDist) == 2) {
+                                    //--------HORIZONTAL POSITION----------------
+                                    if(block.getPosition().getX() == maxX-1){
+                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
+                                    }else {
+                                        view += (fullRelativeName(relativeLayouts.TO_RT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                    }
+                                    
+                                    //--------VERTICAL POSITION----------------
+                                    if(block.getPosition().getY() == 0){
+                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+                                    }else if(block.getPosition().getY() == maxY-1){
+                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
+                                    }else {
+                                        view += (fullRelativeName(relativeLayouts.ALIGN_TP) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                    }
+                                    
+                                    //--------MARGIN--------------
+                                    if (Math.abs(yDist) == 2 && block.getPosition().getX() != maxX-1) {
                                         view += (fullRelativeName(relativeLayouts.MGN_LT) + constDimen + qm + "\n");//margin left moves the block right
                                     }
                                 }
                             } else {//if its not xDist we know its yDist==0 otherwise we'd never have gottten in here
                                 if (yDist < 0) {//block is above  reference
-                                    view += (fullRelativeName(relativeLayouts.ABV) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    view += (fullRelativeName(relativeLayouts.ALIGN_LT) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    if (Math.abs(yDist) == 2) {
+                                    //--------VERTICAL POSITION----------------
+                                    if(block.getPosition().getY() == 0){
+                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+                                    }else {
+                                        view += (fullRelativeName(relativeLayouts.ABV) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                    }
+                                    
+                                    //--------HORIZONTAL POSITION----------------
+                                    if(block.getPosition().getX() == 0){
+                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
+                                    }else if(block.getPosition().getX() == maxX-1){
+                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
+                                    }else {
+                                        view += (fullRelativeName(relativeLayouts.ALIGN_LT) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                    }
+                                    
+                                    //--------MARGIN--------------
+                                    if (Math.abs(yDist) == 2 && block.getPosition().getY() != 0) {
                                         view += (fullRelativeName(relativeLayouts.MGN_BTM) + constDimen + qm + "\n");//margin bottom moves the block up
                                     }
                                 } else {//its below, it can never be equal
-                                    view += (fullRelativeName(relativeLayouts.BLW) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    view += (fullRelativeName(relativeLayouts.ALIGN_LT) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    if (Math.abs(yDist) == 2) {
+                                    //--------VERTICAL POSITION----------------
+                                    if(block.getPosition().getY() == maxY-1){
+                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
+                                    }else {
+                                        view += (fullRelativeName(relativeLayouts.BLW) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                    }
+                                    
+                                    //--------HORIZONTAL POSITION----------------
+                                    if(block.getPosition().getX() == 0){
+                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
+                                    }else if(block.getPosition().getX() == maxX-1){
+                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
+                                    }else {
+                                        view += (fullRelativeName(relativeLayouts.ALIGN_LT) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                    }
+                                    
+                                    //--------MARGIN--------------
+                                    if (Math.abs(yDist) == 2 && block.getPosition().getY() != maxY-1) {
                                         view += (fullRelativeName(relativeLayouts.MGN_TP) + constDimen + qm + "\n");//margin top moves the block down
                                     }
                                 }
@@ -1472,25 +1521,49 @@ public class Solver implements Runnable {
                             //yDist < 0 means current block is above reference, likewise yDist > 0 means current block is below reference
                             if (xDist < 0) {//block is to the left of the reference
                                 //we know its left so put left but check if we need margin
-                                view += (fullRelativeName(relativeLayouts.TO_LT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                if (Math.abs(xDist) == 2) {
+                                //--------HORIZONTAL POSITION----------------
+                                if (block.getPosition().getX() == 0) {
+                                    view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
+                                } else {
+                                    view += (fullRelativeName(relativeLayouts.TO_LT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                }
+                                //--------MARGIN--------------
+                                if (Math.abs(xDist) == 2 && block.getPosition().getX() != 0) {
                                     view += (fullRelativeName(relativeLayouts.MGN_RT) + constDimen + qm + "\n");//margin right moves the block left
                                 }
                             } else {//its to the right, it can never be equal
                                 //we know its right so put right but check if we need margin
-                                view += (fullRelativeName(relativeLayouts.TO_RT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                if (Math.abs(xDist) == 2) {
+                                //--------HORIZONTAL POSITION----------------
+                                if (block.getPosition().getX() == maxX-1) {
+                                    view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
+                                } else {
+                                    view += (fullRelativeName(relativeLayouts.TO_RT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                }
+                                //--------MARGIN--------------
+                                if (Math.abs(xDist) == 2 && block.getPosition().getX() != maxX-1) {
                                     view += (fullRelativeName(relativeLayouts.MGN_LT) + constDimen + qm + "\n");//margin left moves the block right
                                 }
                             }
                             if (yDist < 0) {//block is above  reference
-                                view += (fullRelativeName(relativeLayouts.ABV) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                if (Math.abs(yDist) == 2) {
+                                //--------VERTICAL POSITION----------------
+                                if (block.getPosition().getY() == 0) {
+                                    view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+                                } else {
+                                    view += (fullRelativeName(relativeLayouts.ABV) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                }
+                                //--------MARGIN--------------
+                                if (Math.abs(yDist) == 2 && block.getPosition().getY() != 0) {
                                     view += (fullRelativeName(relativeLayouts.MGN_BTM) + constDimen + qm + "\n");//margin bottom moves the block up
                                 }
                             } else {//its below, it can never be equal
-                                view += (fullRelativeName(relativeLayouts.BLW) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                if (Math.abs(yDist) == 2) {
+                                //--------VERTICAL POSITION----------------
+                                if (block.getPosition().getY() == maxY-1) {
+                                    view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
+                                } else {
+                                    view += (fullRelativeName(relativeLayouts.BLW) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
+                                }
+                                //--------MARGIN--------------
+                                if (Math.abs(yDist) == 2 && block.getPosition().getY() != maxY-1) {
                                     view += (fullRelativeName(relativeLayouts.MGN_TP) + constDimen + qm + "\n");//margin top moves the block down
                                 }
                             }
@@ -1504,15 +1577,39 @@ public class Solver implements Runnable {
                         //first set the vertical aligh so left or right
                         if (block.getPosition().getX() == refV.getPosition().getX()) {
                             //(arbitrairy so choose left always
-                            view += (fullRelativeName(relativeLayouts.ALIGN_LT) + (refV instanceof MovingBlock ? (constRunner) : (refV instanceof FinishBlock ? (constFinish) : (constObstacle + refV.getId()))) + qm + "\n");
+                            if (block.getPosition().getX() == 0) {
+                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
+                            } else if (block.getPosition().getX() == maxX - 1) {
+                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
+                            } else {
+                                view += (fullRelativeName(relativeLayouts.ALIGN_LT) + (refV instanceof MovingBlock ? (constRunner) : (refV instanceof FinishBlock ? (constFinish) : (constObstacle + refV.getId()))) + qm + "\n");
+                            }
                         } else {
-                            view += (fullRelativeName((block.getPosition().getX() < refV.getPosition().getX()) ? relativeLayouts.TO_LT_OF : relativeLayouts.TO_RT_OF) + (refV instanceof MovingBlock ? (constRunner) : (refV instanceof FinishBlock ? (constFinish) : (constObstacle + refV.getId()))) + qm + "\n");
+                            if (block.getPosition().getX() == 0) {
+                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
+                            } else if (block.getPosition().getX() == maxX - 1) {
+                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
+                            } else {
+                                view += (fullRelativeName((block.getPosition().getX() < refV.getPosition().getX()) ? relativeLayouts.TO_LT_OF : relativeLayouts.TO_RT_OF) + (refV instanceof MovingBlock ? (constRunner) : (refV instanceof FinishBlock ? (constFinish) : (constObstacle + refV.getId()))) + qm + "\n");
+                            }
                         }
                         if (block.getPosition().getY() == refH.getPosition().getY()) {
                             //(arbitrairy so choose top)
-                            view += (fullRelativeName(relativeLayouts.ALIGN_TP) + (refH instanceof MovingBlock ? (constRunner) : (refH instanceof FinishBlock ? (constFinish) : (constObstacle + refH.getId()))) + qm + "\n");
+                            if(block.getPosition().getY() == 0){
+                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+                            } else if (block.getPosition().getY() == maxY - 1) {
+                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
+                            } else {
+                                view += (fullRelativeName(relativeLayouts.ALIGN_TP) + (refH instanceof MovingBlock ? (constRunner) : (refH instanceof FinishBlock ? (constFinish) : (constObstacle + refH.getId()))) + qm + "\n");
+                            }
                         } else {
-                            view += (fullRelativeName((block.getPosition().getY() < refH.getPosition().getY()) ? relativeLayouts.ABV : relativeLayouts.BLW) + (refH instanceof MovingBlock ? (constRunner) : (refH instanceof FinishBlock ? (constFinish) : (constObstacle + refH.getId()))) + qm + "\n");
+                            if (block.getPosition().getY() == 0) {
+                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+                            } else if (block.getPosition().getY() == maxY - 1) {
+                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
+                            } else {
+                                view += (fullRelativeName((block.getPosition().getY() < refH.getPosition().getY()) ? relativeLayouts.ABV : relativeLayouts.BLW) + (refH instanceof MovingBlock ? (constRunner) : (refH instanceof FinishBlock ? (constFinish) : (constObstacle + refH.getId()))) + qm + "\n");
+                            }
                         }
                     }
                     //we handle const bases, clusters, and aligns. There is nothing else but to finish off the view block, append it and repeat
@@ -1542,7 +1639,6 @@ public class Solver implements Runnable {
         }
         return levelXML;
     }
-    
     private void assignIds() {
         int obId = 1;
         for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
@@ -1756,6 +1852,40 @@ public class Solver implements Runnable {
             }
         }
         //now all blocks on the map have references
+    }
+    private HashMap<Coordinate, Block> getHorizontalReferences(Object coordinate, boolean debug) {
+        HashMap<Coordinate, Block> horizontalRefs = new HashMap<Coordinate, Block>();
+        Coordinate coord = null;
+        if (coordinate instanceof Coordinate) {
+            coord = (Coordinate) coordinate;
+        } else {
+            return null;//show not happen but just in case
+        }
+        if(debug){System.out.println("Getting valid horizontal refs for block: " + coord);}
+        int blockX = coord.getX();
+        int toRightOfBlock = blockX+1;
+        int toLeftOfBlock = blockX-1;
+        for(int i = 0; i < maxY; i++){
+           /* if (isValidCoord(co2)) {
+                        //if(debug){System.out.println("valid!");}
+                        if (map.get(co2) instanceof Block) {
+                            //if(debug){System.out.println("im a block!");}
+                            if (!(map.get(co2) instanceof EmptyBlock)) {
+                                //if(debug){System.out.println("not empty!");}
+                                if (map.get(co2).isPlaced()) {//ONLY grab placed items
+                                    if (debug) {
+                                        System.out.println("placing it!");
+                                    }
+                                    validrefs.put(map.get(co2).getPosition(), map.get(co2));
+                                }
+                            }
+                        }
+                    }
+                    */
+        }
+        return horizontalRefs;
+        
+        
     }
 
     //Generates a list of all blocks within range of a given coordinate 
@@ -2078,21 +2208,25 @@ public class Solver implements Runnable {
             if (fContent.length() == 0 || fContent.equals("")) {
                 throw new IllegalStateException();
             }
-            File levelsDir = new File("/Users/dewit/Documents/shift_files/level_files");
+            
+            //File levelsDir = new File("/Users/dewit/Documents/shift_files/level_files");
+            File levelsDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
             File newLevelDir = new File(levelsDir.getAbsolutePath() + "/" + outputFileName);
             if (!levelsDir.exists()) {//it should always exist..
                 throw new IOException();//directory storing all levels does not exist?! O_O
             }
             //removed for lucky 8
+            /*
             if (!newLevelDir.exists()) {
                 if (!newLevelDir.mkdir()) {
                     throw new IOException();//making a directory failed
                 }
             }
-            while((new File(newLevelDir.getAbsolutePath() + "/" + outputFileName + (""+levelNum+"") +".xml")).exists()){
+            */
+            while((new File(levelsDir.getAbsolutePath() + "/" + outputFileName + (""+levelNum+"") +".xml")).exists()){
                 ++levelNum;
             }
-            newLevel = new File(newLevelDir.getAbsolutePath() + "/" + outputFileName + (""+levelNum+"") +".xml");
+            newLevel = new File(levelsDir.getAbsolutePath() + "/" + outputFileName + (""+levelNum+"") +".xml");
             FileWriter fw = new FileWriter(newLevel.getAbsoluteFile());
             BufferedWriter bw = new BufferedWriter(fw);
             bw.write(fContent);
