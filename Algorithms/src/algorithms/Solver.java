@@ -2091,10 +2091,10 @@ public class Solver implements Runnable {
                     throw new IOException();//making a directory failed
                 }
             }
-            while((new File(levelsDir.getAbsolutePath() + "/" + outputFileName + (""+levelNum+"") +".xml")).exists()){
+            while((new File(newLevelDir.getAbsolutePath() + "/" + outputFileName + (""+levelNum+"") +".xml")).exists()){
                 ++levelNum;
             }
-            newLevel = new File(levelsDir.getAbsolutePath() + "/" + outputFileName + (""+levelNum+"") +".xml");
+            newLevel = new File(newLevelDir.getAbsolutePath() + "/" + outputFileName + (""+levelNum+"") +".xml");
             FileWriter fw = new FileWriter(newLevel.getAbsoluteFile());
             BufferedWriter bw = new BufferedWriter(fw);
             bw.write(fContent);
