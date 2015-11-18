@@ -1618,39 +1618,31 @@ public class Solver implements Runnable {
                         //first set the vertical aligh so left or right
                         if (block.getPosition().getX() == refV.getPosition().getX()) {
                             //(arbitrairy so choose left always
-                            if (block.getPosition().getX() == 0) {
-                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
-                            } else if (block.getPosition().getX() == maxX - 1) {
-                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
-                            } else {
+                        	if(block.getPosition().getY() == refV.getPosition().getY()){ //then we know it's ref itself
+                        		if (block.getPosition().getX() == 0) {
+                        			view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
+                        		} else if (block.getPosition().getX() == maxX - 1) {
+                        			view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
+                        		}	 
+                        	}else {
                                 view += (fullRelativeName(relativeLayouts.ALIGN_LT) + (refV instanceof MovingBlock ? (constRunner) : (refV instanceof FinishBlock ? (constFinish) : (constObstacle + refV.getId()))) + qm + "\n");
                             }
                         } else {
-                            if (block.getPosition().getX() == 0) {
-                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
-                            } else if (block.getPosition().getX() == maxX - 1) {
-                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
-                            } else {
                                 view += (fullRelativeName((block.getPosition().getX() < refV.getPosition().getX()) ? relativeLayouts.TO_LT_OF : relativeLayouts.TO_RT_OF) + (refV instanceof MovingBlock ? (constRunner) : (refV instanceof FinishBlock ? (constFinish) : (constObstacle + refV.getId()))) + qm + "\n");
-                            }
                         }
                         if (block.getPosition().getY() == refH.getPosition().getY()) {
                             //(arbitrairy so choose top)
-                            if(block.getPosition().getY() == 0){
-                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
-                            } else if (block.getPosition().getY() == maxY - 1) {
-                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
+                        	if(block.getPosition().getX() == refH.getPosition().getX()){ //then we know it's ref itself
+                        		if (block.getPosition().getY() == 0) {
+                        			view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+                        		} else if (block.getPosition().getY() == maxY - 1) {
+                        			view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
+                        		}	
                             } else {
                                 view += (fullRelativeName(relativeLayouts.ALIGN_TP) + (refH instanceof MovingBlock ? (constRunner) : (refH instanceof FinishBlock ? (constFinish) : (constObstacle + refH.getId()))) + qm + "\n");
                             }
                         } else {
-                            if (block.getPosition().getY() == 0) {
-                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
-                            } else if (block.getPosition().getY() == maxY - 1) {
-                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
-                            } else {
                                 view += (fullRelativeName((block.getPosition().getY() < refH.getPosition().getY()) ? relativeLayouts.ABV : relativeLayouts.BLW) + (refH instanceof MovingBlock ? (constRunner) : (refH instanceof FinishBlock ? (constFinish) : (constObstacle + refH.getId()))) + qm + "\n");
-                            }
                         }
                     }
                     //we handle const bases, clusters, and aligns. There is nothing else but to finish off the view block, append it and repeat
@@ -1814,12 +1806,13 @@ public class Solver implements Runnable {
             			Coordinate currentCoord = new Coordinate(j, i);
             			Block currentBlock = map.get(currentCoord);
             			if((currentBlock instanceof Block) && !(currentBlock instanceof EmptyBlock) && !currentBlock.isPlaced()){
-            				ArrayList<Block> horizontalRefs = getHorizontalReferences(currentCoord, false);
-            				ArrayList<Block> verticalRefs = getVerticalReferences(currentCoord, false);
+            				ArrayList<Block> horizontalRefs = getVerticalReferences(currentCoord, false);
+            				ArrayList<Block> verticalRefs = getHorizontalReferences(currentCoord, false);
 
             				if(currentBlock.getHorRef() == null){
             					if(isAgainstWall("horizontal",currentCoord)){
-            						map.get(currentBlock.getPosition()).setHorRef(currentCoord);
+            						map.get(currentBlock.getPosition()).setVerRef(currentCoord);
+            						System.out.println("Block @ ("+currentCoord.getX()+","+currentCoord.getY()+"), ID = "+currentBlock.getId()+" set v ref to self");
             					}else if(horizontalRefs.size() > 0){
             						Coordinate horRef = map.get(horizontalRefs.get(0).getPosition()).getPosition();
             						map.get(currentBlock.getPosition()).setHorRef(map.get(horizontalRefs.get(0).getPosition()).getPosition());
@@ -1829,6 +1822,7 @@ public class Solver implements Runnable {
             				if(currentBlock.getVerRef() == null){
             					if(isAgainstWall("vertical",currentCoord)){
             						map.get(currentBlock.getPosition()).setVerRef(currentCoord);
+            						System.out.println("Block @ ("+currentCoord.getX()+","+currentCoord.getY()+"), ID = "+currentBlock.getId()+" set horizontal ref to self");
             					}else if(verticalRefs.size() > 0){
             						Coordinate verRef = map.get(verticalRefs.get(0).getPosition()).getPosition();
             						map.get(currentBlock.getPosition()).setVerRef(map.get(verticalRefs.get(0).getPosition()).getPosition());
