@@ -22,7 +22,7 @@ public class Solver implements Runnable {
     private static int maxY = 15;
     private static int midX = (maxX - 1) / 2;
     private static int midY = (maxY - 1) / 2;
-    private static int minMoves = 12;
+    private static int minMoves = 15;
     private static int maxMoves = 20;
     private static int retryCount = 0;
     private int numRocks;
@@ -143,11 +143,11 @@ public class Solver implements Runnable {
                     if (i == 0 && a == 0) {
                         continue; // Don't put rocks at start
                     }
-                    if (Math.random() * 100 > randomNum) {
+                    if (Math.random() * 100 > randomNum * 1.00) {
                         RockBlock rockBlock = new RockBlock(currentCoordinate);
                         map.put(currentCoordinate, rockBlock);
                         rockCount++;
-                    } else if (Math.random() * 100 > randomNum * 1.1) {
+                    } else if (Math.random() * 100 > randomNum * 1.2) {
                         BubbleBlock bubbleBlock = new BubbleBlock(currentCoordinate);
                         map.put(currentCoordinate, bubbleBlock);
                         bubbleCount++;
@@ -1415,7 +1415,46 @@ public class Solver implements Runnable {
                     if (block.getPosition().equals(block.getHorRef()) && block.getPosition().equals(block.getVerRef())) {//if ALL the positions are the same then this is a constant base block
                         //returns constant base locs
                         view += getBaseBlockXML(block);
-                    } else if (block.getHorRef().equals(block.getVerRef())) {//if the horizontal and vertical references are the same coordinate we know this is a reference by cluster
+                    } else if((block.getPosition().equals(block.getHorRef()) && !block.getPosition().equals(block.getVerRef())) || (!block.getPosition().equals(block.getHorRef()) && block.getPosition().equals(block.getVerRef()))){
+                    	//if the block references itself for one ref, but not the other, it's aligned to a wall and refs another block
+                    	if(block.getPosition().equals(block.getHorRef())){
+                    		if(block.getPosition().getX() == 0){
+                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
+                    		}else if(block.getPosition().getX() == maxX-1){
+                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
+                    		}else if(block.getPosition().getX() == midX){
+                                view += (fullAbsoluteName(absoluteLayouts.CENT_HOR) + tr + qm + "\n");
+                    		}
+                    		
+                    		Block vRef = map.get(block.getVerRef());
+                    		if(block.getPosition().getY() < block.getVerRef().getY()){
+                                view += (fullRelativeName(relativeLayouts.ABV) + (vRef instanceof MovingBlock ? (constRunner) : (vRef instanceof FinishBlock ? (constFinish) : (constObstacle + vRef.getId()))) + qm + "\n");
+                    		}else if(block.getPosition().getY() > block.getVerRef().getY()){
+                                view += (fullRelativeName(relativeLayouts.BLW) + (vRef instanceof MovingBlock ? (constRunner) : (vRef instanceof FinishBlock ? (constFinish) : (constObstacle + vRef.getId()))) + qm + "\n");
+                    		}else{
+                                view += (fullRelativeName(relativeLayouts.ALIGN_TP) + (vRef instanceof MovingBlock ? (constRunner) : (vRef instanceof FinishBlock ? (constFinish) : (constObstacle + vRef.getId()))) + qm + "\n");
+                    		}
+                
+                    	}else if(block.getPosition().equals(block.getVerRef())){
+                    		if(block.getPosition().getY() == 0){
+                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+                    		}else if(block.getPosition().getY() == maxY-1){
+                                view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
+                    		}else if(block.getPosition().getY() == midY){
+                                view += (fullAbsoluteName(absoluteLayouts.CENT_VERT) + tr + qm + "\n");
+                    		}
+                    		
+                    		Block hRef = map.get(block.getHorRef());
+                    		if(block.getPosition().getX() < block.getHorRef().getX()){
+                                view += (fullRelativeName(relativeLayouts.TO_LT_OF) + (hRef instanceof MovingBlock ? (constRunner) : (hRef instanceof FinishBlock ? (constFinish) : (constObstacle + hRef.getId()))) + qm + "\n");
+                    		}else if(block.getPosition().getX() > block.getHorRef().getX()){
+                                view += (fullRelativeName(relativeLayouts.TO_RT_OF) + (hRef instanceof MovingBlock ? (constRunner) : (hRef instanceof FinishBlock ? (constFinish) : (constObstacle + hRef.getId()))) + qm + "\n");
+                    		}else{
+                                view += (fullRelativeName(relativeLayouts.ALIGN_LT) + (hRef instanceof MovingBlock ? (constRunner) : (hRef instanceof FinishBlock ? (constFinish) : (constObstacle + hRef.getId()))) + qm + "\n");
+                    		}
+                    	}
+                  
+                    }else if (block.getHorRef().equals(block.getVerRef())) {//if the horizontal and vertical references are the same coordinate we know this is a reference by cluster
                         Block ref = map.get(block.getHorRef());//arbitrairy since the same
                         //System.out.println("checking block: "+block.getPosition()+"blockID: " + block.getId() + " with ref"+ref.getPosition()+"refID:" + ref.getId());
                         int yDist = block.getPosition().getY() - ref.getPosition().getY();// block.getPosition().getY() - ref.getPosition().getY();
@@ -1427,20 +1466,9 @@ public class Solver implements Runnable {
                                 if (xDist < 0) {//block is to the left of the reference
                                     //we know its left so put left but check if we need margin
                                     //--------HORIZONTAL POSITION----------------
-                                    if(block.getPosition().getX() == 0){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
-                                    }else {
                                         view += (fullRelativeName(relativeLayouts.TO_LT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    }
-                                    
                                     //--------VERTICAL POSITION----------------
-                                    if(block.getPosition().getY() == 0){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
-                                    }else if(block.getPosition().getY() == maxY-1){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
-                                    }else {
                                         view += (fullRelativeName(relativeLayouts.ALIGN_TP) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    }
                                     
                                     //--------MARGIN--------------
                                     if (Math.abs(xDist) == 2 && block.getPosition().getX() != 0) {
@@ -1449,65 +1477,27 @@ public class Solver implements Runnable {
                                 } else if (xDist > 0) {//its to the right, it can never be equal
                                     //we know its right so put right but check if we need margin
                                     //--------HORIZONTAL POSITION----------------
-                                    if(block.getPosition().getX() == maxX-1){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
-                                    }else {
                                         view += (fullRelativeName(relativeLayouts.TO_RT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    }
+                                  
                                     
                                     //--------VERTICAL POSITION----------------
-                                    if(block.getPosition().getY() == 0){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
-                                    }else if(block.getPosition().getY() == maxY-1){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
-                                    }else {
                                         view += (fullRelativeName(relativeLayouts.ALIGN_TP) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    }
                                     
                                     //--------MARGIN--------------
                                     if (Math.abs(yDist) == 2 && block.getPosition().getX() != maxX-1) {
                                         view += (fullRelativeName(relativeLayouts.MGN_LT) + constDimen + qm + "\n");//margin left moves the block right
                                     }
                                 }else{
-                                	//xDist == 0, which means that reference is itself, which is set when block is against a wall
-                                    //--------HORIZONTAL POSITION----------------
-                                    if(block.getPosition().getX() == maxX-1){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
-                                    }else if(block.getPosition().getX() == 0){
-                                    	view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
-                                    }
-                                    
+                                	System.out.println("xDist == 0 shouldn't be going here...");
+                                	}
+                                } else if(xDist == 0) {//not yDist ==0, must be xDist == 0
+                                	if (yDist < 0) {//block is above  reference
                                     //--------VERTICAL POSITION----------------
-                                    if(block.getPosition().getY() == 0){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
-                                    }else if(block.getPosition().getY() == maxY-1){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
-                                    }else {
-                                        view += (fullRelativeName(relativeLayouts.ALIGN_TP) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    }
-                                    
-                                    //--------MARGIN--------------
-                                    if (Math.abs(yDist) == 2 && (block.getPosition().getX() != maxX-1 || block.getPosition().getX() != 0)) {
-                                        view += (fullRelativeName(relativeLayouts.MGN_LT) + constDimen + qm + "\n");//margin left moves the block right
-                                    }
-                                }
-                            } else {//if its not xDist we know its yDist==0 otherwise we'd never have gottten in here
-                                if (yDist < 0) {//block is above  reference
-                                    //--------VERTICAL POSITION----------------
-                                    if(block.getPosition().getY() == 0){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
-                                    }else {
                                         view += (fullRelativeName(relativeLayouts.ABV) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    }
+                                        
                                     
                                     //--------HORIZONTAL POSITION----------------
-                                    if(block.getPosition().getX() == 0){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
-                                    }else if(block.getPosition().getX() == maxX-1){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
-                                    }else {
                                         view += (fullRelativeName(relativeLayouts.ALIGN_LT) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    }
                                     
                                     //--------MARGIN--------------
                                     if (Math.abs(yDist) == 2 && block.getPosition().getY() != 0) {
@@ -1515,46 +1505,17 @@ public class Solver implements Runnable {
                                     }
                                 } else if(yDist > 0){//its below, it can never be equal
                                     //--------VERTICAL POSITION----------------
-                                    if(block.getPosition().getY() == maxY-1){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
-                                    }else {
                                         view += (fullRelativeName(relativeLayouts.BLW) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    }
                                     
                                     //--------HORIZONTAL POSITION----------------
-                                    if(block.getPosition().getX() == 0){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
-                                    }else if(block.getPosition().getX() == maxX-1){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
-                                    }else {
                                         view += (fullRelativeName(relativeLayouts.ALIGN_LT) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    }
                                     
                                     //--------MARGIN--------------
                                     if (Math.abs(yDist) == 2 && block.getPosition().getY() != maxY-1) {
                                         view += (fullRelativeName(relativeLayouts.MGN_TP) + constDimen + qm + "\n");//margin top moves the block down
                                     }
                                 }else{
-                                	//--------VERTICAL POSITION----------------
-                                    if(block.getPosition().getY() == maxY-1){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
-                                    }else if(block.getPosition().getY() == 0) {
-                                    	view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
-                                    }
-                                    
-                                    //--------HORIZONTAL POSITION----------------
-                                    if(block.getPosition().getX() == 0){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
-                                    }else if(block.getPosition().getX() == maxX-1){
-                                        view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
-                                    }else {
-                                        view += (fullRelativeName(relativeLayouts.ALIGN_LT) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                    }
-                                    
-                                    //--------MARGIN--------------
-                                    if (Math.abs(yDist) == 2 && (block.getPosition().getY() != maxY-1 || block.getPosition().getY() != 0)) {
-                                        view += (fullRelativeName(relativeLayouts.MGN_TP) + constDimen + qm + "\n");//margin top moves the block down
-                                    }
+                                	System.out.println("yDist == 0, shouldn't be happening...");
                                 }
                             }
                         } else {//this means we're in some diagonal direction
@@ -1563,86 +1524,57 @@ public class Solver implements Runnable {
                             if (xDist < 0) {//block is to the left of the reference
                                 //we know its left so put left but check if we need margin
                                 //--------HORIZONTAL POSITION----------------
-                                if (block.getPosition().getX() == 0) {
-                                    view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
-                                } else {
                                     view += (fullRelativeName(relativeLayouts.TO_LT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                }
                                 //--------MARGIN--------------
                                 if (Math.abs(xDist) == 2 && block.getPosition().getX() != 0) {
                                     view += (fullRelativeName(relativeLayouts.MGN_RT) + constDimen + qm + "\n");//margin right moves the block left
                                 }
-                            } else {//its to the right, it can never be equal
-                                //we know its right so put right but check if we need margin
-                                //--------HORIZONTAL POSITION----------------
-                                if (block.getPosition().getX() == maxX-1) {
-                                    view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
-                                } else {
+                            } else if(xDist > 0) {//its to the right, it can never be equal
                                     view += (fullRelativeName(relativeLayouts.TO_RT_OF) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                }
                                 //--------MARGIN--------------
                                 if (Math.abs(xDist) == 2 && block.getPosition().getX() != maxX-1) {
                                     view += (fullRelativeName(relativeLayouts.MGN_LT) + constDimen + qm + "\n");//margin left moves the block right
                                 }
+                            }else{
+                            	System.out.println("xDist == 0 2nd time, should not be a thing...");
                             }
                             if (yDist < 0) {//block is above  reference
                                 //--------VERTICAL POSITION----------------
-                                if (block.getPosition().getY() == 0) {
-                                    view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
-                                } else {
                                     view += (fullRelativeName(relativeLayouts.ABV) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                }
                                 //--------MARGIN--------------
                                 if (Math.abs(yDist) == 2 && block.getPosition().getY() != 0) {
                                     view += (fullRelativeName(relativeLayouts.MGN_BTM) + constDimen + qm + "\n");//margin bottom moves the block up
                                 }
-                            } else {//its below, it can never be equal
+                            } else if(yDist > 0) {//its below, it can never be equal
                                 //--------VERTICAL POSITION----------------
-                                if (block.getPosition().getY() == maxY-1) {
-                                    view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
-                                } else {
                                     view += (fullRelativeName(relativeLayouts.BLW) + (ref instanceof MovingBlock ? (constRunner) : (ref instanceof FinishBlock ? (constFinish) : (constObstacle + ref.getId()))) + qm + "\n");
-                                }
                                 //--------MARGIN--------------
                                 if (Math.abs(yDist) == 2 && block.getPosition().getY() != maxY-1) {
                                     view += (fullRelativeName(relativeLayouts.MGN_TP) + constDimen + qm + "\n");//margin top moves the block down
                                 }
+                            }else{
+                            	System.out.println("yDist == 0 2nd time, should not be a thing...");
                             }
                         }
                     } else {//this means (by process of elimination) that the blocks use align to two different blocks
-                        //Vertical references are aligned  right or left
-                        //Horizontal references are aligned top or bottom
+                        //Vertical references are above, below, alignTiop
+                        //Horizontal references are toRightOf, toLeftOf, alignLeft
                         Block refV = map.get(block.getVerRef());
                         Block refH = map.get(block.getHorRef());
                         if(debug){System.out.println("Attempting to reference block : " + block.getPosition() + " vertically with: " + block.getVerRef() + " and horizontally with: "+block.getHorRef());}
-                        //first set the vertical aligh so left or right
-                        if (block.getPosition().getX() == refV.getPosition().getX()) {
-                            //(arbitrairy so choose left always
-                        	if(block.getPosition().getY() == refV.getPosition().getY()){ //then we know it's ref itself
-                        		if (block.getPosition().getX() == 0) {
-                        			view += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
-                        		} else if (block.getPosition().getX() == maxX - 1) {
-                        			view += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
-                        		}	 
-                        	}else {
-                                view += (fullRelativeName(relativeLayouts.ALIGN_LT) + (refV instanceof MovingBlock ? (constRunner) : (refV instanceof FinishBlock ? (constFinish) : (constObstacle + refV.getId()))) + qm + "\n");
-                            }
+                        //first set the vertical align to find below, above, alignTop
+                        if (block.getPosition().getY() == refV.getPosition().getY()) {
+                            //(arbitrary so choose top always
+                                view += (fullRelativeName(relativeLayouts.ALIGN_TP) + (refV instanceof MovingBlock ? (constRunner) : (refV instanceof FinishBlock ? (constFinish) : (constObstacle + refV.getId()))) + qm + "\n");
                         } else {
-                                view += (fullRelativeName((block.getPosition().getX() < refV.getPosition().getX()) ? relativeLayouts.TO_LT_OF : relativeLayouts.TO_RT_OF) + (refV instanceof MovingBlock ? (constRunner) : (refV instanceof FinishBlock ? (constFinish) : (constObstacle + refV.getId()))) + qm + "\n");
+                        	//if block Y < ref Y, block is above ref, else below
+                                view += (fullRelativeName((block.getPosition().getY() < refV.getPosition().getY()) ? relativeLayouts.ABV : relativeLayouts.BLW) + (refV instanceof MovingBlock ? (constRunner) : (refV instanceof FinishBlock ? (constFinish) : (constObstacle + refV.getId()))) + qm + "\n");
                         }
-                        if (block.getPosition().getY() == refH.getPosition().getY()) {
-                            //(arbitrairy so choose top)
-                        	if(block.getPosition().getX() == refH.getPosition().getX()){ //then we know it's ref itself
-                        		if (block.getPosition().getY() == 0) {
-                        			view += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
-                        		} else if (block.getPosition().getY() == maxY - 1) {
-                        			view += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
-                        		}	
-                            } else {
-                                view += (fullRelativeName(relativeLayouts.ALIGN_TP) + (refH instanceof MovingBlock ? (constRunner) : (refH instanceof FinishBlock ? (constFinish) : (constObstacle + refH.getId()))) + qm + "\n");
-                            }
+                        if (block.getPosition().getX() == refH.getPosition().getX()) {
+                            //arbitrarily choose alignLeft
+                            view += (fullRelativeName(relativeLayouts.ALIGN_LT) + (refH instanceof MovingBlock ? (constRunner) : (refH instanceof FinishBlock ? (constFinish) : (constObstacle + refH.getId()))) + qm + "\n");
                         } else {
-                                view += (fullRelativeName((block.getPosition().getY() < refH.getPosition().getY()) ? relativeLayouts.ABV : relativeLayouts.BLW) + (refH instanceof MovingBlock ? (constRunner) : (refH instanceof FinishBlock ? (constFinish) : (constObstacle + refH.getId()))) + qm + "\n");
+                             view += (fullRelativeName((block.getPosition().getX() < refH.getPosition().getX()) ? relativeLayouts.TO_LT_OF : relativeLayouts.TO_RT_OF) + (refH instanceof MovingBlock ? (constRunner) : (refH instanceof FinishBlock ? (constFinish) : (constObstacle + refH.getId()))) + qm + "\n");
                         }
                     }
                     //we handle const bases, clusters, and aligns. There is nothing else but to finish off the view block, append it and repeat
@@ -1766,16 +1698,113 @@ public class Solver implements Runnable {
         int placeAllPossibleBlocks = 0;
         int runTimes = 5;
         //its possible some blocks were skipped so we need to retrace 5 times to make sure all blocks are placed
-        ArrayList<Coordinate> baseCoords = new ArrayList<>();
-    	baseCoords.add(new Coordinate(0, 0));
-    	baseCoords.add(new Coordinate(0, midY));
-    	baseCoords.add(new Coordinate(0, maxY-1));
-    	baseCoords.add(new Coordinate(midX, 0));
-    	baseCoords.add(new Coordinate(midX, midY));
-    	baseCoords.add(new Coordinate(midX, maxY-1));
-    	baseCoords.add(new Coordinate(maxX-1, 0));
-    	baseCoords.add(new Coordinate(maxX-1, midY));
-    	baseCoords.add(new Coordinate(maxX-1, maxY-1));
+        ArrayList<Coordinate> priorityCoords = new ArrayList<Coordinate>();
+        priorityCoords.add(new Coordinate(0, 0));
+        priorityCoords.add(new Coordinate(0, midY));
+        priorityCoords.add(new Coordinate(0, maxY-1));
+        priorityCoords.add(new Coordinate(midX, 0));
+        priorityCoords.add(new Coordinate(maxX-1, 0));
+        priorityCoords.add(new Coordinate(maxX-1, maxY-1));
+        priorityCoords.add(new Coordinate(midX, midY));
+        if(map.get(new Coordinate(midX,midY)) instanceof Block && !(map.get(new Coordinate(midX,midY)) instanceof EmptyBlock) && map.get(new Coordinate(midX,midY)).isPlaced()){
+        	//cluster around center
+        	priorityCoords.add(new Coordinate(midX-1,midY-1));
+        	priorityCoords.add(new Coordinate(midX,midY-1));
+        	priorityCoords.add(new Coordinate(midX+1,midY-1));
+        	priorityCoords.add(new Coordinate(midX-1,midY));
+        	priorityCoords.add(new Coordinate(midX+1,midY));
+        	priorityCoords.add(new Coordinate(midX-1,midY+1));
+        	priorityCoords.add(new Coordinate(midX,midY+1));
+        	priorityCoords.add(new Coordinate(midX+1,midY+1));
+        }
+        //cluster around corners
+        if(map.get(new Coordinate(0,0)) instanceof Block && !(map.get(new Coordinate(0,0)) instanceof EmptyBlock) && map.get(new Coordinate(0,0)).isPlaced()){
+        	//top left
+        	priorityCoords.add(new Coordinate(1,0));
+        	priorityCoords.add(new Coordinate(0,1));
+        	priorityCoords.add(new Coordinate(1,1));
+        }
+        if(map.get(new Coordinate(maxX-1,0)) instanceof Block && !(map.get(new Coordinate(maxX-1,0)) instanceof EmptyBlock) && map.get(new Coordinate(maxX-1,0)).isPlaced()){
+        	//top right
+        	priorityCoords.add(new Coordinate(maxX-2,0));
+        	priorityCoords.add(new Coordinate(maxX-1,1));
+        	priorityCoords.add(new Coordinate(maxX-2,1));
+        }
+        if(map.get(new Coordinate(0,maxY-1)) instanceof Block && !(map.get(new Coordinate(0,maxY-1)) instanceof EmptyBlock) && map.get(new Coordinate(0,maxY-1)).isPlaced()){
+        	//bottom left
+        	priorityCoords.add(new Coordinate(0,maxY-2));
+        	priorityCoords.add(new Coordinate(1,maxY-1));
+        	priorityCoords.add(new Coordinate(1,maxY-1));
+        }
+        if(map.get(new Coordinate(maxX-1,maxY-1)) instanceof Block && !(map.get(new Coordinate(maxX-1,maxY-1)) instanceof EmptyBlock) && map.get(new Coordinate(maxX-1,maxY-1)).isPlaced()){
+        	//bottom right
+        	priorityCoords.add(new Coordinate(maxX-1,maxY-2));
+        	priorityCoords.add(new Coordinate(maxX-2,maxY-1));
+        	priorityCoords.add(new Coordinate(maxX-1,maxY-2));
+        }
+        //all center_vertical
+        for(int i = 0; i < maxX; i ++){
+        	if(!priorityCoords.contains(new Coordinate(i, midY))){
+                priorityCoords.add(new Coordinate(i, midY));        
+        	}
+        }
+      //all center_horizontal
+        for(int i = 0; i < maxY; i ++){
+        	if(!priorityCoords.contains(new Coordinate(midX, i))){
+                priorityCoords.add(new Coordinate(midY, i));        
+        	}
+        }
+      //all along top and bottom edges
+        for(int i = 0; i < maxX; i ++){
+        	if(!priorityCoords.contains(new Coordinate(i, 0))){
+                priorityCoords.add(new Coordinate(i, 0));        
+        	}
+        	if(!priorityCoords.contains(new Coordinate(i, maxY-1))){
+                priorityCoords.add(new Coordinate(i, maxY-1));        
+        	}
+        }
+        //all along right and left edges
+        for(int i = 0; i < maxY; i ++){
+        	if(!priorityCoords.contains(new Coordinate(0, i))){
+                priorityCoords.add(new Coordinate(0, i));        
+        	}
+        	if(!priorityCoords.contains(new Coordinate(maxX-1, i))){
+                priorityCoords.add(new Coordinate(maxX-1, i));        
+        	}
+        }
+      //all 1 from top/bottom
+        for(int i = 0; i < maxX; i ++){
+        	if(!priorityCoords.contains(new Coordinate(i, 1))){
+                priorityCoords.add(new Coordinate(i, 1));        
+        	}
+        	if(!priorityCoords.contains(new Coordinate(i, maxY-2))){
+                priorityCoords.add(new Coordinate(i, maxY-2));        
+        	}
+        }
+      //all 1 from sides
+        for(int i = 0; i < maxY; i ++){
+        	if(!priorityCoords.contains(new Coordinate(1, i))){
+                priorityCoords.add(new Coordinate(1, i));        
+        	}
+        	if(!priorityCoords.contains(new Coordinate(maxX-2, i))){
+                priorityCoords.add(new Coordinate(maxX-2, i));        
+        	}
+        }
+        //rest
+        for(int i = 0; i < maxY; i ++){
+        	for(int j = 0; j < maxX; j++){
+        		Coordinate tempCoord = new Coordinate(j, i);
+        		if(!priorityCoords.contains(tempCoord)){
+        			priorityCoords.add(tempCoord);
+        		}
+        	}
+        }
+        System.out.println("priorityCoords.size() = "+priorityCoords.size());
+
+
+
+
+
     	/*
         while(numBlocksToWrite < 6){
         	for(int i = 0; i < baseCoords.size(); i++){
@@ -1801,18 +1830,17 @@ public class Solver implements Runnable {
             while(timesRun < runThreshhold){
             	System.out.println("numBlocksToWrite = "+numBlocksToWrite);
             	System.out.println("Iterating through grid time "+timesRun);
-            	for(int i = 0; i < maxY; ++i){
-            		for(int j = 0; j < maxX; j++){
-            			Coordinate currentCoord = new Coordinate(j, i);
+            	for(int i = 0; i < priorityCoords.size(); ++i){
+            			Coordinate currentCoord = priorityCoords.get(i);
             			Block currentBlock = map.get(currentCoord);
             			if((currentBlock instanceof Block) && !(currentBlock instanceof EmptyBlock) && !currentBlock.isPlaced()){
-            				ArrayList<Block> horizontalRefs = getVerticalReferences(currentCoord, false);
-            				ArrayList<Block> verticalRefs = getHorizontalReferences(currentCoord, false);
+            				ArrayList<Block> horizontalRefs = getHorizontalReferences(currentCoord, false);
+            				ArrayList<Block> verticalRefs = getVerticalReferences(currentCoord, false);
 
             				if(currentBlock.getHorRef() == null){
             					if(isAgainstWall("horizontal",currentCoord)){
-            						map.get(currentBlock.getPosition()).setVerRef(currentCoord);
-            						System.out.println("Block @ ("+currentCoord.getX()+","+currentCoord.getY()+"), ID = "+currentBlock.getId()+" set v ref to self");
+            						map.get(currentBlock.getPosition()).setHorRef(currentCoord);
+            						System.out.println("Block @ ("+currentCoord.getX()+","+currentCoord.getY()+"), ID = "+currentBlock.getId()+" set h ref to self");
             					}else if(horizontalRefs.size() > 0){
             						Coordinate horRef = map.get(horizontalRefs.get(0).getPosition()).getPosition();
             						map.get(currentBlock.getPosition()).setHorRef(map.get(horizontalRefs.get(0).getPosition()).getPosition());
@@ -1822,11 +1850,11 @@ public class Solver implements Runnable {
             				if(currentBlock.getVerRef() == null){
             					if(isAgainstWall("vertical",currentCoord)){
             						map.get(currentBlock.getPosition()).setVerRef(currentCoord);
-            						System.out.println("Block @ ("+currentCoord.getX()+","+currentCoord.getY()+"), ID = "+currentBlock.getId()+" set horizontal ref to self");
+            						System.out.println("Block @ ("+currentCoord.getX()+","+currentCoord.getY()+"), ID = "+currentBlock.getId()+" set v ref to self");
             					}else if(verticalRefs.size() > 0){
             						Coordinate verRef = map.get(verticalRefs.get(0).getPosition()).getPosition();
             						map.get(currentBlock.getPosition()).setVerRef(map.get(verticalRefs.get(0).getPosition()).getPosition());
-            						System.out.println("Block @ ("+currentCoord.getX()+","+currentCoord.getY()+") set horizontal ref to ("+verRef.getX()+","+verRef.getY()+") , ID = "+map.get(verRef).getId());
+            						System.out.println("Block @ ("+currentCoord.getX()+","+currentCoord.getY()+") set v ref to ("+verRef.getX()+","+verRef.getY()+") , ID = "+map.get(verRef).getId());
             					}
             				}
             				if(currentBlock.getVerRef() != null && currentBlock.getHorRef() != null){
@@ -1837,8 +1865,7 @@ public class Solver implements Runnable {
             			}
             		
             		}
-            	}	
-            	timesRun++;
+            	 timesRun++;
             }/*
             for (int i = 0; i < maxY; ++i) {//increments rows
                 for (int j = 0; j < maxX; ++j) {//increments columns
@@ -1963,11 +1990,11 @@ public class Solver implements Runnable {
     private boolean isAgainstWall(String direction, Coordinate coord){
     	boolean againstWall = false;
     	if(direction.equals("vertical")){
-    		if(coord.getY() == 0 || coord.getY() == maxY-1){
+    		if(coord.getY() == 0 || coord.getY() == midY || coord.getY() == maxY-1){
     			againstWall = true;
     		}
     	}else if(direction.equals("horizontal")){
-    		if(coord.getX() == 0 || coord.getX() == maxX-1){
+    		if(coord.getX() == 0 || coord.getX() == midX || coord.getX() == maxX-1){
     			againstWall = true;
     		}
     	}
@@ -1983,9 +2010,9 @@ public class Solver implements Runnable {
             return null;//show not happen but just in case
         }
         if(debug){System.out.println("Getting valid vertical refs for block: " + map.get(coord).getId());}
-        for (int i = 0; i < maxY; i++) {//iterate from 0 to maxY, grabbing any references toRight, toLeft, alignLeft 
-        	for(int j = -1; j < 2; j++){//add -1, 0, 1 to coordX to grab left and right of block as well
-        		Coordinate co = new Coordinate(coord.getX()+j, i);
+        for (int i = 0; i < maxX; i++) {//iterate from 0 to maxX, grabbing all above, below, alignTop
+        	for(int j = -1; j < 2; j++){//add -1, 0, 1 to coordX to grab above and below of block as well
+        		Coordinate co = new Coordinate(i, coord.getY()+j);
         		if (isValidCoord(co)) {
         			if (map.get(co) instanceof Block) {
         				if (!(map.get(co) instanceof EmptyBlock)) {
@@ -2014,9 +2041,9 @@ public class Solver implements Runnable {
             return null;//show not happen but just in case
         }
         if(false){System.out.println("Getting valid horizontal refs for block: " + map.get(coord).getId());}
-        for (int i = 0; i < maxX; i++) {//iterate from 0 to maxX, grabbing any references above, below, alignTop 
-        	for(int j = -1; j < 2; j++){//add -1, 0, 1 to coordY to grab above and below of block as well
-        		Coordinate co = new Coordinate(i, coord.getY()+j);
+        for (int i = 0; i < maxY; i++) {//iterate from 0 to maxY, grabbing all toLeft, toRight, alignLeft
+        	for(int j = -1; j < 2; j++){//add -1, 0, 1 to coordX to grab toLeft and toRight of block as well
+        		Coordinate co = new Coordinate(coord.getX()+j, i);
         		if (isValidCoord(co)) {
         			if (map.get(co) instanceof Block) {
         				if (!(map.get(co) instanceof EmptyBlock)) {
@@ -2050,7 +2077,7 @@ public class Solver implements Runnable {
     	baseCoords.add(new Coordinate(maxX-1, midY));
     	baseCoords.add(new Coordinate(maxX-1, maxY-1));
     	for(int i = 0; i < coords.size(); i++){
-			if(baseCoords.contains(coords) && !prioritizedCoords.contains(coords.get(i))){
+			if(baseCoords.contains(coords.get(i)) && !prioritizedCoords.contains(coords.get(i))){
 				prioritizedCoords.add(coords.get(i));
 			}
 		}
