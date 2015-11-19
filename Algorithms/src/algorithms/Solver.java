@@ -42,7 +42,7 @@ public class Solver implements Runnable {
 
     private static double minBlockDensity = .1;
     private static double maxBlockDensity = .5;
-    private static double totalBlockDensity = 0; // going to be randomely between the two variables above
+    private static double totalBlockDensity = 0; // going to be randomly between the two variables above
     private static double rockDensity = 0;
     private static double bubbleDensity = 0;
     private static double moltenDensity = 0;
@@ -60,14 +60,6 @@ public class Solver implements Runnable {
     }
 
     public static void main(String[] args) {
-        if (1 == 2) {
-            Solver s = new Solver();
-            recreateMap = true;
-            s.setMapFromString("WygwMCwwMCl8Ul1bKDAxLDAwKXxSXVsoMDIsMDApfCpdWygwMywwMCl8Ql1bKDA0LDAwKXxNXVsoMDUsMDApfCpdWygwNiwwMCl8Ql1bKDA3LDAwKXxSXVsoMDgsMDApfFJdWygwOSwwMCl8Ql1bKDEwLDAwKXxSXVsoMDAsMDEpfE1dWygwMSwwMSl8Ul1bKDAyLDAxKXxNXVsoMDMsMDEpfE1dWygwNCwwMSl8Ql1bKDA1LDAxKXxSXVsoMDYsMDEpfEJdWygwNywwMSl8Ul1bKDA4LDAxKXwqXVsoMDksMDEpfE1dWygxMCwwMSl8TV1bKDAwLDAyKXwqXVsoMDEsMDIpfEJdWygwMiwwMil8Kl1bKDAzLDAyKXxCXVsoMDQsMDIpfEJdWygwNSwwMil8Kl1bKDA2LDAyKXwqXVsoMDcsMDIpfCpdWygwOCwwMil8TV1bKDA5LDAyKXwqXVsoMTAsMDIpfCpdWygwMCwwMyl8Ul1bKDAxLDAzKXxSXVsoMDIsMDMpfE1dWygwMywwMyl8Ql1bKDA0LDAzKXxSXVsoMDUsMDMpfCpdWygwNiwwMyl8Ul1bKDA3LDAzKXxSXVsoMDgsMDMpfE1dWygwOSwwMyl8TV1bKDEwLDAzKXwqXVsoMDAsMDQpfFJdWygwMSwwNCl8Kl1bKDAyLDA0KXwqXVsoMDMsMDQpfCpdWygwNCwwNCl8Kl1bKDA1LDA0KXwqXVsoMDYsMDQpfEJdWygwNywwNCl8TV1bKDA4LDA0KXxNXVsoMDksMDQpfCpdWygxMCwwNCl8Kl1bKDAwLDA1KXxSXVsoMDEsMDUpfEJdWygwMiwwNSl8Kl1bKDAzLDA1KXwqXVsoMDQsMDUpfEJdWygwNSwwNSl8Kl1bKDA2LDA1KXxCXVsoMDcsMDUpfEJdWygwOCwwNSl8Kl1bKDA5LDA1KXxSXVsoMTAsMDUpfFJdWygwMCwwNil8Kl1bKDAxLDA2KXwqXVsoMDIsMDYpfEJdWygwMywwNil8Ql1bKDA0LDA2KXxCXVsoMDUsMDYpfCpdWygwNiwwNil8Kl1bKDA3LDA2KXwqXVsoMDgsMDYpfCpdWygwOSwwNil8Ul1bKDEwLDA2KXxNXVsoMDAsMDcpfCpdWygwMSwwNyl8Ul1bKDAyLDA3KXxSXVsoMDMsMDcpfCpdWygwNCwwNyl8Kl1bKDA1LDA3KXxSXVsoMDYsMDcpfFJdWygwNywwNyl8Kl1bKDA4LDA3KXwqXVsoMDksMDcpfCpdWygxMCwwNyl8Ql1bKDAwLDA4KXxCXVsoMDEsMDgpfCpdWygwMiwwOCl8Ul1bKDAzLDA4KXxCXVsoMDQsMDgpfCpdWygwNSwwOCl8Kl1bKDA2LDA4KXxCXVsoMDcsMDgpfFJdWygwOCwwOCl8Ql1bKDA5LDA4KXwqXVsoMTAsMDgpfEJdWygwMCwwOSl8Ul1bKDAxLDA5KXwqXVsoMDIsMDkpfCpdWygwMywwOSl8Ql1bKDA0LDA5KXwqXVsoMDUsMDkpfFJdWygwNiwwOSl8TV1bKDA3LDA5KXwqXVsoMDgsMDkpfCpdWygwOSwwOSl8Ql1bKDEwLDA5KXwqXVsoMDAsMTApfE1dWygwMSwxMCl8Ul1bKDAyLDEwKXxSXVsoMDMsMTApfCpdWygwNCwxMCl8Ql1bKDA1LDEwKXxCXVsoMDYsMTApfEJdWygwNywxMCl8Kl1bKDA4LDEwKXxSXVsoMDksMTApfFJdWygxMCwxMCl8Kl1bKDAwLDExKXxCXVsoMDEsMTEpfCpdWygwMiwxMSl8Ul1bKDAzLDExKXwqXVsoMDQsMTEpfFJdWygwNSwxMSl8Ul1bKDA2LDExKXwqXVsoMDcsMTEpfCpdWygwOCwxMSl8Kl1bKDA5LDExKXwqXVsoMTAsMTEpfCpdWygwMCwxMil8TV1bKDAxLDEyKXwqXVsoMDIsMTIpfEJdWygwMywxMil8Ul1bKDA0LDEyKXxCXVsoMDUsMTIpfEJdWygwNiwxMil8Kl1bKDA3LDEyKXwqXVsoMDgsMTIpfE1dWygwOSwxMil8Ql1bKDEwLDEyKXxXXVsoMDAsMTMpfCpdWygwMSwxMyl8Ul1bKDAyLDEzKXxNXVsoMDMsMTMpfCpdWygwNCwxMyl8Ul1bKDA1LDEzKXxCXVsoMDYsMTMpfEJdWygwNywxMyl8Ql1bKDA4LDEzKXwqXVsoMDksMTMpfCpdWygxMCwxMyl8Ul1bKDAwLDE0KXxCXVsoMDEsMTQpfEJdWygwMiwxNCl8Kl1bKDAzLDE0KXxSXVsoMDQsMTQpfCpdWygwNSwxNCl8Ql1bKDA2LDE0KXxSXVsoMDcsMTQpfCpdWygwOCwxNCl8Ul1bKDA5LDE0KXxSXVsoMTAsMTQpfFJd");
-            s.createAndSolve();
-            //s.createXmlFiles();
-            return;
-        }
         Long totalTime = System.currentTimeMillis();
         if (args.length > 0) {
             for (String arg : args) {
@@ -121,7 +113,7 @@ public class Solver implements Runnable {
         }
         Solver s = new Solver();
         s.run();
-        //s.createXmlFiles();
+        s.createXmlFiles();
         long total = 0;
         for (Long t : execTimes) {
             total += t;
@@ -133,6 +125,7 @@ public class Solver implements Runnable {
     }
 
     public void createXmlFiles() {
+        // Put the start guy on the map now!
         MovingBlock startBlock = new MovingBlock();
         Coordinate startPosition = new Coordinate(startX, startY);
         startBlock.setPosition(startPosition);
