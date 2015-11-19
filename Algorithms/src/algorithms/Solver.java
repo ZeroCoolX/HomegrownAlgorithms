@@ -266,7 +266,13 @@ public class Solver implements Runnable {
             movingBlock.setCurrentDirection(direction);
             movingBlock.savePreviousPosition();
             moveQueue.add(movingBlock);
+            map.put(movingBlock.getPosition(), movingBlock);
         }
+        MovingBlock startMoving = new MovingBlock();
+        startMoving.setPosition(new Coordinate(startX, startY));
+        System.out.println("start moving block = "+startMoving.getPosition().getX()+","+startMoving.getPosition().getY());
+        map.put(startMoving.getPosition(), startMoving);
+        
 
         do {
             MovingBlock currentBlock = moveQueue.remove();
@@ -1524,22 +1530,24 @@ public class Solver implements Runnable {
             view = "";//just clear for a new view block
             block = null;//just clear out for a new block
             //writtenBlocks <= numBlocksToWrite; 
+            boolean wasDude = false;
             for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
+            	wasDude = ent.getValue() instanceof MovingBlock && ent.getValue() instanceof Block;
                 if (debug) {
                     System.out.println("attempting to write:" + ent.getKey());
                 }
-                if (ent.getValue() instanceof Block && ent.getValue() instanceof MovingBlock) {//we must save the runner for the very last view block appended
+                if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && ent.getValue() instanceof MovingBlock) {//we must save the runner for the very last view block appended
                     if (debug) {
                         System.out.println("" + ent.getKey() + " is the mover");
                     }
+                    System.out.println("hit the mover!!!!");
                     block = ent.getValue();
-                    runnerView += (viewStart + "\n");
-                    runnerView += (fullAssetDataName(assetData.ID) + constRunner + qm + "\n");//variable name
-                    runnerView += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
-                    runnerView += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
-                    runnerView += (fullAssetDataName(assetData.BKRND) + (fullAssetName(assets.P_DUD)) + qm + "\n");//const background with respect to the blocktype
-                    runnerView += (viewEnd + "\n");
-                } else if(ent.getValue() instanceof Block && ent.getValue() instanceof RefBlock && ent.getValue().isPlaced()){//Reference blocks
+                    view += (viewStart + "\n");
+                    view += (fullAssetDataName(assetData.ID) + constRunner + qm + "\n");//variable name
+                    view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
+                    view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
+                    view += (fullAssetDataName(assetData.BKRND) + (fullAssetName(assets.P_DUD)) + qm + "\n");//const background with respect to the blocktype
+                } else if(ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && ent.getValue() instanceof RefBlock && ent.getValue().isPlaced()){//Reference blocks
                 	block = ent.getValue();
                     refView += (viewStart + "\n");
                     refView += (fullAssetDataName(assetData.ID) + (constRef + block.getRefId()) + qm + "\n");//variable name
@@ -1568,7 +1576,7 @@ public class Solver implements Runnable {
                     }
                     refView += (viewEnd + "\n");
                     levelXML.append(refView);
-                } else if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && !(ent.getValue() instanceof RefBlock) && ent.getValue().isPlaced()) {//we don't write any EmptyBlocks
+                } else if(ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && !(ent.getValue() instanceof RefBlock) && ent.getValue().isPlaced()){ 
                     if (debug) {
                         System.out.println("We need to write: " + ent.getKey());
                     }
@@ -1585,6 +1593,8 @@ public class Solver implements Runnable {
                                                             : (fullAssetName(assets.P_OBST))))))) + qm + "\n");//const background with respect to the blocktype
                     //for the relative locations just start at 
                     //current block - reference < 0 its either left of the ref or above it
+                }
+                if(ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && !(ent.getValue() instanceof RefBlock) && (wasDude ? true :ent.getValue().isPlaced())) {//we don't write any EmptyBlocks)
                     if (block.getPosition().equals(block.getHorRef()) && block.getPosition().equals(block.getVerRef())) {//if ALL the positions are the same then this is a constant base block
                         //returns constant base locs
                         view += getBaseBlockXML(block);
@@ -1721,7 +1731,14 @@ public class Solver implements Runnable {
                         }
                     }
                     //we handle const bases, clusters, and aligns. There is nothing else but to finish off the view block, append it and repeat
-                    view += (viewEnd + "\n");
+                }
+                if(!view.equals("")){
+                	view += (viewEnd + "\n");
+                }
+                if(wasDude){//if the block was the dude don't write it
+                    runnerView = view;
+                    view = "";
+                }else{
                     levelXML.append(view);
                     view = "";
                 }
@@ -2667,7 +2684,7 @@ public class Solver implements Runnable {
         }
         Coordinate cBefore;
         Coordinate cAfter;
-        cBefore = new Coordinate(0, 0);
+        cBefore = new Coordinate(startX, startY);
         for (int i = 1; i < shortestPathRock.getPreviousPositions().size() - 1; i++) {
             cAfter = shortestPathRock.getPreviousPositions().get(i);
             if (co.getX() == cBefore.getX() && co.getX() == cAfter.getX()) {//if the x's are the same that means the path is vertical and check if co.y is between before and after
