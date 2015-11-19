@@ -365,9 +365,9 @@ public class Solver implements Runnable {
                 map.put(coordinate, portalBlock);
                 portalCount += 2;
             } else if (inRange(iceStart, iceEnd, randBlockNum)) {
-//                IceBlock iceBlock = new IceBlock(coordinate);
-//                map.put(coordinate, iceBlock);
-//                iceCount++;
+                IceBlock iceBlock = new IceBlock(coordinate);
+                map.put(coordinate, iceBlock);
+                iceCount++;
             } else {
                 System.out.println("Random Number was.... " + randBlockNum);
             }
@@ -466,6 +466,9 @@ public class Solver implements Runnable {
                     break;
                 case "M":
                     block = new MoltenBlock(coordinate);
+                    break;
+                case "I":
+                    block = new IceBlock(coordinate);
                     break;
                 case "P":
                     block = new PortalBlock(coordinate);
@@ -993,6 +996,33 @@ public class Solver implements Runnable {
         @Override
         public String printMapObject() {
             return "M";
+        }
+    }
+
+    class IceBlock extends RockBlock {
+
+        public IceBlock(Coordinate coordinate) {
+            super(coordinate);
+        }
+
+        @Override
+        public void onTouch(MovingBlock block) {
+            // Does nothing for the solver
+        }
+
+        @Override
+        public String getBlockType() {
+            return "Ice Block";
+        }
+
+        @Override
+        public boolean canTravel(Direction direction) {
+            return false;
+        }
+
+        @Override
+        public String printMapObject() {
+            return "I";
         }
     }
 
