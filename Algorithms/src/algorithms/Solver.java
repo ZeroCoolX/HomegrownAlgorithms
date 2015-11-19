@@ -40,13 +40,14 @@ public class Solver implements Runnable {
     private static boolean forcePortalPassThrough = false; // FORCE at least 1 portal to exist and be USED on the map
 
 
-    // Default these to zero when using command line!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    private static double totalBlockDensity = .3;
-    private static double rockDensity = .4;
-    private static double bubbleDensity = .2;
-    private static double moltenDensity = .2;
+    private static double minBlockDensity = .1;
+    private static double maxBlockDensity = .5;
+    private static double totalBlockDensity = 0; // going to be randomely between the two variables above
+    private static double rockDensity = 0;
+    private static double bubbleDensity = 0;
+    private static double moltenDensity = 0;
     private static double iceDensity = 0;
-    private static double portalDensity = .1;
+    private static double portalDensity = 0;
 
     private static int rockCount = 0;
     private static int bubbleCount = 0;
@@ -81,8 +82,11 @@ public class Solver implements Runnable {
                         e.printStackTrace();
                     }
                     switch (split[0]) {
-                        case "density":
-                            totalBlockDensity = num;
+                        case "minDensity":
+                            minBlockDensity = (int) num;
+                            break;
+                        case "maxDensity":
+                            maxBlockDensity = (int) num;
                             break;
                         case "rocks":
                             rockDensity = num;
@@ -155,6 +159,7 @@ public class Solver implements Runnable {
     public void run() {
         do {
             long start = System.currentTimeMillis();
+            totalBlockDensity = ThreadLocalRandom.current().nextDouble(minBlockDensity, maxBlockDensity + 1);
             createAndSolve();
             long diff = System.currentTimeMillis() - start;
             execTimes.add(diff);
