@@ -5,10 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 
 public class Solver implements Runnable {
 
@@ -33,29 +30,36 @@ public class Solver implements Runnable {
     private static String levelGenre = "fire";//right now its hardcoded
     //private final File templateXML = new File("/Users/dewit/Documents/shift_files/level_files/level_template/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
     //private final File templateDir = new File("/Users/dewit/Documents/shift_files/level_files/level_template/");
-    private final File templateXML = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
-    private final File templateDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
-    //private final File templateXML = new File("/Users/nrichardson/Desktop/builder/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
-    //private final File templateDir = new File("/Users/nrichardson/Desktop/builder/");
+//    private final File templateXML = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
+//    private final File templateDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
+    private final File templateXML = new File("/Users/nrichardson/Desktop/builder/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
+    private final File templateDir = new File("/Users/nrichardson/Desktop/builder/");
 
     private static boolean superDebug = false;
     private static boolean showPath = true;
-    private static boolean forcePortalPassThrough = true; // FORCE at least 1 portal to exist on the map
+    private static boolean forcePortalPassThrough = false; // FORCE at least 1 portal to exist and be USED on the map
 
-    private static int randomMin = 70;
+    private static int randomMin = 10;
     private static int randomMax = 95;
     private static double rockDensity = 1.0;
-    private static double bubbleDensity = 1.0;
-    private static double moltenDensity = 1.0;
-    private static double iceDensity = 1.0;
-    private static double portalDensity = 1.0;
+    private static double bubbleDensity = 1.3;
+    private static double moltenDensity = 1.3;
+    private static double iceDensity = 100.0;
+    private static double portalDensity = 1.5;
 
     private enum Direction {
-
         UP, DOWN, LEFT, RIGHT
     }
 
     public static void main(String[] args) {
+        if (1 == 2) {
+            Solver s = new Solver();
+            recreateMap = true;
+            s.setMapFromString("WygwMCwwMCl8Ul1bKDAxLDAwKXxSXVsoMDIsMDApfCpdWygwMywwMCl8Ql1bKDA0LDAwKXxNXVsoMDUsMDApfCpdWygwNiwwMCl8Ql1bKDA3LDAwKXxSXVsoMDgsMDApfFJdWygwOSwwMCl8Ql1bKDEwLDAwKXxSXVsoMDAsMDEpfE1dWygwMSwwMSl8Ul1bKDAyLDAxKXxNXVsoMDMsMDEpfE1dWygwNCwwMSl8Ql1bKDA1LDAxKXxSXVsoMDYsMDEpfEJdWygwNywwMSl8Ul1bKDA4LDAxKXwqXVsoMDksMDEpfE1dWygxMCwwMSl8TV1bKDAwLDAyKXwqXVsoMDEsMDIpfEJdWygwMiwwMil8Kl1bKDAzLDAyKXxCXVsoMDQsMDIpfEJdWygwNSwwMil8Kl1bKDA2LDAyKXwqXVsoMDcsMDIpfCpdWygwOCwwMil8TV1bKDA5LDAyKXwqXVsoMTAsMDIpfCpdWygwMCwwMyl8Ul1bKDAxLDAzKXxSXVsoMDIsMDMpfE1dWygwMywwMyl8Ql1bKDA0LDAzKXxSXVsoMDUsMDMpfCpdWygwNiwwMyl8Ul1bKDA3LDAzKXxSXVsoMDgsMDMpfE1dWygwOSwwMyl8TV1bKDEwLDAzKXwqXVsoMDAsMDQpfFJdWygwMSwwNCl8Kl1bKDAyLDA0KXwqXVsoMDMsMDQpfCpdWygwNCwwNCl8Kl1bKDA1LDA0KXwqXVsoMDYsMDQpfEJdWygwNywwNCl8TV1bKDA4LDA0KXxNXVsoMDksMDQpfCpdWygxMCwwNCl8Kl1bKDAwLDA1KXxSXVsoMDEsMDUpfEJdWygwMiwwNSl8Kl1bKDAzLDA1KXwqXVsoMDQsMDUpfEJdWygwNSwwNSl8Kl1bKDA2LDA1KXxCXVsoMDcsMDUpfEJdWygwOCwwNSl8Kl1bKDA5LDA1KXxSXVsoMTAsMDUpfFJdWygwMCwwNil8Kl1bKDAxLDA2KXwqXVsoMDIsMDYpfEJdWygwMywwNil8Ql1bKDA0LDA2KXxCXVsoMDUsMDYpfCpdWygwNiwwNil8Kl1bKDA3LDA2KXwqXVsoMDgsMDYpfCpdWygwOSwwNil8Ul1bKDEwLDA2KXxNXVsoMDAsMDcpfCpdWygwMSwwNyl8Ul1bKDAyLDA3KXxSXVsoMDMsMDcpfCpdWygwNCwwNyl8Kl1bKDA1LDA3KXxSXVsoMDYsMDcpfFJdWygwNywwNyl8Kl1bKDA4LDA3KXwqXVsoMDksMDcpfCpdWygxMCwwNyl8Ql1bKDAwLDA4KXxCXVsoMDEsMDgpfCpdWygwMiwwOCl8Ul1bKDAzLDA4KXxCXVsoMDQsMDgpfCpdWygwNSwwOCl8Kl1bKDA2LDA4KXxCXVsoMDcsMDgpfFJdWygwOCwwOCl8Ql1bKDA5LDA4KXwqXVsoMTAsMDgpfEJdWygwMCwwOSl8Ul1bKDAxLDA5KXwqXVsoMDIsMDkpfCpdWygwMywwOSl8Ql1bKDA0LDA5KXwqXVsoMDUsMDkpfFJdWygwNiwwOSl8TV1bKDA3LDA5KXwqXVsoMDgsMDkpfCpdWygwOSwwOSl8Ql1bKDEwLDA5KXwqXVsoMDAsMTApfE1dWygwMSwxMCl8Ul1bKDAyLDEwKXxSXVsoMDMsMTApfCpdWygwNCwxMCl8Ql1bKDA1LDEwKXxCXVsoMDYsMTApfEJdWygwNywxMCl8Kl1bKDA4LDEwKXxSXVsoMDksMTApfFJdWygxMCwxMCl8Kl1bKDAwLDExKXxCXVsoMDEsMTEpfCpdWygwMiwxMSl8Ul1bKDAzLDExKXwqXVsoMDQsMTEpfFJdWygwNSwxMSl8Ul1bKDA2LDExKXwqXVsoMDcsMTEpfCpdWygwOCwxMSl8Kl1bKDA5LDExKXwqXVsoMTAsMTEpfCpdWygwMCwxMil8TV1bKDAxLDEyKXwqXVsoMDIsMTIpfEJdWygwMywxMil8Ul1bKDA0LDEyKXxCXVsoMDUsMTIpfEJdWygwNiwxMil8Kl1bKDA3LDEyKXwqXVsoMDgsMTIpfE1dWygwOSwxMil8Ql1bKDEwLDEyKXxXXVsoMDAsMTMpfCpdWygwMSwxMyl8Ul1bKDAyLDEzKXxNXVsoMDMsMTMpfCpdWygwNCwxMyl8Ul1bKDA1LDEzKXxCXVsoMDYsMTMpfEJdWygwNywxMyl8Ql1bKDA4LDEzKXwqXVsoMDksMTMpfCpdWygxMCwxMyl8Ul1bKDAwLDE0KXxCXVsoMDEsMTQpfEJdWygwMiwxNCl8Kl1bKDAzLDE0KXxSXVsoMDQsMTQpfCpdWygwNSwxNCl8Ql1bKDA2LDE0KXxSXVsoMDcsMTQpfCpdWygwOCwxNCl8Ul1bKDA5LDE0KXxSXVsoMTAsMTQpfFJd");
+            s.createAndSolve();
+            //s.createXmlFiles();
+            return;
+        }
         Long totalTime = System.currentTimeMillis();
         if (args.length > 0) {
             for (String arg : args) {
@@ -97,7 +101,7 @@ public class Solver implements Runnable {
                         case "recreate":
                             Solver s = new Solver();
                             recreateMap = true;
-                            s.setMapFromString(split[1]);
+                            s.setMapFromString(split[1].trim());
                             s.createAndSolve();
                             s.createXmlFiles();
                             return;
@@ -109,7 +113,7 @@ public class Solver implements Runnable {
         }
         Solver s = new Solver();
         s.run();
-        s.createXmlFiles();
+        //s.createXmlFiles();
         long total = 0;
         for (Long t : execTimes) {
             total += t;
@@ -121,6 +125,12 @@ public class Solver implements Runnable {
     }
 
     public void createXmlFiles() {
+        MovingBlock startBlock = new MovingBlock();
+        Coordinate startPosition = new Coordinate(startX, startY);
+        startBlock.setPosition(startPosition);
+        map.put(startPosition, startBlock);
+
+
         levelXML = new StringBuilder();
         levelXML = build(true);
         System.out.println(levelXML.toString());
@@ -174,14 +184,10 @@ public class Solver implements Runnable {
                 for (int a = 0; a < maxX; a++) {
                     Coordinate currentCoordinate = new Coordinate(a, i);
                     if (map.containsKey(currentCoordinate) && map.get(currentCoordinate) instanceof RockBlock) {
-//                        System.out.println("skipping stupid place: " + currentCoordinate + "\t" + map.get(currentCoordinate).getBlockType());
                         continue; // We previously placed a portal block here, don't overwrite it!
                     }
                     EmptyBlock emptyBlock = new EmptyBlock(currentCoordinate);
                     map.put(currentCoordinate, emptyBlock);
-                    if (i == 0 && a == 0) {
-                        continue; // Don't put rocks at start
-                    }
                     if (Math.random() * 100 > randomNum * rockDensity) {
                         RockBlock rockBlock = new RockBlock(currentCoordinate);
                         map.put(currentCoordinate, rockBlock);
@@ -266,33 +272,31 @@ public class Solver implements Runnable {
             movingBlock.setCurrentDirection(direction);
             movingBlock.savePreviousPosition();
             moveQueue.add(movingBlock);
-            map.put(movingBlock.getPosition(), movingBlock);
         }
-        MovingBlock startMoving = new MovingBlock();
-        startMoving.setPosition(new Coordinate(startX, startY));
-        System.out.println("start moving block = "+startMoving.getPosition().getX()+","+startMoving.getPosition().getY());
-        map.put(startMoving.getPosition(), startMoving);
-        
 
         do {
             MovingBlock currentBlock = moveQueue.remove();
             currentBlock.move();
+
             Block nextBlock = getNextBlock(currentBlock, currentBlock.currentDirection);
             if (nextBlock != null) {
                 if (superDebug) {
                     System.out.println("Type of next block: " + nextBlock.getBlockType());
                 }
                 nextBlock.onTouch(currentBlock);
-                if (map.get(currentBlock.getPosition()) instanceof FinishBlock) { // Currently sitting on the finish block
-                    if (currentBlock.getPreviousPositions().size() < (minMoves + 1)) {
-                        return false; // We will try whole process again because it was too easy
-                    }
-                    if (shortestPathRock == null || currentBlock.getPreviousPositions().size() < shortestPathRock.getPreviousPositions().size()) {
-                        solved = true;
-                        shortestPathRock = currentBlock; // We found either the first answer or a shorter answer
-                    }
+            }
+            if (map.get(currentBlock.getPosition()) instanceof FinishBlock) { // Currently sitting on the finish block
+                if (!recreateMap && (currentBlock.getPreviousPositions().size() < (minMoves + 1) || currentBlock.isDeadBlock())) { // Make sure it didn't like end up in a molten next to finish block
+                    return false; // We will try whole process again because it was too easy
+                }
+                if (shortestPathRock == null || currentBlock.getPreviousPositions().size() < shortestPathRock.getPreviousPositions().size()) {
+                    solved = true;
+                    MovingBlock copiedBlock = new MovingBlock();
+                    currentBlock.copy(copiedBlock);
+                    shortestPathRock = copiedBlock; // We found either the first answer or a shorter answer
                 }
             }
+
             if (currentBlock.getPreviousPositions().size() <= maxMoves && (shortestPathRock == null || currentBlock.getPreviousPositions().size() < shortestPathRock.getPreviousPositions().size()) && !currentBlock.isDeadBlock()) {
                 for (Direction direction : Direction.values()) {
                     if (canTravelInDirection(currentBlock, direction)) {
@@ -429,8 +433,7 @@ public class Solver implements Runnable {
                     i += 7; // We messed with the default loop counter b/c the portal code is longer
                     break;
                 case "S":
-                    block = new MovingBlock();
-                    block.setPosition(coordinate);
+                    block = new EmptyBlock(coordinate); // Don't actually put in on the map YET, but we will later
                     startX = coordinate.getX();
                     startY = coordinate.getY();
                     break;
@@ -542,13 +545,16 @@ public class Solver implements Runnable {
         }
 
         public <T extends Block> T copy(T copy) {
-            copy.setPosition(new Coordinate(this.getPosition().getX(), this.getPosition().getY()));
+            copy.setPosition(new Coordinate(this.getPosition()));
             copy.setPreviousPositions((ArrayList<Coordinate>) this.getPreviousPositions().clone());
             if (copy instanceof MovingBlock && this instanceof MovingBlock) {
-                ((MovingBlock) copy).setCurrentDirection(((MovingBlock) this).getCurrentDirection());
                 HashMap<Coordinate, Direction> allPreviousDirections = new HashMap<>();
                 allPreviousDirections.putAll(((MovingBlock) this).getAllPreviousPositions());
                 ((MovingBlock) copy).setAllPreviousPositions(allPreviousDirections);
+                ((MovingBlock) copy).setCurrentDirection(((MovingBlock) this).getCurrentDirection());
+                ((MovingBlock) copy).setLastDirection(((MovingBlock) this).getLastDirection());
+                ((MovingBlock) copy).setDeadBlock(((MovingBlock) this).isDeadBlock());
+                ((MovingBlock) copy).setPassedThroughPortal(((MovingBlock) this).isPassedThroughPortal());
             }
             return copy;
         }
@@ -805,8 +811,9 @@ public class Solver implements Runnable {
         }
 
         public void onTouch(MovingBlock block) {
-            block.move();
-            block.savePositionForPrinting();
+//            block.move();
+//            block.savePositionForPrinting();
+//            I don't think we want to do anything here....
         }
 
         @Override
@@ -954,7 +961,6 @@ public class Solver implements Runnable {
 
         public PortalBlock(Coordinate coordinate) {
             super(coordinate);
-            setPosition(coordinate);
         }
 
         @Override
@@ -1532,7 +1538,7 @@ public class Solver implements Runnable {
             //writtenBlocks <= numBlocksToWrite; 
             boolean wasDude = false;
             for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
-            	wasDude = ent.getValue() instanceof MovingBlock && ent.getValue() instanceof Block;
+                wasDude = ent.getValue() instanceof MovingBlock && ent.getValue() instanceof Block;
                 if (debug) {
                     System.out.println("attempting to write:" + ent.getKey());
                 }
@@ -1547,8 +1553,8 @@ public class Solver implements Runnable {
                     view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
                     view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
                     view += (fullAssetDataName(assetData.BKRND) + (fullAssetName(assets.P_DUD)) + qm + "\n");//const background with respect to the blocktype
-                } else if(ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && ent.getValue() instanceof RefBlock && ent.getValue().isPlaced()){//Reference blocks
-                	block = ent.getValue();
+                } else if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && ent.getValue() instanceof RefBlock && ent.getValue().isPlaced()) {//Reference blocks
+                    block = ent.getValue();
                     refView += (viewStart + "\n");
                     refView += (fullAssetDataName(assetData.ID) + (constRef + block.getRefId()) + qm + "\n");//variable name
                     refView += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
@@ -1576,7 +1582,7 @@ public class Solver implements Runnable {
                     }
                     refView += (viewEnd + "\n");
                     levelXML.append(refView);
-                } else if(ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && !(ent.getValue() instanceof RefBlock) && ent.getValue().isPlaced()){ 
+                } else if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && !(ent.getValue() instanceof RefBlock) && ent.getValue().isPlaced()) {
                     if (debug) {
                         System.out.println("We need to write: " + ent.getKey());
                     }
@@ -1587,14 +1593,14 @@ public class Solver implements Runnable {
                     view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
                     view += (fullAssetDataName(assetData.BKRND) + (block instanceof MovingBlock ? (fullAssetName(assets.P_DUD))
                             : (block instanceof FinishBlock ? (fullAssetName(assets.P_FIN))
-                                    : (block instanceof MoltenBlock ? (fullAssetName(assets.P_MOLT))
-                                            : (block instanceof PortalBlock ? (fullAssetName(assets.P_PORT))
-                                                    : (block instanceof BubbleBlock ? (fullAssetName(assets.P_BUB))
-                                                            : (fullAssetName(assets.P_OBST))))))) + qm + "\n");//const background with respect to the blocktype
+                            : (block instanceof MoltenBlock ? (fullAssetName(assets.P_MOLT))
+                            : (block instanceof PortalBlock ? (fullAssetName(assets.P_PORT))
+                            : (block instanceof BubbleBlock ? (fullAssetName(assets.P_BUB))
+                            : (fullAssetName(assets.P_OBST))))))) + qm + "\n");//const background with respect to the blocktype
                     //for the relative locations just start at 
                     //current block - reference < 0 its either left of the ref or above it
                 }
-                if(ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && !(ent.getValue() instanceof RefBlock) && (wasDude ? true :ent.getValue().isPlaced())) {//we don't write any EmptyBlocks)
+                if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock) && !(ent.getValue() instanceof RefBlock) && (wasDude ? true : ent.getValue().isPlaced())) {//we don't write any EmptyBlocks)
                     if (block.getPosition().equals(block.getHorRef()) && block.getPosition().equals(block.getVerRef())) {//if ALL the positions are the same then this is a constant base block
                         //returns constant base locs
                         view += getBaseBlockXML(block);
@@ -1732,13 +1738,13 @@ public class Solver implements Runnable {
                     }
                     //we handle const bases, clusters, and aligns. There is nothing else but to finish off the view block, append it and repeat
                 }
-                if(!view.equals("")){
-                	view += (viewEnd + "\n");
+                if (!view.equals("")) {
+                    view += (viewEnd + "\n");
                 }
-                if(wasDude){//if the block was the dude don't write it
+                if (wasDude) {//if the block was the dude don't write it
                     runnerView = view;
                     view = "";
-                }else{
+                } else {
                     levelXML.append(view);
                     view = "";
                 }
@@ -2412,7 +2418,7 @@ public class Solver implements Runnable {
             if (!prioritizedCoords.contains(rest)) {
                 prioritizedCoords.add(rest);
             }
-        };
+        }
         ArrayList<Block> prioritizedReferences = new ArrayList<Block>(0);
         for (int i = 0; i < prioritizedCoords.size(); i++) {
             prioritizedReferences.add(map.get(prioritizedCoords.get(i)));
@@ -2754,12 +2760,13 @@ public class Solver implements Runnable {
                 }
 
                 //File levelsDir = new File("/Users/dewit/Documents/shift_files/level_files");
-                File levelsDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
+//                File levelsDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
+                File levelsDir = new File("/Users/nrichardson/Desktop/builder/");
                 File newLevelDir = new File(levelsDir.getAbsolutePath() + "/" + outputFileName);
                 if (!levelsDir.exists()) {//it should always exist..
                     throw new IOException();//directory storing all levels does not exist?! O_O
                 }
-            //removed for lucky 8
+                //removed for lucky 8
             /*
                  if (!newLevelDir.exists()) {
                  if (!newLevelDir.mkdir()) {
