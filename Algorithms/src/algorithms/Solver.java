@@ -39,13 +39,19 @@ public class Solver implements Runnable {
     private static boolean showPath = true;
     private static boolean forcePortalPassThrough = false; // FORCE at least 1 portal to exist and be USED on the map
 
-    private static int randomMin = 10;
-    private static int randomMax = 95;
-    private static double rockDensity = 1.0;
-    private static double bubbleDensity = 1.3;
-    private static double moltenDensity = 1.3;
-    private static double iceDensity = 100.0;
-    private static double portalDensity = 1.5;
+
+    private static double totalBlockDensity = .3;
+    private static double rockDensity = .4;
+    private static double bubbleDensity = .2;
+    private static double moltenDensity = .2;
+    private static double iceDensity = 0;
+    private static double portalDensity = .1;
+
+    private static int rockCount = 0;
+    private static int bubbleCount = 0;
+    private static int moltenCount = 0;
+    private static int iceCount = 0;
+    private static int portalCount = 0;
 
     private enum Direction {
         UP, DOWN, LEFT, RIGHT
@@ -74,11 +80,8 @@ public class Solver implements Runnable {
                         e.printStackTrace();
                     }
                     switch (split[0]) {
-                        case "minDensity":
-                            randomMin = (int) num;
-                            break;
-                        case "maxDensity":
-                            randomMax = (int) num;
+                        case "density":
+                            totalBlockDensity = num;
                             break;
                         case "rocks":
                             rockDensity = num;
@@ -96,7 +99,7 @@ public class Solver implements Runnable {
                             portalDensity = num;
                             break;
                         case "level":
-                            levelGenre = split[1];
+                            levelGenre = split[1].trim();
                             break;
                         case "recreate":
                             Solver s = new Solver();
@@ -160,6 +163,11 @@ public class Solver implements Runnable {
     public boolean createAndSolve() {
         if (!recreateMap) {
             map = new HashMap<>();
+            rockCount = 0;
+            bubbleCount = 0;
+            moltenCount = 0;
+            iceCount = 0;
+            portalCount = 0;
         }
         if (foundGoodMap) {
             return false;
@@ -173,12 +181,6 @@ public class Solver implements Runnable {
             System.out.print("\rTotal Number Of Puzzles Tried: " + retryCount + "\t");
         }
 
-        int rockCount = 0;
-        int bubbleCount = 0;
-        int moltenCount = 0;
-        int portalCount = 0;
-
-        int randomNum = ThreadLocalRandom.current().nextInt(randomMin, randomMax + 1); // Try out different block densities between 5% and 30%
         if (!recreateMap) {
             for (int i = 0; i < maxY; i++) { // Generate 11x15 map
                 for (int a = 0; a < maxX; a++) {
@@ -186,46 +188,7 @@ public class Solver implements Runnable {
                     if (map.containsKey(currentCoordinate) && map.get(currentCoordinate) instanceof RockBlock) {
                         continue; // We previously placed a portal block here, don't overwrite it!
                     }
-                    EmptyBlock emptyBlock = new EmptyBlock(currentCoordinate);
-                    map.put(currentCoordinate, emptyBlock);
-                    if (Math.random() * 100 > randomNum * rockDensity) {
-                        RockBlock rockBlock = new RockBlock(currentCoordinate);
-                        map.put(currentCoordinate, rockBlock);
-                        rockCount++;
-                    } else if (Math.random() * 100 > randomNum * bubbleDensity) {
-                        BubbleBlock bubbleBlock = new BubbleBlock(currentCoordinate);
-                        map.put(currentCoordinate, bubbleBlock);
-                        bubbleCount++;
-                    } else if (Math.random() * 100 > randomNum * moltenDensity) {
-                        MoltenBlock moltenBlock = new MoltenBlock(currentCoordinate);
-                        map.put(currentCoordinate, moltenBlock);
-                        moltenCount++;
-                    } else if (Math.random() * 100 > randomNum * portalDensity && portalCount < 6) { // Only put like 6 portals max per map
-                        int randomX = ThreadLocalRandom.current().nextInt(1, maxX - 1);
-                        int randomY = ThreadLocalRandom.current().nextInt(1, maxY - 1);
-
-                        while (randomX == currentCoordinate.getX() || randomY == currentCoordinate.getY()) { // Make sure we don't happen to get the exact same spot (very unlikely)
-                            randomX = ThreadLocalRandom.current().nextInt(1, maxX - 1);
-                            randomY = ThreadLocalRandom.current().nextInt(1, maxY - 1);
-                        }
-                        while (diff(i, randomX) < 3 || diff(a, randomY) < 4) { // Make sure they are at least a little bit away from each other
-                            randomX = ThreadLocalRandom.current().nextInt(1, maxX - 1);
-                            randomY = ThreadLocalRandom.current().nextInt(1, maxY - 1);
-                        }
-
-                        Coordinate randomPortalBlockCoordinate = new Coordinate(randomX, randomY);
-                        PortalBlock portalBlockCompanion = new PortalBlock(randomPortalBlockCoordinate);
-
-                        PortalBlock portalBlock = new PortalBlock(currentCoordinate);
-
-                        portalBlockCompanion.setPortalExit(currentCoordinate);
-                        portalBlock.setPortalExit(randomPortalBlockCoordinate);
-
-                        map.put(currentCoordinate, portalBlock);
-                        map.put(randomPortalBlockCoordinate, portalBlockCompanion);
-
-                        portalCount += 2;
-                    }
+                    placeBlock(currentCoordinate);
                 }
             }
         }
@@ -328,7 +291,7 @@ public class Solver implements Runnable {
             for (int i = 0; i < shortestPathRock.getPreviousPositions().size() - 1; i++) {
                 System.out.println("Went To " + shortestPathRock.getPreviousPositions().get(i + 1));
             }
-            System.out.println("Total # Of: Rocks: " + rockCount + "\tBubbles: " + bubbleCount + "\tMoltens: " + moltenCount + "\tPortals: " + portalCount);
+            System.out.println("Total # Of: Rocks: " + rockCount + "\tBubbles: " + bubbleCount + "\tMoltens: " + moltenCount + "\tPortals: " + portalCount + "\tIce: " + iceCount);
             numRocks = rockCount;
             printMap();
 
@@ -340,6 +303,71 @@ public class Solver implements Runnable {
         }
         return false;
     }
+
+    private void placeBlock(Coordinate coordinate) {
+        if (rockDensity + bubbleDensity + moltenDensity + portalDensity + iceDensity < 1.0) {
+            rockDensity = 1.0 - (bubbleDensity + moltenDensity + portalDensity + iceDensity);
+        }
+        double rockStart = 0.0;
+        double rockEnd = rockDensity;
+        double bubbleStart = rockEnd;
+        double bubbleEnd = bubbleStart + bubbleDensity;
+        double moltenStart = bubbleEnd;
+        double moltenEnd = moltenStart + moltenDensity;
+        double portalStart = moltenEnd;
+        double portalEnd = portalStart + portalDensity;
+        double iceStart = portalEnd;
+        double iceEnd = iceStart + iceDensity;
+        double randBlockNum = Math.random(); // WHICH block to place
+
+        double randTotalNum = Math.random(); // WHETHER or not we should place a block at all
+
+        if (inRange(0, totalBlockDensity, randTotalNum)) {
+            if (inRange(rockStart, rockEnd, randBlockNum)) {
+                RockBlock rockBlock = new RockBlock(coordinate);
+                map.put(coordinate, rockBlock);
+                rockCount++;
+            } else if (inRange(bubbleStart, bubbleEnd, randBlockNum)) {
+                BubbleBlock bubbleBlock = new BubbleBlock(coordinate);
+                map.put(coordinate, bubbleBlock);
+                bubbleCount++;
+            } else if (inRange(moltenStart, moltenEnd, randBlockNum)) {
+                MoltenBlock moltenBlock = new MoltenBlock(coordinate);
+                map.put(coordinate, moltenBlock);
+                moltenCount++;
+            } else if (inRange(portalStart, portalEnd, randBlockNum)) {
+                int randomX = ThreadLocalRandom.current().nextInt(1, maxX - 1);
+                int randomY = ThreadLocalRandom.current().nextInt(1, maxY - 1);
+
+                while ((randomX == coordinate.getX() && randomY == coordinate.getY()) || diff(coordinate.getX(), randomX) < 3 || diff(coordinate.getY(), randomY) < 4) { // Make sure they are at least a little bit away from each other & make sure we don't happen to get the exact same spot (very unlikely)
+                    randomX = ThreadLocalRandom.current().nextInt(1, maxX - 1);
+                    randomY = ThreadLocalRandom.current().nextInt(1, maxY - 1);
+                }
+                Coordinate randomPortalBlockCoordinate = new Coordinate(randomX, randomY);
+                PortalBlock portalBlockCompanion = new PortalBlock(randomPortalBlockCoordinate);
+
+                PortalBlock portalBlock = new PortalBlock(coordinate);
+
+                portalBlockCompanion.setPortalExit(coordinate);
+                portalBlock.setPortalExit(randomPortalBlockCoordinate);
+
+                map.put(coordinate, portalBlock);
+                map.put(randomPortalBlockCoordinate, portalBlockCompanion);
+                map.put(coordinate, portalBlock);
+                portalCount += 2;
+            } else {
+                System.out.println("Random Number was.... " + randBlockNum);
+            }
+        } else {
+            EmptyBlock emptyBlock = new EmptyBlock(coordinate);
+            map.put(coordinate, emptyBlock);
+        }
+    }
+
+    private boolean inRange(double minInclusive, double maxExclusive, double val) {
+        return val >= minInclusive && val < maxExclusive && minInclusive != maxExclusive; // If there is no range, always say false
+    }
+
 
     private void printMap() {
         HashMap<Coordinate, Direction> finalPathTaken = null;
@@ -372,7 +400,7 @@ public class Solver implements Runnable {
                     System.out.print(" ");
                 } else {
                     if (map.get(coordinate) == null) {
-                        System.out.print("N ");
+                        System.out.print("N "); // This isn't good to see!
                     } else {
                         System.out.print(map.get(coordinate).printMapObject() + " ");
                     }
