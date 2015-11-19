@@ -148,15 +148,15 @@ public class Solver implements Runnable {
                         RockBlock rockBlock = new RockBlock(currentCoordinate);
                         map.put(currentCoordinate, rockBlock);
                         rockCount++;
-                    } else if (Math.random() * 100 > randomNum * 1.2) {
+                    } else if (Math.random() * 100 > randomNum * 1.02) {
                         BubbleBlock bubbleBlock = new BubbleBlock(currentCoordinate);
                         map.put(currentCoordinate, bubbleBlock);
                         bubbleCount++;
-                    } else if (Math.random() * 100 > randomNum * 1.02) {
+                    } else if (Math.random() * 100 > randomNum * 1.5) {
                         MoltenBlock moltenBlock = new MoltenBlock(currentCoordinate);
                         map.put(currentCoordinate, moltenBlock);
                         moltenCount++;
-                    } else if (Math.random() * 100 > randomNum * 10.2) { // Turned off right now
+                    } else if (Math.random() * 100 > randomNum * 10.05) { // Turned off right now
                         int randomX = ThreadLocalRandom.current().nextInt(1, maxX);
                         int randomY = ThreadLocalRandom.current().nextInt(1, maxY);
 
@@ -1447,7 +1447,7 @@ public class Solver implements Runnable {
                     runnerView += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
                     runnerView += (fullAssetDataName(assetData.BKRND) + (fullAssetName(assets.P_DUD)) + qm + "\n");//const background with respect to the blocktype
                     runnerView += (viewEnd + "\n");
-                } else if(ent.getValue() instanceof Block && ent.getValue() instanceof RefBlock){//Reference blocks
+                } else if(ent.getValue() instanceof Block && ent.getValue() instanceof RefBlock && ent.getValue().isPlaced()){//Reference blocks
                 	block = ent.getValue();
                     refView += (viewStart + "\n");
                     refView += (fullAssetDataName(assetData.ID) + (constRef+block.getRefId()) + qm + "\n");//variable name
