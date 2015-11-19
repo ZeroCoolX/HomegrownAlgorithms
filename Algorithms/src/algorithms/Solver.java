@@ -40,6 +40,7 @@ public class Solver implements Runnable {
     private static boolean forcePortalPassThrough = false; // FORCE at least 1 portal to exist and be USED on the map
 
 
+    // Default these to zero when using command line!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     private static double totalBlockDensity = .3;
     private static double rockDensity = .4;
     private static double bubbleDensity = .2;
@@ -305,6 +306,15 @@ public class Solver implements Runnable {
     }
 
     private void placeBlock(Coordinate coordinate) {
+        /*
+        Block placement logic is as follows:
+
+        You pass in a total block density first. Say .3 means cover the whole board in about 30% of blocks. This is achieved by passing in "density=.3" to the command line
+        Then you pass in each individual block type's density
+        Say, I want about 50% of blocks placed to Rock Blocks, I pass in "rocks=.5" as a command line argument
+        Say I want 10% of blocks placed to be Portal Blocks, I pass in "portals=.1" as a command line argument
+        Any block I FAIL to pass in a density for, it defaults to 0. Say I pass in "portals=.2 moltens=.1 bubbles=.4", it will auto make RockBlock density be .3 (1.0 minus all others)
+         */
         if (rockDensity + bubbleDensity + moltenDensity + portalDensity + iceDensity < 1.0) {
             rockDensity = 1.0 - (bubbleDensity + moltenDensity + portalDensity + iceDensity);
         }
@@ -339,7 +349,8 @@ public class Solver implements Runnable {
                 int randomX = ThreadLocalRandom.current().nextInt(1, maxX - 1);
                 int randomY = ThreadLocalRandom.current().nextInt(1, maxY - 1);
 
-                while ((randomX == coordinate.getX() && randomY == coordinate.getY()) || diff(coordinate.getX(), randomX) < 3 || diff(coordinate.getY(), randomY) < 4) { // Make sure they are at least a little bit away from each other & make sure we don't happen to get the exact same spot (very unlikely)
+                // Make sure they are at least a little bit away from each other & make sure we don't happen to get the exact same spot (very unlikely)
+                while ((randomX == coordinate.getX() && randomY == coordinate.getY()) || diff(coordinate.getX(), randomX) < 3 || diff(coordinate.getY(), randomY) < 4) {
                     randomX = ThreadLocalRandom.current().nextInt(1, maxX - 1);
                     randomY = ThreadLocalRandom.current().nextInt(1, maxY - 1);
                 }
@@ -355,6 +366,10 @@ public class Solver implements Runnable {
                 map.put(randomPortalBlockCoordinate, portalBlockCompanion);
                 map.put(coordinate, portalBlock);
                 portalCount += 2;
+            } else if (inRange(iceStart, iceEnd, randBlockNum)) {
+//                IceBlock iceBlock = new IceBlock(coordinate);
+//                map.put(coordinate, iceBlock);
+//                iceCount++;
             } else {
                 System.out.println("Random Number was.... " + randBlockNum);
             }
