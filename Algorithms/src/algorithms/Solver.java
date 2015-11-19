@@ -2795,6 +2795,32 @@ public class Solver implements Runnable {
         //if we made it all the way through the path return false because we are not in the path
         return false;
     }
+    
+    public void createAuxData(String newLevel, int levelNum){
+        File auxData = new File("");
+        String ps = "public static Level ";/*levelpackname and number*/ String nl = "= new Level(\"";/*Caps packname*/ String pad = "\",";/*num*/String comma = ",";/*moves*//*pad*/String pack = "R.layout.";/*xmlfilename without xml*/String endLine = ");";
+        //public static Level fire30 = new Level("Fire", 30, 15, R.layout.pack_fire_level30);
+        HashMap<Integer, ArrayList<Block>> specialBlocks = new HashMap<Integer, ArrayList<Block>>();
+        specialBlocks.put(1, new ArrayList<Block>());//molten
+        specialBlocks.put(2, new ArrayList<Block>());//bubble
+        specialBlocks.put(3, new ArrayList<Block>());//portals
+        specialBlocks.put(4, new ArrayList<Block>());//frozens
+        for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
+            if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock)) {
+                if(ent.getValue() instanceof MoltenBlock){
+                    specialBlocks.get(1).add(ent.getValue());
+                }else if(ent.getValue() instanceof BubbleBlock){
+                    specialBlocks.get(2).add(ent.getValue());
+                }else if(ent.getValue() instanceof PortalBlock){
+                    specialBlocks.get(3).add(ent.getValue());
+                }else if(ent.getValue() instanceof IceBlock){
+                    specialBlocks.get(4).add(ent.getValue());
+                }
+            }
+        }
+        String headerLine = ps+levelGenre+levelNum+nl+"";
+        
+    }
 
     private boolean isValidCoord(Coordinate c) {
         return ((c.getX() < maxX && c.getX() >= 0 && c.getY() < maxY && c.getY() >= 0) && (!inPath(c)));
