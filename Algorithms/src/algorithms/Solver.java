@@ -2798,8 +2798,20 @@ public class Solver implements Runnable {
     
     public void createAuxData(String newLevel, int levelNum){
         File auxData = new File("");
-        String ps = "public static Level ";/*levelpackname and number*/ String nl = "= new Level(\"";/*Caps packname*/ String pad = "\",";/*num*/String comma = ",";/*moves*//*pad*/String pack = "R.layout.";/*xmlfilename without xml*/String endLine = ");";
+        StringBuilder sb = new StringBuilder();
+        String ps = "public static Level ";
+        String nl = "= new Level(\"";
+        String pad = "\",";
+        String comma = ",";
+        String pack = "R.layout.";
+        String endLine = ");";
+        String putBegin = ".put(";
+        String putEnd = ");";
+        String caseStmt = "case";
+        String scolon = ":";
+        String breakStmt = "break";
         //public static Level fire30 = new Level("Fire", 30, 15, R.layout.pack_fire_level30);
+        //fire.put(30, fire30);
         HashMap<Integer, ArrayList<Block>> specialBlocks = new HashMap<Integer, ArrayList<Block>>();
         specialBlocks.put(1, new ArrayList<Block>());//molten
         specialBlocks.put(2, new ArrayList<Block>());//bubble
@@ -2818,7 +2830,19 @@ public class Solver implements Runnable {
                 }
             }
         }
-        String headerLine = ps+levelGenre+levelNum+nl+"";
+        String upperLevelName = ""+levelGenre.charAt(0);
+        String headerLine = ps+levelGenre+levelNum+nl+(upperLevelName.toUpperCase() + levelGenre.substring(1))+pad+levelNum+comma+(shortestPathRock.getPreviousPositions().size() - 1)+pad+pack+newLevel+endLine;
+        String putLevelLine = levelGenre+putBegin+levelNum+comma+levelGenre+levelNum+putEnd;
+        String addSpecs = "";
+        
+        //go through each special block writing the additions to the case statement
+        for (Map.Entry<Integer, ArrayList<Block>> ent : specialBlocks.entrySet()) {
+            //TODO - ALL THIS. hah
+        }
+        
+        sb.append("Adux Data for Level: " + newLevel + "\n");
+        sb.append(headerLine+"\n");
+        sb.append(putLevelLine+"\n");
         
     }
 
@@ -2874,6 +2898,7 @@ public class Solver implements Runnable {
                 while ((new File(levelsDir.getAbsolutePath() + "/" + outputFileName + ("" + levelNum + "") + ".xml")).exists()) {
                     ++levelNum;
                 }
+                String levelName = outputFileName + ("" + levelNum + "");
                 newLevel = new File(levelsDir.getAbsolutePath() + "/" + outputFileName + ("" + levelNum + "") + ".xml");
                 FileWriter fw = new FileWriter(newLevel.getAbsoluteFile());
                 BufferedWriter bw = new BufferedWriter(fw);
