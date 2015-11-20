@@ -30,10 +30,10 @@ public class Solver implements Runnable {
     private static String levelGenre = "fire";//right now its hardcoded
     //private final File templateXML = new File("/Users/dewit/Documents/shift_files/level_files/level_template/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
     //private final File templateDir = new File("/Users/dewit/Documents/shift_files/level_files/level_template/");
-//    private final File templateXML = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
-//    private final File templateDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
-    private final File templateXML = new File("/Users/nrichardson/Desktop/builder/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
-    private final File templateDir = new File("/Users/nrichardson/Desktop/builder/");
+    private final File templateXML = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
+    private final File templateDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
+    //private final File templateXML = new File("/Users/nrichardson/Desktop/builder/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
+    //private final File templateDir = new File("/Users/nrichardson/Desktop/builder/");
 
     private static boolean superDebug = false;
     private static boolean showPath = true;
@@ -122,6 +122,7 @@ public class Solver implements Runnable {
         if (!recreateMap) {
             System.out.println("Average Time Per Map For Creation/Solve = " + (total / execTimes.size()) + "ms");
         }
+        
     }
 
     public void createXmlFiles() {
@@ -144,6 +145,9 @@ public class Solver implements Runnable {
         } else {
             System.out.println("\n\nFile not created : unable to create file within:\n\t" + templateDir);
         }
+        String levelPath = levelXMLFile.getLevel().getAbsolutePath();
+        int level = Integer.valueOf(levelPath.substring(levelPath.lastIndexOf("e")+2, levelPath.lastIndexOf(".")));
+        createAuxData(levelGenre, level);
     }
 
     public Solver() {
@@ -1427,7 +1431,7 @@ public class Solver implements Runnable {
                 System.out.println("Processing block: " + block.getPosition());
             }
             if (block instanceof EmptyBlock) {//otherwise, if this spot is an empty block ,lets place one there as an ancor!
-                MoltenBlock constBlock = new MoltenBlock(block.getPosition());
+                RockBlock constBlock = new RockBlock(block.getPosition());
                 map.put(constBlock.getPosition(), constBlock);
                 block = constBlock;
             }
@@ -1444,7 +1448,7 @@ public class Solver implements Runnable {
         block = map.get(new Coordinate(0, maxY - 1));
         if (block instanceof Block && !inPath(block.getPosition())) {//top right
             if (block instanceof EmptyBlock) {
-                MoltenBlock constBlock = new MoltenBlock(block.getPosition());
+                RockBlock constBlock = new RockBlock(block.getPosition());
                 map.put(constBlock.getPosition(), constBlock);
                 block = constBlock;
             }
@@ -1467,7 +1471,7 @@ public class Solver implements Runnable {
                 System.out.println("Processing block: " + block.getPosition());
             }
             if (block instanceof EmptyBlock) {
-                MoltenBlock constBlock = new MoltenBlock(block.getPosition());
+                RockBlock constBlock = new RockBlock(block.getPosition());
                 map.put(constBlock.getPosition(), constBlock);
                 block = constBlock;
             }
@@ -1488,7 +1492,7 @@ public class Solver implements Runnable {
                 System.out.println("Processing block: " + block.getPosition());
             }
             if (block instanceof EmptyBlock) {
-                MoltenBlock constBlock = new MoltenBlock(block.getPosition());
+                RockBlock constBlock = new RockBlock(block.getPosition());
                 map.put(constBlock.getPosition(), constBlock);
                 block = constBlock;
             }
@@ -1505,7 +1509,7 @@ public class Solver implements Runnable {
         block = map.get(new Coordinate(midX, 0));
         if (block instanceof Block && !inPath(block.getPosition())) {//top middle
             if (block instanceof EmptyBlock) {
-                MoltenBlock constBlock = new MoltenBlock(block.getPosition());
+                RockBlock constBlock = new RockBlock(block.getPosition());
                 map.put(constBlock.getPosition(), constBlock);
                 block = constBlock;
             }
@@ -1528,7 +1532,7 @@ public class Solver implements Runnable {
                 System.out.println("Processing block: " + block.getPosition());
             }
             if (block instanceof EmptyBlock) {
-                MoltenBlock constBlock = new MoltenBlock(block.getPosition());
+                RockBlock constBlock = new RockBlock(block.getPosition());
                 map.put(constBlock.getPosition(), constBlock);
                 block = constBlock;
             }
@@ -1548,7 +1552,7 @@ public class Solver implements Runnable {
                 System.out.println("Processing block: " + block.getPosition());
             }
             if (block instanceof EmptyBlock) {
-                MoltenBlock constBlock = new MoltenBlock(block.getPosition());
+                RockBlock constBlock = new RockBlock(block.getPosition());
                 map.put(constBlock.getPosition(), constBlock);
                 block = constBlock;
             }
@@ -1565,7 +1569,7 @@ public class Solver implements Runnable {
         block = map.get(new Coordinate(midX, midY));
         if (block instanceof Block && !inPath(block.getPosition())) {//middle EXACTLY!!!!
             if (block instanceof EmptyBlock) {
-                MoltenBlock constBlock = new MoltenBlock(block.getPosition());
+                RockBlock constBlock = new RockBlock(block.getPosition());
                 map.put(constBlock.getPosition(), constBlock);
                 block = constBlock;
             }
@@ -2803,46 +2807,80 @@ public class Solver implements Runnable {
         String nl = "= new Level(\"";
         String pad = "\",";
         String comma = ",";
-        String pack = "R.layout.";
+        String pack = "R.layout.pack_";
         String endLine = ");";
         String putBegin = ".put(";
         String putEnd = ");";
+        String level = "_level_";
         String caseStmt = "case";
         String scolon = ":";
         String breakStmt = "break";
+        String MOLTENS_ADD = "moltens.add(";
+        String BUBBLES_ADD = "bubbles.add(";
+        String PORTALSFROM_ADD = "portalsFrom.add(";
+        String PORTALSTO_ADD = "portalsTo.add(";
+        String FROZENS_ADD = "frozens.add(";
         //public static Level fire30 = new Level("Fire", 30, 15, R.layout.pack_fire_level30);
         //fire.put(30, fire30);
         HashMap<Integer, ArrayList<Block>> specialBlocks = new HashMap<Integer, ArrayList<Block>>();
         specialBlocks.put(1, new ArrayList<Block>());//molten
         specialBlocks.put(2, new ArrayList<Block>());//bubble
-        specialBlocks.put(3, new ArrayList<Block>());//portals
-        specialBlocks.put(4, new ArrayList<Block>());//frozens
+        specialBlocks.put(3, new ArrayList<Block>());//portalsFrom
+        specialBlocks.put(4, new ArrayList<Block>());//portalsTo
+        specialBlocks.put(5, new ArrayList<Block>());//frozens
         for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
             if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock)) {
                 if(ent.getValue() instanceof MoltenBlock){
                     specialBlocks.get(1).add(ent.getValue());
                 }else if(ent.getValue() instanceof BubbleBlock){
                     specialBlocks.get(2).add(ent.getValue());
-                }else if(ent.getValue() instanceof PortalBlock){
+                }else if(ent.getValue() instanceof PortalBlock && !specialBlocks.get(3).contains(ent.getValue()) && !specialBlocks.get(4).contains(ent.getValue())){
                     specialBlocks.get(3).add(ent.getValue());
+                    PortalBlock fromPortal =(PortalBlock) ent.getValue();
+                    Coordinate portalExit = fromPortal.getPortalExit();
+                    specialBlocks.get(4).add(map.get(portalExit));
                 }else if(ent.getValue() instanceof IceBlock){
-                    specialBlocks.get(4).add(ent.getValue());
+                    specialBlocks.get(5).add(ent.getValue());
                 }
             }
         }
         String upperLevelName = ""+levelGenre.charAt(0);
-        String headerLine = ps+levelGenre+levelNum+nl+(upperLevelName.toUpperCase() + levelGenre.substring(1))+pad+levelNum+comma+(shortestPathRock.getPreviousPositions().size() - 1)+pad+pack+newLevel+endLine;
+        String headerLine = ps+levelGenre+levelNum+nl+(upperLevelName.toUpperCase() + levelGenre.substring(1))+pad+levelNum+comma+(shortestPathRock.getPreviousPositions().size() - 1)+comma+pack+newLevel+level+levelNum+endLine;
         String putLevelLine = levelGenre+putBegin+levelNum+comma+levelGenre+levelNum+putEnd;
         String addSpecs = "";
-        
+        ArrayList<Block> moltens = specialBlocks.get(1);
+        ArrayList<Block> bubbles = specialBlocks.get(2);
+        ArrayList<Block> portalsFrom = specialBlocks.get(3);
+        ArrayList<Block> portalsTo = specialBlocks.get(4);
+        ArrayList<Block> frozens = specialBlocks.get(5);
+        for(int i = 0; i < moltens.size(); i++){
+        	addSpecs += MOLTENS_ADD + constObstacle + moltens.get(i).getId() + putEnd + "\n";
+        }
+        for(int i = 0; i < bubbles.size(); i++){
+        	addSpecs += BUBBLES_ADD + constObstacle + bubbles.get(i).getId() + putEnd + "\n";
+        }
+        if(portalsFrom.size() == portalsTo.size()){
+        	for(int i = 0; i < portalsFrom.size(); i++){
+            	addSpecs += PORTALSFROM_ADD + constObstacle + portalsFrom.get(i).getId() + putEnd + "\n";
+            	addSpecs += PORTALSTO_ADD + constObstacle + portalsTo.get(i).getId() + putEnd + "\n";
+            }
+        }else{
+        	System.out.println("portalsFrom and portalsTo list are not the same size!");
+        }
+        for(int i = 0; i < frozens.size(); i++){
+        	addSpecs += FROZENS_ADD + constObstacle + frozens.get(i).getId() + putEnd + "\n";
+        }
+        /*
         //go through each special block writing the additions to the case statement
         for (Map.Entry<Integer, ArrayList<Block>> ent : specialBlocks.entrySet()) {
             //TODO - ALL THIS. hah
         }
-        
+        */
         sb.append("Adux Data for Level: " + newLevel + "\n");
         sb.append(headerLine+"\n");
         sb.append(putLevelLine+"\n");
+        sb.append(addSpecs+"\n");
+        System.out.println(sb.toString());
         
     }
 
@@ -2881,9 +2919,9 @@ public class Solver implements Runnable {
                 }
 
                 //File levelsDir = new File("/Users/dewit/Documents/shift_files/level_files");
-//                File levelsDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
-                File levelsDir = new File("/Users/nrichardson/Desktop/builder/");
-                File newLevelDir = new File(levelsDir.getAbsolutePath() + "/" + outputFileName);
+                File levelsDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
+                //File levelsDir = new File("/Users/nrichardson/Desktop/builder/");
+                //File newLevelDir = new File(levelsDir.getAbsolutePath() + "/" + outputFileName);
                 if (!levelsDir.exists()) {//it should always exist..
                     throw new IOException();//directory storing all levels does not exist?! O_O
                 }
