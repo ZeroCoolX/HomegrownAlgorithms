@@ -71,7 +71,7 @@ public class Solver implements Runnable {
                     String[] split = arg.split("=");
                     double num = 0;
                     try {
-                        if (!split[0].equals("recreate") && !split[0].equals("level")) {
+                        if (!split[0].equals("recreate") && !split[0].equals("pack")) {
                             num = Double.parseDouble(split[1]);
                         }
                     } catch (NumberFormatException e) {
@@ -2902,16 +2902,20 @@ public class Solver implements Runnable {
             File newAuxLevelDir = new File(pcAuxDataDir.getAbsolutePath() + "\\" + newLevel);
             //removed for lucky 8
             if (!pcAuxDataDir.exists()) {
-                if (!pcAuxDataDir.mkdir()) {
+                        throw new IOException();//making a directory failed
+            }
+            if (!newAuxLevelDir.exists()) {
+                if (!newAuxLevelDir.mkdir()) {
+                    System.out.println("failed making dir: " + newAuxLevelDir.getAbsolutePath());
                         throw new IOException();//making a directory failed
                 }
             }
-            while ((new File(pcAuxDataDir.getAbsolutePath() + "\\" + level + ("" + levelNum + "") + "_aux.txt")).exists()) {
+            while ((new File(newAuxLevelDir.getAbsolutePath() + "\\" + newLevel + ("" + levelNum + "") + "_aux.txt")).exists()) {
                 ++levelNum;
             }
-            File newLevelAuxDir = new File(pcAuxDataDir.getAbsolutePath() + "\\" + level + ("" + levelNum + "") + "_aux.txt");
+            File newLevelAuxDir = new File(newAuxLevelDir.getAbsolutePath() + "\\" + newLevel + ("" + levelNum + "") + "_aux.txt");
 
-            FileWriter fw = new FileWriter(newLevelAuxDir.getAbsoluteFile());
+            FileWriter fw = new FileWriter(newAuxLevelDir.getAbsoluteFile());
             BufferedWriter bw = new BufferedWriter(fw);
             bw.write(sb.toString());
             bw.close();
