@@ -50,12 +50,14 @@ public class Solver implements Runnable {
     private static double rockDensity = 0;
     private static double bubbleDensity = 0;
     private static double moltenDensity = 0;
+    private static double breakableDensity = .5;
     private static double iceDensity = 0;
     private static double portalDensity = 0;
 
     private static int rockCount = 0;
     private static int bubbleCount = 0;
     private static int moltenCount = 0;
+    private static int breakableCount = 0;
     private static int iceCount = 0;
     private static int portalCount = 0;
 
@@ -94,6 +96,9 @@ public class Solver implements Runnable {
                         case "moltens":
                             moltenDensity = num;
                             break;
+                        case "breakables":
+                            breakableDensity = num;
+                            break;
                         case "ice":
                             iceDensity = num;
                             break;
@@ -118,7 +123,7 @@ public class Solver implements Runnable {
         }
         Solver s = new Solver();
         s.run();
-        s.createXmlFiles();
+        //s.createXmlFiles();
         long total = 0;
         for (Long t : execTimes) {
             total += t;
@@ -299,7 +304,7 @@ public class Solver implements Runnable {
             for (int i = 0; i < shortestPathRock.getPreviousPositions().size() - 1; i++) {
                 System.out.println("Went To " + shortestPathRock.getPreviousPositions().get(i + 1));
             }
-            System.out.println("Total # Of: Rocks: " + rockCount + "\tBubbles: " + bubbleCount + "\tMoltens: " + moltenCount + "\tPortals: " + portalCount + "\tIce: " + iceCount);
+            System.out.println("Total # Of: Rocks: " + rockCount + "\tBubbles: " + bubbleCount + "\tMoltens: " + moltenCount + "\tBreakables: " + breakableCount + "\tPortals: " + portalCount + "\tIce: " + iceCount);
             numRocks = rockCount;
             printMap();
 
@@ -322,8 +327,8 @@ public class Solver implements Runnable {
         Say I want 10% of blocks placed to be Portal Blocks, I pass in "portals=.1" as a command line argument
         Any block I FAIL to pass in a density for, it defaults to 0. Say I pass in "portals=.2 moltens=.1 bubbles=.4", it will auto make RockBlock density be .3 (1.0 minus all others)
          */
-        if (rockDensity + bubbleDensity + moltenDensity + portalDensity + iceDensity < 1.0) {
-            rockDensity = 1.0 - (bubbleDensity + moltenDensity + portalDensity + iceDensity);
+        if (rockDensity + bubbleDensity + moltenDensity + breakableDensity + portalDensity + iceDensity < 1.0) {
+            rockDensity = 1.0 - (bubbleDensity + moltenDensity + breakableDensity + portalDensity + iceDensity);
         }
         double rockStart = 0.0;
         double rockEnd = rockDensity;
@@ -331,6 +336,8 @@ public class Solver implements Runnable {
         double bubbleEnd = bubbleStart + bubbleDensity;
         double moltenStart = bubbleEnd;
         double moltenEnd = moltenStart + moltenDensity;
+        double breakableStart = moltenEnd;
+        double breakableEnd = breakableStart + breakableDensity;
         double portalStart = moltenEnd;
         double portalEnd = portalStart + portalDensity;
         double iceStart = portalEnd;
@@ -352,6 +359,10 @@ public class Solver implements Runnable {
                 MoltenBlock moltenBlock = new MoltenBlock(coordinate);
                 map.put(coordinate, moltenBlock);
                 moltenCount++;
+            } else if (inRange(breakableStart, breakableEnd, randBlockNum)) {
+                BreakableBlock breakableBlock = new BreakableBlock(coordinate);
+                map.put(coordinate, breakableBlock);
+                breakableCount++;
             } else if (inRange(portalStart, portalEnd, randBlockNum)) {
                 int randomX = ThreadLocalRandom.current().nextInt(1, maxX - 1);
                 int randomY = ThreadLocalRandom.current().nextInt(1, maxY - 1);
@@ -488,6 +499,9 @@ public class Solver implements Runnable {
                 case "I":
                     block = new IceBlock(coordinate);
                     break;
+                case "Q":
+                    block = new BreakableBlock(coordinate);
+                    break;
                 case "P":
                     block = new PortalBlock(coordinate);
                     Coordinate portalExit = new Coordinate(decoded.substring(i + 10, i + 17));
@@ -544,6 +558,10 @@ public class Solver implements Runnable {
             if (secondNextBlock != null && secondNextBlock instanceof BubbleBlock) {
                 if (block.getPreviousPositions().size() == ((BubbleBlock) secondNextBlock).turnPopped) {
                     return false; // Don't allow to go through bubble block right after popping
+                }
+            } else if(secondNextBlock != null && secondNextBlock instanceof BreakableBlock){
+                if (block.getPreviousPositions().size() == ((BreakableBlock) secondNextBlock).turnBroken) {
+                    return false; // Don't allow to go through breakable block right after popping
                 }
             }
         }
@@ -942,7 +960,6 @@ public class Solver implements Runnable {
     }
 
     class BubbleBlock extends RockBlock {
-
         private int turnPopped = 0;
         private boolean popped = false;
 
@@ -987,6 +1004,45 @@ public class Solver implements Runnable {
 
         public void pop() {
             this.popped = true;
+        }
+    }
+
+    class BreakableBlock extends RockBlock {
+        private int turnBroken = 0;
+        private int hits = 0;
+        private boolean broken = false;
+
+        public BreakableBlock(Coordinate coordinate) {
+            super(coordinate);
+        }
+
+        @Override
+        public void onTouch(MovingBlock block) {
+            turnBroken = block.getPreviousPositions().size() + 1;
+            hits++;
+            if (hits == 3) {
+                turnBroken = block.getPreviousPositions().size() + 1;
+                smash();
+            }
+        }
+
+        @Override
+        public String getBlockType() {
+            return "Breakable Block";
+        }
+
+        @Override
+        public boolean canTravel(Direction direction) {
+            return broken;
+        }
+
+        @Override
+        public String printMapObject() {
+            return "Q";
+        }
+
+        public void smash() {
+            this.broken = true;
         }
     }
 
