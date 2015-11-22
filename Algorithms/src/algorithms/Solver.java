@@ -44,7 +44,7 @@ public class Solver implements Runnable {
     //private final File templateXML = new File("/Users/nrichardson/Desktop/builder/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
     //private final File templateDir = new File("/Users/nrichardson/Desktop/builder/");
 
-    private static boolean superDebug = false;
+    private static boolean superDebug = true;
     private static boolean showPath = true;
     private static boolean forcePortalPassThrough = false; // FORCE at least 1 portal to exist and be USED on the map
 
@@ -1704,7 +1704,7 @@ public class Solver implements Runnable {
             hintView = "";
             ArrayList<Coordinate> positions = shortestPathRock.getPreviousPositions();
             int hintNum = 1;
-            for(int i = positions.size()-1; i > 0; i--){
+            for(int i = positions.size()-2; i > 0; i--){
                 Coordinate hintCoord = positions.get(i);
                 Coordinate lastPosition = positions.get(i-1);
                 String direction = getHintDirection(lastPosition, hintCoord);
@@ -3262,12 +3262,14 @@ public class Solver implements Runnable {
             if (!pcAuxDataDir.exists()) {
                         throw new IOException();//making a directory failed
             }
+            
             if (!newAuxLevelDir.exists()) {
                 if (!newAuxLevelDir.mkdir()) {
                     System.out.println("failed making dir: " + newAuxLevelDir.getAbsolutePath());
                         throw new IOException();//making a directory failed
                 }
             }
+            
             while ((new File(newAuxLevelDir.getAbsolutePath() + "/" + newLevel + ("" + levelNum + "") + "_aux.txt")).exists()) {
                 ++levelNum;
             }
@@ -3325,16 +3327,19 @@ public class Solver implements Runnable {
                     throw new IOException();//directory storing all levels does not exist?! O_O
                 }
                 //removed for lucky 8
+                /*
                 if (!newLevelDir.exists()) {
                     if (!newLevelDir.mkdir()) {
                         throw new IOException();//making a directory failed
                     }
                 }
-                while ((new File(newLevelDir.getAbsolutePath() + "/" + outputFileName + ("" + levelNum + "") + ".xml")).exists()) {
+                */
+                while ((new File(levelsDir.getAbsolutePath() + "/" + outputFileName + ("" + levelNum + "") + ".xml")).exists()) {
                     ++levelNum;
                 }
+               
                 String levelName = outputFileName + ("" + levelNum + "");
-                newLevel = new File(newLevelDir.getAbsolutePath() + "/" + outputFileName + ("" + levelNum + "") + ".xml");
+                newLevel = new File(levelsDir.getAbsolutePath() + "/" + outputFileName + ("" + levelNum + "") + ".xml");
                 FileWriter fw = new FileWriter(newLevel.getAbsoluteFile());
                 BufferedWriter bw = new BufferedWriter(fw);
                 bw.write(fContent);
