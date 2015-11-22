@@ -44,7 +44,8 @@ public class Solver implements Runnable {
     //private final File templateXML = new File("/Users/nrichardson/Desktop/builder/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
     //private final File templateDir = new File("/Users/nrichardson/Desktop/builder/");
 
-    private static boolean superDebug = true;
+    private static boolean superDebug = false;
+    private static boolean showRowAndColumnNumbers = true;
     private static boolean showPath = true;
     private static boolean forcePortalPassThrough = false; // FORCE at least 1 portal to exist and be USED on the map
 
@@ -72,7 +73,6 @@ public class Solver implements Runnable {
 
     public static void main(String[] args) {
         Long totalTime = System.currentTimeMillis();
-        System.out.println("args.length = " + args.length);
         if (args.length > 0) {
             for (String arg : args) {
                 if (arg.contains("=")) {
@@ -87,10 +87,10 @@ public class Solver implements Runnable {
                     }
                     switch (split[0]) {
                         case "minDensity":
-                            minBlockDensity = (double) num;
+                            minBlockDensity = num;
                             break;
                         case "maxDensity":
-                            maxBlockDensity = (double) num;
+                            maxBlockDensity = num;
                             break;
                         case "rocks":
                             rockDensity = num;
@@ -114,16 +114,16 @@ public class Solver implements Runnable {
                             levelGenre = split[1].trim();
                             break;
                         case "minMoves":
-                            minMoves = (int)num;
+                            minMoves = (int) num;
                             break;
                         case "maxMoves":
-                            maxMoves = (int)num;
+                            maxMoves = (int) num;
                         case "recreate":
                             Solver s = new Solver();
                             recreateMap = true;
                             s.setMapFromString(split[1].trim());
                             s.createAndSolve();
-                            s.createXmlFiles();
+                            //s.createXmlFiles();
                             return;
                         default:
                             System.out.println("Unsupported Option! \"" + arg + "\"");
@@ -133,7 +133,10 @@ public class Solver implements Runnable {
         }
         Solver s = new Solver();
         s.run();
-        s.createXmlFiles();
+        if(breakableDensity > 0) {
+            s.findBlocksHitMultipleTimes();
+        }
+        //s.createXmlFiles();
         long total = 0;
         for (Long t : execTimes) {
             total += t;
@@ -142,7 +145,7 @@ public class Solver implements Runnable {
         if (!recreateMap) {
             System.out.println("Average Time Per Map For Creation/Solve = " + (total / execTimes.size()) + "ms");
         }
-        
+
     }
 
     public void createXmlFiles() {
@@ -166,7 +169,7 @@ public class Solver implements Runnable {
             System.out.println("\n\nFile not created : unable to create file within:\n\t" + templateDir);
         }
         String levelPath = levelXMLFile.getLevel().getAbsolutePath();
-        int level = Integer.valueOf(levelPath.substring(levelPath.lastIndexOf("e")+2, levelPath.lastIndexOf(".")));
+        int level = Integer.valueOf(levelPath.substring(levelPath.lastIndexOf("e") + 2, levelPath.lastIndexOf(".")));
         createAuxData(levelGenre, level);
     }
 
@@ -181,6 +184,28 @@ public class Solver implements Runnable {
             long diff = System.currentTimeMillis() - start;
             execTimes.add(diff);
         } while (!foundGoodMap);
+    }
+
+    public void findBlocksHitMultipleTimes() {
+        HashMap<RockBlock, Integer> hits = new HashMap<>();
+        for (Map.Entry<Coordinate, Direction> previousPositions : shortestPathRock.getAllPreviousPositions().entrySet()) {
+            Block nextBlock = getNextBlock(map.get(previousPositions.getKey()), previousPositions.getValue());
+            if (nextBlock instanceof RockBlock) {
+                if (hits.containsKey(nextBlock)) {
+                    Integer hitCount = hits.get(nextBlock);
+                    hits.put((RockBlock) nextBlock, ++hitCount);
+                } else {
+                    hits.put((RockBlock) nextBlock, 1);
+                }
+            }
+        }
+        for (Map.Entry<RockBlock, Integer> hit : hits.entrySet()) {
+            if (hit.getValue() == 2 || hit.getValue() == 3) {
+                map.put(hit.getKey().getPosition(), new BreakableBlock(hit.getKey().getPosition()));
+            }
+        }
+        System.out.println("Map With Breakables: ");
+        printMap();
     }
 
     public boolean createAndSolve() {
@@ -306,7 +331,6 @@ public class Solver implements Runnable {
         if (!recreateMap && forcePortalPassThrough && (portalCount == 0 || (shortestPathRock == null || !shortestPathRock.isPassedThroughPortal()))) { // If we force portals, make sure we passed through at least 1
             return false;
         }
-
         if (solved) {
             foundGoodMap = true;
             System.out.println(); // Finish the counter off
@@ -326,6 +350,7 @@ public class Solver implements Runnable {
         }
         return false;
     }
+
     private void placeBlock(Coordinate coordinate) {
         /*
         Block placement logic is as follows:
@@ -416,7 +441,17 @@ public class Solver implements Runnable {
             finalPathTaken = shortestPathRock.getAllPreviousPositions();
         }
 
+        if (showRowAndColumnNumbers) {
+            System.out.print("   ");
+            for (int a = 0; a < maxX; a++) {
+                System.out.print(a + " ");
+            }
+            System.out.println();
+        }
         for (int i = 0; i < maxY; i++) {
+            if (showRowAndColumnNumbers) {
+                System.out.print(i + (i < 10 ? "  " : " "));
+            }
             for (int a = 0; a < maxX; a++) {
                 if (i == startY && a == startX) {
                     System.out.print("S "); // Print the start block
@@ -428,7 +463,7 @@ public class Solver implements Runnable {
                     switch (finalPathTaken.get(coordinate)) {
                         case UP:
                             System.out.print("^");
-                            visualDisplay+= "^";
+                            visualDisplay += "^";
                             break;
                         case DOWN:
                             System.out.print("v");
@@ -474,7 +509,11 @@ public class Solver implements Runnable {
         for (int i = 0; i < maxY; i++) {
             for (int a = 0; a < maxX; a++) {
                 Coordinate coordinate = new Coordinate(a, i);
-                sb.append("[").append(coordinate.printForEncoding()).append("|").append(map.get(coordinate).printMapObject()).append(map.get(coordinate) instanceof PortalBlock ? ((PortalBlock) map.get(coordinate)).getPortalExit().printForEncoding() : "").append("]");
+                if (i == startY && a == startX) {
+                    sb.append("[").append(coordinate.printForEncoding()).append("|").append(new MovingBlock().printMapObject()).append("]");
+                } else {
+                    sb.append("[").append(coordinate.printForEncoding()).append("|").append(map.get(coordinate).printMapObject()).append(map.get(coordinate) instanceof PortalBlock ? ((PortalBlock) map.get(coordinate)).getPortalExit().printForEncoding() : "").append("]");
+                }
             }
         }
         byte[] bytes = Base64.getEncoder().encode(sb.toString().getBytes());
@@ -567,7 +606,7 @@ public class Solver implements Runnable {
                 if (block.getPreviousPositions().size() == ((BubbleBlock) secondNextBlock).turnPopped) {
                     return false; // Don't allow to go through bubble block right after popping
                 }
-            } else if(secondNextBlock != null && secondNextBlock instanceof BreakableBlock){
+            } else if (secondNextBlock != null && secondNextBlock instanceof BreakableBlock) {
                 if (block.getPreviousPositions().size() == ((BreakableBlock) secondNextBlock).turnBroken) {
                     return false; // Don't allow to go through breakable block right after popping
                 }
@@ -623,11 +662,10 @@ public class Solver implements Runnable {
         protected Coordinate position;
         protected ArrayList<Coordinate> previousPositions = new ArrayList<>();
         protected int id;
-        protected boolean placed;
         protected int refId;
+        protected boolean placed;
         protected Coordinate horRef;
         protected Coordinate verRef;
-        protected boolean isBase;//refers to this block being on a wall or corner or center somewhere
 
         protected void savePreviousPosition() {
             previousPositions.add(new Coordinate(position));
@@ -707,6 +745,7 @@ public class Solver implements Runnable {
         public boolean isUsed() {
             return this.isUsed;
         }
+
         public void setWritten(boolean isWritten) {
             this.isWritten = isWritten;
         }
@@ -955,8 +994,6 @@ public class Solver implements Runnable {
 
         @Override
         public void onTouch(MovingBlock block) {
-            // lets split here
-
         }
 
         @Override
@@ -1704,9 +1741,9 @@ public class Solver implements Runnable {
             hintView = "";
             ArrayList<Coordinate> positions = shortestPathRock.getPreviousPositions();
             int hintNum = 1;
-            for(int i = positions.size()-2; i > 0; i--){
+            for (int i = positions.size() - 2; i > 0; i--) {
                 Coordinate hintCoord = positions.get(i);
-                Coordinate lastPosition = positions.get(i-1);
+                Coordinate lastPosition = positions.get(i - 1);
                 String direction = getHintDirection(lastPosition, hintCoord);
                 hintView += (viewStart + "\n");
                 hintView += (fullAssetDataName(assetData.ID) + constHint + Integer.toString(hintNum) + qm + "\n");
@@ -1714,8 +1751,8 @@ public class Solver implements Runnable {
                 hintView += (fullAssetDataName(assetData.HGTH) + qm + "\n");
                 hintView += (fullAssetDataName(assetData.BKRND) + (fullAssetName(assets.ARRW)) + us + direction + qm + "\n");
                 Block hintRef = findHintReference(hintCoord, direction);
-                if(hintRef != null){
-                    switch(direction){
+                if (hintRef != null) {
+                    switch (direction) {
                         case "up":
                             hintView += (fullRelativeName(relativeLayouts.BLW) + (hintRef instanceof MovingBlock ? (constRunner) : (hintRef instanceof FinishBlock ? (constFinish) : (constObstacle + hintRef.getId()))) + qm + "\n");
                             hintView += (fullRelativeName(relativeLayouts.ALIGN_LT) + (hintRef instanceof MovingBlock ? (constRunner) : (hintRef instanceof FinishBlock ? (constFinish) : (constObstacle + hintRef.getId()))) + qm + "\n");
@@ -1732,35 +1769,37 @@ public class Solver implements Runnable {
                             hintView += (fullRelativeName(relativeLayouts.TO_LT_OF) + (hintRef instanceof MovingBlock ? (constRunner) : (hintRef instanceof FinishBlock ? (constFinish) : (constObstacle + hintRef.getId()))) + qm + "\n");
                             hintView += (fullRelativeName(relativeLayouts.ALIGN_TP) + (hintRef instanceof MovingBlock ? (constRunner) : (hintRef instanceof FinishBlock ? (constFinish) : (constObstacle + hintRef.getId()))) + qm + "\n");
                             break;
-                        default: System.out.println("direction is not cardinal!");
+                        default:
+                            System.out.println("direction is not cardinal!");
                     }
-                }else if(((hintCoord.getX() == 0 || hintCoord.getX() == maxX-1)&&(hintCoord.getY() != 0 && hintCoord.getY() != maxY-1)) || ((hintCoord.getY() == 0 || hintCoord.getY() == maxY-1)&&(hintCoord.getX() != 0 && hintCoord.getX() != maxX-1))){
+                } else if (((hintCoord.getX() == 0 || hintCoord.getX() == maxX - 1) && (hintCoord.getY() != 0 && hintCoord.getY() != maxY - 1)) || ((hintCoord.getY() == 0 || hintCoord.getY() == maxY - 1) && (hintCoord.getX() != 0 && hintCoord.getX() != maxX - 1))) {
                     hintRef = getWallBuddy(hintCoord);
-                    switch(direction){
+                    switch (direction) {
                         case "up":
-                            hintView += (fullAbsoluteName(absoluteLayouts.A_PAR_TP)+tr+qm+ "\n");
+                            hintView += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
                             hintView += (fullRelativeName((hintCoord.getX() == hintRef.getPosition().getX() ? relativeLayouts.ALIGN_LT : (hintCoord.getX() < hintRef.getPosition().getX() ? relativeLayouts.TO_LT_OF : relativeLayouts.TO_RT_OF))) + (hintRef instanceof MovingBlock ? (constRunner) : (hintRef instanceof FinishBlock ? (constFinish) : (constObstacle + hintRef.getId()))) + qm + "\n");
                             break;
                         case "down":
-                            hintView += (fullAbsoluteName(absoluteLayouts.A_PAR_BT)+tr+qm+ "\n");
+                            hintView += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
                             hintView += (fullRelativeName((hintCoord.getX() == hintRef.getPosition().getX() ? relativeLayouts.ALIGN_LT : (hintCoord.getX() < hintRef.getPosition().getX() ? relativeLayouts.TO_LT_OF : relativeLayouts.TO_RT_OF))) + (hintRef instanceof MovingBlock ? (constRunner) : (hintRef instanceof FinishBlock ? (constFinish) : (constObstacle + hintRef.getId()))) + qm + "\n");
                             break;
                         case "left":
-                            hintView += (fullAbsoluteName(absoluteLayouts.A_PAR_LT)+tr+qm+ "\n");
+                            hintView += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
                             hintView += (fullRelativeName((hintCoord.getY() == hintRef.getPosition().getY() ? relativeLayouts.ALIGN_TP : (hintCoord.getY() < hintRef.getPosition().getY() ? relativeLayouts.ABV : relativeLayouts.BLW))) + (hintRef instanceof MovingBlock ? (constRunner) : (hintRef instanceof FinishBlock ? (constFinish) : (constObstacle + hintRef.getId()))) + qm + "\n");
                             break;
                         case "right":
-                            hintView += (fullAbsoluteName(absoluteLayouts.A_PAR_RT)+tr+qm+ "\n");
+                            hintView += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
                             hintView += (fullRelativeName((hintCoord.getY() == hintRef.getPosition().getY() ? relativeLayouts.ALIGN_TP : (hintCoord.getY() < hintRef.getPosition().getY() ? relativeLayouts.ABV : relativeLayouts.BLW))) + (hintRef instanceof MovingBlock ? (constRunner) : (hintRef instanceof FinishBlock ? (constFinish) : (constObstacle + hintRef.getId()))) + qm + "\n");
                             break;
-                        default: System.out.println("direction is not cardinal!");
-                           
+                        default:
+                            System.out.println("direction is not cardinal!");
+
                     }
-                }else{//in a corner
+                } else {//in a corner
                     int x = hintCoord.getX();
                     int y = hintCoord.getY();
-                    hintView += (fullAbsoluteName(x==0 ? absoluteLayouts.A_PAR_LT : absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
-                    hintView += (fullAbsoluteName(y==0 ? absoluteLayouts.A_PAR_TP : absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
+                    hintView += (fullAbsoluteName(x == 0 ? absoluteLayouts.A_PAR_LT : absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
+                    hintView += (fullAbsoluteName(y == 0 ? absoluteLayouts.A_PAR_TP : absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
                 }
                 hintView += (viewEnd + "\n");
                 levelXML.append(hintView);
@@ -1793,54 +1832,54 @@ public class Solver implements Runnable {
                     refView += (fullAssetDataName(assetData.ID) + (constRef + block.getRefId()) + qm + "\n");//variable name
                     refView += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
                     refView += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
-                        Coordinate vRefCoord = block.getVerRef();
-                        Coordinate hRefCoord = block.getHorRef();
-                        Block vRef = map.get(block.getVerRef());
-                        Block hRef = map.get(block.getHorRef());
-                        System.out.println("vRef coords  = ("+vRef.getPosition().getX()+","+vRef.getPosition().getY()+")");
-                        System.out.println("hRef coords  = ("+hRef.getPosition().getX()+","+hRef.getPosition().getY()+")");
-                        System.out.println("attempting to place RefBlock with hRef @ ("+hRefCoord.getX()+","+hRefCoord.getY()+") and vRef @ ("+vRefCoord.getX()+","+vRefCoord.getY()+") ");
-                        if (hRef == block && (vRef != null && vRef != block)) { //this means the reference is to the left of rink and above/below a block
-                            refView += (fullRelativeName(relativeLayouts.TO_LT_OF) + (constGridName) + qm + "\n");
-                            if (block.getPosition().getY() < vRef.getPosition().getY()) {
-                                refView += (fullRelativeName(relativeLayouts.ABV) + (vRef instanceof MovingBlock ? (constRunner) : (vRef instanceof FinishBlock ? (constFinish) : (vRef instanceof RefBlock ? (constRef + vRef.getRefId())  : (constObstacle + vRef.getId())))) + qm + "\n");
-                            } else {
-                                refView += (fullRelativeName(relativeLayouts.BLW) + (vRef instanceof MovingBlock ? (constRunner) : (vRef instanceof FinishBlock ? (constFinish): (vRef instanceof RefBlock ? (constRef + vRef.getRefId())  : (constObstacle + vRef.getId())))) + qm + "\n");
-                            }
-                        } else if (vRef == block && (hRef != null && hRef != block)) { //this means the reference is above rink and right/left of a block
-                            refView += (fullRelativeName(relativeLayouts.ABV) + (constGridName) + qm + "\n");
-                            if (block.getPosition().getX() < hRef.getPosition().getX()) {
-                                refView += (fullRelativeName(relativeLayouts.TO_LT_OF) + (hRef instanceof MovingBlock ? (constRunner) : (hRef instanceof FinishBlock ? (constFinish) : (hRef instanceof RefBlock ? (constRef + hRef.getRefId()) :(constObstacle + hRef.getId())))) + qm + "\n");
-                            } else {
-                                refView += (fullRelativeName(relativeLayouts.TO_RT_OF) + (hRef instanceof MovingBlock ? (constRunner) : (hRef instanceof FinishBlock ? (constFinish) : (hRef instanceof RefBlock ? (constRef + hRef.getRefId())  : (constObstacle + hRef.getId())))) + qm + "\n");
-                            }
-                        } else if(vRef == block && hRef == block) {
-                        	if(block.getPosition().getX() == -1 && (block.getPosition().getY() == 0 || block.getPosition().getY() == midY || block.getPosition().getY() == maxY-1)){
-                                refView += (fullRelativeName(relativeLayouts.TO_LT_OF) + (constGridName) + qm + "\n");
-                                if (block.getPosition().getY() == 0) {
-                                    refView += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
-                                } else if (block.getPosition().getY() == maxY - 1) {
-                                    refView += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
-                                } else if (block.getPosition().getY() == midY) {
-                                    refView += (fullAbsoluteName(absoluteLayouts.CENT_HOR) + tr + qm + "\n");
-                                }
-
-                        	}else if(block.getPosition().getY() == -1 && (block.getPosition().getX() == 0 || block.getPosition().getX() == midX || block.getPosition().getX() == maxX-1)){
-                                refView += (fullRelativeName(relativeLayouts.ABV) + (constGridName) + qm + "\n");
-                                if (block.getPosition().getX() == 0) {
-                                    refView += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
-                                } else if (block.getPosition().getX() == maxX - 1) {
-                                    refView += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
-                                } else if (block.getPosition().getX() == midX) {
-                                    refView += (fullAbsoluteName(absoluteLayouts.CENT_HOR) + tr + qm + "\n");
-                                }
-
-                        	}else{
-                        		System.out.println("setting refBlock xml, it's refs are equal to itself, but the block coords don't contain a -1...");
-                        	}
-                        }else{
-                            System.out.println("something went wrong placing xml for reference block...not good.");
+                    Coordinate vRefCoord = block.getVerRef();
+                    Coordinate hRefCoord = block.getHorRef();
+                    Block vRef = map.get(block.getVerRef());
+                    Block hRef = map.get(block.getHorRef());
+                    System.out.println("vRef coords  = (" + vRef.getPosition().getX() + "," + vRef.getPosition().getY() + ")");
+                    System.out.println("hRef coords  = (" + hRef.getPosition().getX() + "," + hRef.getPosition().getY() + ")");
+                    System.out.println("attempting to place RefBlock with hRef @ (" + hRefCoord.getX() + "," + hRefCoord.getY() + ") and vRef @ (" + vRefCoord.getX() + "," + vRefCoord.getY() + ") ");
+                    if (hRef == block && (vRef != null && vRef != block)) { //this means the reference is to the left of rink and above/below a block
+                        refView += (fullRelativeName(relativeLayouts.TO_LT_OF) + (constGridName) + qm + "\n");
+                        if (block.getPosition().getY() < vRef.getPosition().getY()) {
+                            refView += (fullRelativeName(relativeLayouts.ABV) + (vRef instanceof MovingBlock ? (constRunner) : (vRef instanceof FinishBlock ? (constFinish) : (vRef instanceof RefBlock ? (constRef + vRef.getRefId()) : (constObstacle + vRef.getId())))) + qm + "\n");
+                        } else {
+                            refView += (fullRelativeName(relativeLayouts.BLW) + (vRef instanceof MovingBlock ? (constRunner) : (vRef instanceof FinishBlock ? (constFinish) : (vRef instanceof RefBlock ? (constRef + vRef.getRefId()) : (constObstacle + vRef.getId())))) + qm + "\n");
                         }
+                    } else if (vRef == block && (hRef != null && hRef != block)) { //this means the reference is above rink and right/left of a block
+                        refView += (fullRelativeName(relativeLayouts.ABV) + (constGridName) + qm + "\n");
+                        if (block.getPosition().getX() < hRef.getPosition().getX()) {
+                            refView += (fullRelativeName(relativeLayouts.TO_LT_OF) + (hRef instanceof MovingBlock ? (constRunner) : (hRef instanceof FinishBlock ? (constFinish) : (hRef instanceof RefBlock ? (constRef + hRef.getRefId()) : (constObstacle + hRef.getId())))) + qm + "\n");
+                        } else {
+                            refView += (fullRelativeName(relativeLayouts.TO_RT_OF) + (hRef instanceof MovingBlock ? (constRunner) : (hRef instanceof FinishBlock ? (constFinish) : (hRef instanceof RefBlock ? (constRef + hRef.getRefId()) : (constObstacle + hRef.getId())))) + qm + "\n");
+                        }
+                    } else if (vRef == block && hRef == block) {
+                        if (block.getPosition().getX() == -1 && (block.getPosition().getY() == 0 || block.getPosition().getY() == midY || block.getPosition().getY() == maxY - 1)) {
+                            refView += (fullRelativeName(relativeLayouts.TO_LT_OF) + (constGridName) + qm + "\n");
+                            if (block.getPosition().getY() == 0) {
+                                refView += (fullAbsoluteName(absoluteLayouts.A_PAR_TP) + tr + qm + "\n");
+                            } else if (block.getPosition().getY() == maxY - 1) {
+                                refView += (fullAbsoluteName(absoluteLayouts.A_PAR_BT) + tr + qm + "\n");
+                            } else if (block.getPosition().getY() == midY) {
+                                refView += (fullAbsoluteName(absoluteLayouts.CENT_HOR) + tr + qm + "\n");
+                            }
+
+                        } else if (block.getPosition().getY() == -1 && (block.getPosition().getX() == 0 || block.getPosition().getX() == midX || block.getPosition().getX() == maxX - 1)) {
+                            refView += (fullRelativeName(relativeLayouts.ABV) + (constGridName) + qm + "\n");
+                            if (block.getPosition().getX() == 0) {
+                                refView += (fullAbsoluteName(absoluteLayouts.A_PAR_LT) + tr + qm + "\n");
+                            } else if (block.getPosition().getX() == maxX - 1) {
+                                refView += (fullAbsoluteName(absoluteLayouts.A_PAR_RT) + tr + qm + "\n");
+                            } else if (block.getPosition().getX() == midX) {
+                                refView += (fullAbsoluteName(absoluteLayouts.CENT_HOR) + tr + qm + "\n");
+                            }
+
+                        } else {
+                            System.out.println("setting refBlock xml, it's refs are equal to itself, but the block coords don't contain a -1...");
+                        }
+                    } else {
+                        System.out.println("something went wrong placing xml for reference block...not good.");
+                    }
                     block.setWritten(true);
                     refView += (viewEnd + "\n");
                     levelXML.append(refView);
@@ -1977,7 +2016,7 @@ public class Solver implements Runnable {
                                 System.out.println("yDist == 0 2nd time, should not be a thing...");
                             }
                         }
-                    } else if(!(block instanceof RefBlock)) {//this means (by process of elimination) that the blocks use align to two different blocks
+                    } else if (!(block instanceof RefBlock)) {//this means (by process of elimination) that the blocks use align to two different blocks
                         //Vertical references are above, below, alignTiop
                         //Horizontal references are toRightOf, toLeftOf, alignLeft
                         Block refV = map.get(block.getVerRef());
@@ -2050,73 +2089,78 @@ public class Solver implements Runnable {
             }
         }
     }
-    private Block getWallBuddy(Coordinate hintCoord){
-        ArrayList<Block> hRefs = getHorizontalReferences(hintCoord,false);
-        ArrayList<Block> vRefs = getVerticalReferences(hintCoord,false);
-        if((hintCoord.getY() == 0 || hintCoord.getY() == maxY-1)&&(hintCoord.getX() != 0 && hintCoord.getX() != maxX-1) && hRefs.size() > 0){
-                return hRefs.get(0);
-        }else if((hintCoord.getX() == 0 || hintCoord.getX() == maxX-1)&&(hintCoord.getY() != 0 && hintCoord.getY() != maxY-1) && vRefs.size() > 0){
+
+    private Block getWallBuddy(Coordinate hintCoord) {
+        ArrayList<Block> hRefs = getHorizontalReferences(hintCoord, false);
+        ArrayList<Block> vRefs = getVerticalReferences(hintCoord, false);
+        if ((hintCoord.getY() == 0 || hintCoord.getY() == maxY - 1) && (hintCoord.getX() != 0 && hintCoord.getX() != maxX - 1) && hRefs.size() > 0) {
+            return hRefs.get(0);
+        } else if ((hintCoord.getX() == 0 || hintCoord.getX() == maxX - 1) && (hintCoord.getY() != 0 && hintCoord.getY() != maxY - 1) && vRefs.size() > 0) {
             return vRefs.get(0);
-        }else{
-        	System.out.println("getWallBuddy returning null! WHAT!");
+        } else {
+            System.out.println("getWallBuddy returning null! WHAT!");
             return null;
         }
     }
-    private Block findHintReference(Coordinate hintCoord, String direction){
-        Block hintRef=null;
-        switch(direction){
+
+    private Block findHintReference(Coordinate hintCoord, String direction) {
+        Block hintRef = null;
+        switch (direction) {
             case "up":
-                if(hintCoord.getY() == 0){
-                    
-                }else{
-                    hintRef = map.get(new Coordinate(hintCoord.getX(), hintCoord.getY()-1));
+                if (hintCoord.getY() == 0) {
+
+                } else {
+                    hintRef = map.get(new Coordinate(hintCoord.getX(), hintCoord.getY() - 1));
                 }
                 break;
             case "down":
-                if(hintCoord.getY() == maxY-1){
+                if (hintCoord.getY() == maxY - 1) {
                     return null;
-                }else{
-                    hintRef = map.get(new Coordinate(hintCoord.getX(), hintCoord.getY()+1));
+                } else {
+                    hintRef = map.get(new Coordinate(hintCoord.getX(), hintCoord.getY() + 1));
                 }
                 break;
             case "left":
-                if(hintCoord.getX() == 0){
+                if (hintCoord.getX() == 0) {
                     return null;
-                }else{
-                    hintRef = map.get(new Coordinate(hintCoord.getX()-1, hintCoord.getY()));
+                } else {
+                    hintRef = map.get(new Coordinate(hintCoord.getX() - 1, hintCoord.getY()));
                 }
                 break;
             case "right":
-                if(hintCoord.getX() == maxX-1){
+                if (hintCoord.getX() == maxX - 1) {
                     return null;
-                }else{
-                    hintRef = map.get(new Coordinate(hintCoord.getX()+1, hintCoord.getY()));
+                } else {
+                    hintRef = map.get(new Coordinate(hintCoord.getX() + 1, hintCoord.getY()));
                 }
                 break;
-            default: return null;
+            default:
+                return null;
         }
         return hintRef;
     }
-    private String getHintDirection(Coordinate from, Coordinate to){
+
+    private String getHintDirection(Coordinate from, Coordinate to) {
         int fromX = from.getX();
         int fromY = from.getY();
         int toX = to.getX();
         int toY = to.getY();
-        int xDiff = fromX-toX;
-        int yDiff = fromY-toY;
-        if(xDiff < 0 && yDiff == 0){
+        int xDiff = fromX - toX;
+        int yDiff = fromY - toY;
+        if (xDiff < 0 && yDiff == 0) {
             return "right";
-        }else if(xDiff > 0 && yDiff == 0){
+        } else if (xDiff > 0 && yDiff == 0) {
             return "left";
-        }else if(yDiff < 0 && xDiff == 0){
+        } else if (yDiff < 0 && xDiff == 0) {
             return "down";
-        }else if(yDiff > 0 && xDiff == 0){
+        } else if (yDiff > 0 && xDiff == 0) {
             return "up";
-        }else{
+        } else {
             System.out.println("getDirection else!");
             return "up";
         }
     }
+
     //This is for all the little blocks that were unplacable due to a lack of valid references - but it is not the end for these brave souls!
     private void applyPadding(Block unplacable, boolean debug) {
         //we need a horizontal and a vertical reference, it's probably only missing one reference
@@ -2133,7 +2177,9 @@ public class Solver implements Runnable {
                 System.out.println("hRef is missing");
                 if (references != null && references.size() > 0) {
                     for (int i = 0; i < references.size(); i++) {
-                        if (references.get(i).getPosition().getY() == -1 && references.get(i).getHorRef() != unplacable.getPosition()); {
+                        if (references.get(i).getPosition().getY() == -1 && references.get(i).getHorRef() != unplacable.getPosition())
+                            ;
+                        {
                             horRefs.add(references.get(i));
                         }
                     }
@@ -2144,24 +2190,24 @@ public class Solver implements Runnable {
                     int counter = 0;
                     for (int i = 0; i < horRefs.size(); i++) {
                         RefBlock tempRef = horRefs.get(i);
-                        System.out.println("tempRef X = "+tempRef.getPosition().getX());
+                        System.out.println("tempRef X = " + tempRef.getPosition().getX());
                         if (unplacable.getPosition().getX() + 1 == tempRef.getPosition().getX() || unplacable.getPosition().getX() - 1 == tempRef.getPosition().getX()) {
-                            System.out.println("tempRef filtered X = "+tempRef.getPosition().getX());
+                            System.out.println("tempRef filtered X = " + tempRef.getPosition().getX());
                             //see if we can assign references for this refBlock
-                            if(tempRef.isPlaced()){
+                            if (tempRef.isPlaced()) {
                                 unplacable.setHorRef(tempRef.getPosition());
                                 tempRef.setUsed(true);
-                                System.out.println("setting horizontal reference for block ("+unplacable.getPosition().getX()+","+unplacable.getPosition().getY()+") to (" + tempRef.getPosition().getX() + "," + tempRef.getPosition().getY() + ") ");
+                                System.out.println("setting horizontal reference for block (" + unplacable.getPosition().getX() + "," + unplacable.getPosition().getY() + ") to (" + tempRef.getPosition().getX() + "," + tempRef.getPosition().getY() + ") ");
                                 counter++;
                                 break;
                             }
                         }
                     }
-                    if(counter==0){
+                    if (counter == 0) {
                         System.out.println("couldn't find references to place the hor reference block!");
                     }
                 } else {
-                    System.out.println("Cannot find horizontal reference for this block! Block @ ("+unplacable.getPosition().getX()+","+unplacable.getPosition().getY()+")");
+                    System.out.println("Cannot find horizontal reference for this block! Block @ (" + unplacable.getPosition().getX() + "," + unplacable.getPosition().getY() + ")");
                 }
 
             }
@@ -2179,26 +2225,26 @@ public class Solver implements Runnable {
                     int counter = 0;
                     for (int i = 0; i < vertRefs.size(); i++) {
                         RefBlock tempRef = vertRefs.get(i);
-                        System.out.println("tempRef Y = "+tempRef.getPosition().getY());
+                        System.out.println("tempRef Y = " + tempRef.getPosition().getY());
                         if (unplacable.getPosition().getY() + 1 == tempRef.getPosition().getY() || unplacable.getPosition().getY() - 1 == tempRef.getPosition().getY()) {
-                            System.out.println("tempRef filtered Y = "+tempRef.getPosition().getY());
-                            if(tempRef.isPlaced()){
+                            System.out.println("tempRef filtered Y = " + tempRef.getPosition().getY());
+                            if (tempRef.isPlaced()) {
                                 unplacable.setVerRef(tempRef.getPosition());
                                 tempRef.setUsed(true);
-                                System.out.println("setting vertical reference for this block ("+unplacable.getPosition().getX()+","+unplacable.getPosition().getY()+") to (" + tempRef.getPosition().getX() + "," + tempRef.getPosition().getY() + ") ");
+                                System.out.println("setting vertical reference for this block (" + unplacable.getPosition().getX() + "," + unplacable.getPosition().getY() + ") to (" + tempRef.getPosition().getX() + "," + tempRef.getPosition().getY() + ") ");
                                 counter++;
                                 break;
                             }
                         }
                     }
-                    if(counter==0){
+                    if (counter == 0) {
                         System.out.println("couldn't find references to place the ver reference block! Need to look for other reference blocks to reference this reference block. REFERENCEPTION!");
                     }
                 } else {
                     System.out.println("Cannot find vertical reference for this block!");
                 }
             }
-            if(unplacable.getHorRef() != null && unplacable.getVerRef() != null){
+            if (unplacable.getHorRef() != null && unplacable.getVerRef() != null) {
                 unplacable.setPlaced(true);
             }
         }
@@ -2280,71 +2326,73 @@ public class Solver implements Runnable {
          }
          */
     }
-    private boolean assignRefsForRefBlock(RefBlock refBlock){
+
+    private boolean assignRefsForRefBlock(RefBlock refBlock) {
         Coordinate refCoords = refBlock.getPosition();
         ArrayList<Block> hRefs;
         ArrayList<Block> vRefs;
-        System.out.println("assigning refs for RefBlock @ ("+refCoords.getX()+","+refCoords.getY()+") ");
-        if(refCoords.getX() == -1){//vertical reference, just find vertical references, horizontal reference will be itself
-        	if(refBlock.getHorRef() == null){
-        		refBlock.setHorRef(refCoords);
-                System.out.println("setting refBlock horRef to itself @ ("+refCoords.getX()+","+refCoords.getY()+")");
-        	}
-            if(refBlock.getVerRef() == null){
-            	if(refCoords.getY() == 0 || refCoords.getY() == midY || refCoords.getY() == maxY-1){//against a wall!
-            		refBlock.setVerRef(refCoords);
-            	}else{
-            		vRefs = getVerticalReferences(refCoords, false);
-            		if(refBlock.getVerRef()==null && vRefs.size()>0){
-            			for (int i = 0; i < vRefs.size(); i++) {
-            				if (vRefs.get(i).getVerRef() != refBlock.getPosition()) {
-            					refBlock.setVerRef(vRefs.get(i).getPosition());
-            					System.out.println("vRef for this RefBlock = (" + vRefs.get(i).getPosition().getX() + "," + vRefs.get(i).getPosition().getY() + ")");
-            					break;
-            				}
-            			}
-            		}else if(refBlock.getVerRef()==null && vRefs.size() == 0){
-            			System.out.println("no vert refs for RefBlock! Going to applyPadding!");
-            			applyPadding(refBlock, false);
-            		}
-            	}
+        System.out.println("assigning refs for RefBlock @ (" + refCoords.getX() + "," + refCoords.getY() + ") ");
+        if (refCoords.getX() == -1) {//vertical reference, just find vertical references, horizontal reference will be itself
+            if (refBlock.getHorRef() == null) {
+                refBlock.setHorRef(refCoords);
+                System.out.println("setting refBlock horRef to itself @ (" + refCoords.getX() + "," + refCoords.getY() + ")");
             }
-        }else if(refCoords.getY() == -1){//horizontal reference, just find horizontal references, vertical reference will be itself
-        	if(refBlock.getVerRef() == null){
-        		refBlock.setVerRef(refCoords);
-        		System.out.println("setting refBlock verRef to itself @ ("+refCoords.getX()+","+refCoords.getY()+")");
-        	}
-        	if(refBlock.getHorRef() == null){
-        		if(refCoords.getX() == 0 || refCoords.getX() == midX || refCoords.getX() == maxX-1){//against a wall!
-            		refBlock.setHorRef(refCoords);
-            		System.out.println("setting refBlock horRef to itself @ ("+refCoords.getX()+","+refCoords.getY()+")");
-        		}else{
-            		hRefs = getHorizontalReferences(refCoords, false);
-            		if(refBlock.getHorRef()==null && hRefs.size()>0){
-            			for (int i = 0; i < hRefs.size(); i++) {
-            				if (hRefs.get(i).getHorRef() != refBlock.getPosition()) {
-            					refBlock.setHorRef(hRefs.get(i).getPosition());
-            					System.out.println("hRef for this RefBlock = (" + hRefs.get(i).getPosition().getX() + "," + hRefs.get(i).getPosition().getY() + ")");
-            					break;
-            				}
-            			}
-            		}else if(refBlock.getHorRef()==null && hRefs.size() == 0){
-            			System.out.println("no hor refs for RefBlock! Going to applyPadding for new refblock!");
-            			applyPadding(refBlock, false);
-            		}
-            	}
-        	}
+            if (refBlock.getVerRef() == null) {
+                if (refCoords.getY() == 0 || refCoords.getY() == midY || refCoords.getY() == maxY - 1) {//against a wall!
+                    refBlock.setVerRef(refCoords);
+                } else {
+                    vRefs = getVerticalReferences(refCoords, false);
+                    if (refBlock.getVerRef() == null && vRefs.size() > 0) {
+                        for (int i = 0; i < vRefs.size(); i++) {
+                            if (vRefs.get(i).getVerRef() != refBlock.getPosition()) {
+                                refBlock.setVerRef(vRefs.get(i).getPosition());
+                                System.out.println("vRef for this RefBlock = (" + vRefs.get(i).getPosition().getX() + "," + vRefs.get(i).getPosition().getY() + ")");
+                                break;
+                            }
+                        }
+                    } else if (refBlock.getVerRef() == null && vRefs.size() == 0) {
+                        System.out.println("no vert refs for RefBlock! Going to applyPadding!");
+                        applyPadding(refBlock, false);
+                    }
+                }
+            }
+        } else if (refCoords.getY() == -1) {//horizontal reference, just find horizontal references, vertical reference will be itself
+            if (refBlock.getVerRef() == null) {
+                refBlock.setVerRef(refCoords);
+                System.out.println("setting refBlock verRef to itself @ (" + refCoords.getX() + "," + refCoords.getY() + ")");
+            }
+            if (refBlock.getHorRef() == null) {
+                if (refCoords.getX() == 0 || refCoords.getX() == midX || refCoords.getX() == maxX - 1) {//against a wall!
+                    refBlock.setHorRef(refCoords);
+                    System.out.println("setting refBlock horRef to itself @ (" + refCoords.getX() + "," + refCoords.getY() + ")");
+                } else {
+                    hRefs = getHorizontalReferences(refCoords, false);
+                    if (refBlock.getHorRef() == null && hRefs.size() > 0) {
+                        for (int i = 0; i < hRefs.size(); i++) {
+                            if (hRefs.get(i).getHorRef() != refBlock.getPosition()) {
+                                refBlock.setHorRef(hRefs.get(i).getPosition());
+                                System.out.println("hRef for this RefBlock = (" + hRefs.get(i).getPosition().getX() + "," + hRefs.get(i).getPosition().getY() + ")");
+                                break;
+                            }
+                        }
+                    } else if (refBlock.getHorRef() == null && hRefs.size() == 0) {
+                        System.out.println("no hor refs for RefBlock! Going to applyPadding for new refblock!");
+                        applyPadding(refBlock, false);
+                    }
+                }
+            }
         }
-        if(refBlock.getHorRef() != null && refBlock.getVerRef() != null){
+        if (refBlock.getHorRef() != null && refBlock.getVerRef() != null) {
             refBlock.setPlaced(true);
             System.out.println("setting refBlock placed to true");
             System.out.println("assigning refs for refblock TRUE");
             return true;
-        }else{
+        } else {
             System.out.println("assigning refs for refblock FALSE");
             return false;
         }
     }
+
     private void assignReferenceBlocks() {
         //find all columns that do not contain a block
         int counter = 0;
@@ -2357,7 +2405,7 @@ public class Solver implements Runnable {
                 }
             }
             if (counter == 0) {
-                map.put(new Coordinate(i, -1),new RefBlock(new Coordinate(i, -1)));
+                map.put(new Coordinate(i, -1), new RefBlock(new Coordinate(i, -1)));
                 System.out.println("new horizontal reference created for column " + i);
             }
         }
@@ -2370,7 +2418,7 @@ public class Solver implements Runnable {
                 }
             }
             if (counter == 0) {
-            	map.put(new Coordinate(-1, i),new RefBlock(new Coordinate(-1, i)));
+                map.put(new Coordinate(-1, i), new RefBlock(new Coordinate(-1, i)));
                 System.out.println("new vertical reference created for row " + i);
             }
         }
@@ -2675,75 +2723,75 @@ public class Solver implements Runnable {
 
     public void placeReferences() {
         if (references != null) {
-        	int runs = 0;
-        	while(runs < 5){
-        		for (int i = 0; i < references.size(); i++) {
-        			if(!references.get(i).isPlaced()){
-        				System.out.println("placing RefBlock @ ("+references.get(i).getPosition().getX()+","+references.get(i).getPosition().getY()+")");
-        				if (references.get(i).getPosition().getY() == -1) {
-        					//find a block within a column to align place left/right
-        					RefBlock hRef = references.get(i);
-        					Coordinate hRefCoords = hRef.getPosition();
-        					int columnLeft = (hRefCoords.getX() - 1) < 0 ? 0 : hRefCoords.getX() - 1;
-        					int columnRight = (hRefCoords.getX() + 1) > maxX - 1 ? maxX - 1 : hRefCoords.getX() + 1;
-        					hRef.setVerRef(hRefCoords);
-        					System.out.println("setting this horizontal RefBlock vertical ref = ("+hRefCoords.getX()+","+hRefCoords.getY()+")");
-        					if(hRefCoords.getX() == 0 || hRefCoords.getX() == midX || hRefCoords.getX() == maxX-1){
-                        	hRef.setHorRef(hRefCoords);
-                            System.out.println("setting this horizontal RefBlock horizontal ref = ("+hRefCoords.getX()+","+hRefCoords.getY()+")");
-                            hRef.setPlaced(true);
-                            System.out.println("placing this bitch.");
-        					}else{
-        						for (int j = columnLeft; j <= columnRight; j++) {
-        							for (int k = -1; k < maxY; k++) {
-        								Coordinate tempCo = new Coordinate(j, k);
-        								Block tempBlock = map.get(tempCo);
-        								if (tempBlock != null && tempBlock instanceof Block && !(tempBlock instanceof EmptyBlock) && tempBlock.isPlaced() && tempBlock != hRef) {
-        									hRef.setHorRef(tempCo);
-        									System.out.println("setting RefBlock @ ("+hRef.getPosition().getX()+","+hRef.getPosition().getY()+") vRef = ("+hRef.getVerRef().getX()+","+hRef.getVerRef().getY()+") and hRef = ("+hRef.getHorRef().getX()+","+hRef.getHorRef().getY()+")");
-        									hRef.setPlaced(true);
-        									if(tempBlock instanceof RefBlock){
-        										tempBlock.setUsed(true);
-        									}
-        									break;
-        								}	
-        							}
-        							}
-        					}
-        				} else if (references.get(i).getPosition().getX() == -1) {
-        					//find a block within a row to align 1 place up/down
-        					RefBlock vRef = references.get(i);
-        					Coordinate vRefCoords = vRef.getPosition();
-        					int rowUp = vRefCoords.getY() - 1;
-        					int rowDown = vRefCoords.getY() + 1;
-        					vRef.setHorRef(vRefCoords);
-        					System.out.println("setting this vertical RefBlock horizontal ref = ("+vRefCoords.getX()+","+vRefCoords.getY()+")");
-        					if(vRefCoords.getY() == 0 || vRefCoords.getY() == midY || vRefCoords.getY() == maxY-1){
-        						vRef.setVerRef(vRefCoords);
-								System.out.println("setting RefBlock @ ("+vRef.getPosition().getX()+","+vRef.getPosition().getY()+") vRef = ("+vRef.getVerRef().getX()+","+vRef.getVerRef().getY()+") and hRef = ("+vRef.getHorRef().getX()+","+vRef.getHorRef().getY()+")");
-        						vRef.setPlaced(true);
-        						System.out.println("places this bitch");
-        					}else{
-        						for (int j = rowUp; j <= rowDown; j++) {
-        							for (int k = -1; k < maxX; k++) {
-        								Coordinate tempCo = new Coordinate(k, j);
-        								Block tempBlock = map.get(tempCo);
-        								if (tempBlock != null && tempBlock instanceof Block && !(tempBlock instanceof EmptyBlock) && tempBlock.isPlaced() && tempBlock != vRef) {
-        									vRef.setVerRef(tempCo);
-        									System.out.println("setting RefBlock @ ("+vRef.getPosition().getX()+","+vRef.getPosition().getY()+") vRef = ("+vRef.getVerRef().getX()+","+vRef.getVerRef().getY()+") and hRef = ("+vRef.getHorRef().getX()+","+vRef.getHorRef().getY()+")");
-        									vRef.setPlaced(true);
-        									if(tempBlock instanceof RefBlock){
-        										tempBlock.setUsed(true);
-        									}
-        									break;
-        								}
-        							}
-        						}
-        					}
-        				}	
-                    	}
-            }
-        		runs++;
+            int runs = 0;
+            while (runs < 5) {
+                for (int i = 0; i < references.size(); i++) {
+                    if (!references.get(i).isPlaced()) {
+                        System.out.println("placing RefBlock @ (" + references.get(i).getPosition().getX() + "," + references.get(i).getPosition().getY() + ")");
+                        if (references.get(i).getPosition().getY() == -1) {
+                            //find a block within a column to align place left/right
+                            RefBlock hRef = references.get(i);
+                            Coordinate hRefCoords = hRef.getPosition();
+                            int columnLeft = (hRefCoords.getX() - 1) < 0 ? 0 : hRefCoords.getX() - 1;
+                            int columnRight = (hRefCoords.getX() + 1) > maxX - 1 ? maxX - 1 : hRefCoords.getX() + 1;
+                            hRef.setVerRef(hRefCoords);
+                            System.out.println("setting this horizontal RefBlock vertical ref = (" + hRefCoords.getX() + "," + hRefCoords.getY() + ")");
+                            if (hRefCoords.getX() == 0 || hRefCoords.getX() == midX || hRefCoords.getX() == maxX - 1) {
+                                hRef.setHorRef(hRefCoords);
+                                System.out.println("setting this horizontal RefBlock horizontal ref = (" + hRefCoords.getX() + "," + hRefCoords.getY() + ")");
+                                hRef.setPlaced(true);
+                                System.out.println("placing this bitch.");
+                            } else {
+                                for (int j = columnLeft; j <= columnRight; j++) {
+                                    for (int k = -1; k < maxY; k++) {
+                                        Coordinate tempCo = new Coordinate(j, k);
+                                        Block tempBlock = map.get(tempCo);
+                                        if (tempBlock != null && tempBlock instanceof Block && !(tempBlock instanceof EmptyBlock) && tempBlock.isPlaced() && tempBlock != hRef) {
+                                            hRef.setHorRef(tempCo);
+                                            System.out.println("setting RefBlock @ (" + hRef.getPosition().getX() + "," + hRef.getPosition().getY() + ") vRef = (" + hRef.getVerRef().getX() + "," + hRef.getVerRef().getY() + ") and hRef = (" + hRef.getHorRef().getX() + "," + hRef.getHorRef().getY() + ")");
+                                            hRef.setPlaced(true);
+                                            if (tempBlock instanceof RefBlock) {
+                                                tempBlock.setUsed(true);
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (references.get(i).getPosition().getX() == -1) {
+                            //find a block within a row to align 1 place up/down
+                            RefBlock vRef = references.get(i);
+                            Coordinate vRefCoords = vRef.getPosition();
+                            int rowUp = vRefCoords.getY() - 1;
+                            int rowDown = vRefCoords.getY() + 1;
+                            vRef.setHorRef(vRefCoords);
+                            System.out.println("setting this vertical RefBlock horizontal ref = (" + vRefCoords.getX() + "," + vRefCoords.getY() + ")");
+                            if (vRefCoords.getY() == 0 || vRefCoords.getY() == midY || vRefCoords.getY() == maxY - 1) {
+                                vRef.setVerRef(vRefCoords);
+                                System.out.println("setting RefBlock @ (" + vRef.getPosition().getX() + "," + vRef.getPosition().getY() + ") vRef = (" + vRef.getVerRef().getX() + "," + vRef.getVerRef().getY() + ") and hRef = (" + vRef.getHorRef().getX() + "," + vRef.getHorRef().getY() + ")");
+                                vRef.setPlaced(true);
+                                System.out.println("places this bitch");
+                            } else {
+                                for (int j = rowUp; j <= rowDown; j++) {
+                                    for (int k = -1; k < maxX; k++) {
+                                        Coordinate tempCo = new Coordinate(k, j);
+                                        Block tempBlock = map.get(tempCo);
+                                        if (tempBlock != null && tempBlock instanceof Block && !(tempBlock instanceof EmptyBlock) && tempBlock.isPlaced() && tempBlock != vRef) {
+                                            vRef.setVerRef(tempCo);
+                                            System.out.println("setting RefBlock @ (" + vRef.getPosition().getX() + "," + vRef.getPosition().getY() + ") vRef = (" + vRef.getVerRef().getX() + "," + vRef.getVerRef().getY() + ") and hRef = (" + vRef.getHorRef().getX() + "," + vRef.getHorRef().getY() + ")");
+                                            vRef.setPlaced(true);
+                                            if (tempBlock instanceof RefBlock) {
+                                                tempBlock.setUsed(true);
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                runs++;
             }
         }
     }
@@ -2782,10 +2830,10 @@ public class Solver implements Runnable {
                         if (!(map.get(co) instanceof EmptyBlock)) {
                             if (map.get(co).isPlaced()) {
                                 if (!inPath(co)) {
-                                        if (!(coord.equals(map.get(co).getVerRef()))) {
-                                            verticalRefs.put(map.get(co).getPosition(), map.get(co));
-                                            break;
-                                        }
+                                    if (!(coord.equals(map.get(co).getVerRef()))) {
+                                        verticalRefs.put(map.get(co).getPosition(), map.get(co));
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -2815,10 +2863,10 @@ public class Solver implements Runnable {
                         if (!(map.get(co) instanceof EmptyBlock)) {
                             if (map.get(co).isPlaced()) {
                                 if (!inPath(co)) {
-                                        if (!(coord.equals(map.get(co).getHorRef()))) {
-                                            horizontalRefs.put(map.get(co).getPosition(), map.get(co));
-                                            break;
-                                        }
+                                    if (!(coord.equals(map.get(co).getHorRef()))) {
+                                        horizontalRefs.put(map.get(co).getPosition(), map.get(co));
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -3260,16 +3308,16 @@ public class Solver implements Runnable {
             File newAuxLevelDir = new File(pcAuxDataDir.getAbsolutePath() + "/" + newLevel);
             //removed for lucky 8
             if (!pcAuxDataDir.exists()) {
-                        throw new IOException();//making a directory failed
+                throw new IOException();//making a directory failed
             }
-            
+
             if (!newAuxLevelDir.exists()) {
                 if (!newAuxLevelDir.mkdir()) {
                     System.out.println("failed making dir: " + newAuxLevelDir.getAbsolutePath());
-                        throw new IOException();//making a directory failed
+                    throw new IOException();//making a directory failed
                 }
             }
-            
+
             while ((new File(newAuxLevelDir.getAbsolutePath() + "/" + newLevel + ("" + levelNum + "") + "_aux.txt")).exists()) {
                 ++levelNum;
             }
@@ -3280,7 +3328,7 @@ public class Solver implements Runnable {
             bw.write(sb.toString());
             bw.close();
         } catch (IOException ex) {
-                                            System.out.println("macAuxLevel doesnt exist");
+            System.out.println("macAuxLevel doesnt exist");
             Logger.getLogger(Solver.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -3337,7 +3385,7 @@ public class Solver implements Runnable {
                 while ((new File(levelsDir.getAbsolutePath() + "/" + outputFileName + ("" + levelNum + "") + ".xml")).exists()) {
                     ++levelNum;
                 }
-               
+
                 String levelName = outputFileName + ("" + levelNum + "");
                 newLevel = new File(levelsDir.getAbsolutePath() + "/" + outputFileName + ("" + levelNum + "") + ".xml");
                 FileWriter fw = new FileWriter(newLevel.getAbsoluteFile());
