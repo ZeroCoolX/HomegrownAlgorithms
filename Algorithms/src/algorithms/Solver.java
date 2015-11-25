@@ -51,12 +51,12 @@ public class Solver implements Runnable {
 
 
     private static double minBlockDensity = .025;
-    private static double maxBlockDensity = .05;
+    private static double maxBlockDensity = .25;
     private static double totalBlockDensity = 0; // going to be randomly between the two variables above
     private static double rockDensity = 0;
     private static double bubbleDensity = 0;
     private static double moltenDensity = 0;
-    private static double breakableDensity = 0;
+    private static double breakableDensity = .4;
     private static double iceDensity = 0;
     private static double portalDensity = 0;
 
@@ -123,6 +123,7 @@ public class Solver implements Runnable {
                             recreateMap = true;
                             s.setMapFromString(split[1].trim());
                             s.createAndSolve();
+                            s.printMap();
                             //s.createXmlFiles();
                             return;
                         default:
@@ -187,6 +188,7 @@ public class Solver implements Runnable {
     }
 
     public void findBlocksHitMultipleTimes() {
+        int replacedCount = 0;
         HashMap<RockBlock, Integer> hits = new HashMap<>();
         for (Map.Entry<Coordinate, Direction> previousPositions : shortestPathRock.getAllPreviousPositions().entrySet()) {
             Block nextBlock = getNextBlock(map.get(previousPositions.getKey()), previousPositions.getValue());
@@ -201,16 +203,18 @@ public class Solver implements Runnable {
         }
         for (Map.Entry<RockBlock, Integer> hit : hits.entrySet()) {
             if (hit.getValue() == 2 || hit.getValue() == 3) {
+                replacedCount++;
                 map.put(hit.getKey().getPosition(), new BreakableBlock(hit.getKey().getPosition()));
             }
         }
-        System.out.println("Map With Breakables: ");
+        System.out.println("Map With Breakables (Replaced "+replacedCount+" Rocks W/Breakables): ");
         printMap();
     }
 
     public boolean createAndSolve() {
         if (!recreateMap) {
             map = new HashMap<>();
+            breakableCount = 0;
             rockCount = 0;
             bubbleCount = 0;
             moltenCount = 0;
@@ -569,7 +573,11 @@ public class Solver implements Runnable {
     }
 
     private boolean canTravelInDirection(MovingBlock block, Direction direction) {
+        Block nextBlock = getNextBlock(block, direction);
         if (block.getLastDirection() != null) {
+//            if(block.getLastDirection() == direction && nextBlock != null !(nextBlock instanceof BreakableBlock && ((BreakableBlock)nextBlock).broken)){
+//                return false; // Don't keep trying maybe?
+//            }
             switch (block.getLastDirection()) { // Don't move back where we just came
                 case UP:
                     if (direction == Direction.DOWN) {
@@ -594,7 +602,6 @@ public class Solver implements Runnable {
             }
         }
 
-        Block nextBlock = getNextBlock(block, direction);
         if (nextBlock instanceof FinishBlock) {
             Block secondNextBlock = getNextBlock(nextBlock, direction);
             if (secondNextBlock == null || !secondNextBlock.canTravel(direction)) {
@@ -605,10 +612,6 @@ public class Solver implements Runnable {
             if (secondNextBlock != null && secondNextBlock instanceof BubbleBlock) {
                 if (block.getPreviousPositions().size() == ((BubbleBlock) secondNextBlock).turnPopped) {
                     return false; // Don't allow to go through bubble block right after popping
-                }
-            } else if (secondNextBlock != null && secondNextBlock instanceof BreakableBlock) {
-                if (block.getPreviousPositions().size() == ((BreakableBlock) secondNextBlock).turnBroken) {
-                    return false; // Don't allow to go through breakable block right after popping
                 }
             }
         }
@@ -1086,6 +1089,7 @@ public class Solver implements Runnable {
 
         @Override
         public boolean canTravel(Direction direction) {
+            System.out.println("Can I travel?");
             return broken;
         }
 
@@ -3230,7 +3234,7 @@ public class Solver implements Runnable {
             String endLine = ");";
             String putBegin = ".put(";
             String putEnd = ");";
-            String level = "_level_";
+            String level = "_level";
             String caseStmt = "case";
             String scolon = ":";
             String breakStmt = "break";
