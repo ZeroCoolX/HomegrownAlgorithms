@@ -28,8 +28,8 @@ public class Solver implements Runnable {
     private static int maxY = 15;
     private static int midX = (maxX - 1) / 2;
     private static int midY = (maxY - 1) / 2;
-    private static int minMoves = 6;
-    private static int maxMoves = 10;
+    private static int minMoves = 15;
+    private static int maxMoves = 18;
     private static int retryCount = 0;
     private int numRocks;
     private int numBlocksToWrite = 0;
@@ -37,10 +37,10 @@ public class Solver implements Runnable {
     private String visualDisplay = "";
     private String encodedMap = "";
     private static String levelGenre = "default";//right now its hardcoded
-    //private final File templateXML = new File("/Users/dewit/Documents/shift_files/level_files/level_template/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
-    //private final File templateDir = new File("/Users/dewit/Documents/shift_files/level_files/level_template/");
-    private final File templateXML = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
-    private final File templateDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
+    private final File templateXML = new File("/Users/dewit/Documents/shift_files/level_files/level_template/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
+    private final File templateDir = new File("/Users/dewit/Documents/shift_files/level_files/level_template/");
+    //private final File templateXML = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
+    //private final File templateDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
     //private final File templateXML = new File("/Users/nrichardson/Desktop/builder/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
     //private final File templateDir = new File("/Users/nrichardson/Desktop/builder/");
 
@@ -124,7 +124,7 @@ public class Solver implements Runnable {
                             s.setMapFromString(split[1].trim());
                             s.createAndSolve();
                             s.printMap();
-                            //s.createXmlFiles();
+                            s.createXmlFiles();
                             return;
                         default:
                             System.out.println("Unsupported Option! \"" + arg + "\"");
@@ -137,7 +137,7 @@ public class Solver implements Runnable {
         if(breakableDensity > 0) {
             s.findBlocksHitMultipleTimes();
         }
-        //s.createXmlFiles();
+        s.createXmlFiles();
         long total = 0;
         for (Long t : execTimes) {
             total += t;
@@ -440,6 +440,7 @@ public class Solver implements Runnable {
 
 
     private void printMap() {
+        visualDisplay = "Map\n";
         HashMap<Coordinate, Direction> finalPathTaken = null;
         if (shortestPathRock != null) {
             finalPathTaken = shortestPathRock.getAllPreviousPositions();
@@ -1903,7 +1904,8 @@ public class Solver implements Runnable {
                             : (block instanceof PortalBlock ? (fullAssetName(assets.P_PORT))
                             : (block instanceof BubbleBlock ? (fullAssetName(assets.P_BUB))
                             : (block instanceof IceBlock ? (fullAssetName(assets.P_FZN))
-                            : (fullAssetName(assets.P_OBST)))))))) + qm + "\n");//const background with respect to the blocktype
+                            : (block instanceof BreakableBlock ? (fullAssetName(assets.P_BREAK))
+                            : (fullAssetName(assets.P_OBST))))))))) + qm + "\n");//const background with respect to the blocktype
                     //for the relative locations just start at 
                     //current block - reference < 0 its either left of the ref or above it
                 }
@@ -3243,6 +3245,7 @@ public class Solver implements Runnable {
             String PORTALSFROM_ADD = "portalsFrom.add(";
             String PORTALSTO_ADD = "portalsTo.add(";
             String FROZENS_ADD = "frozens.add(";
+            String BREAKABLES_ADD = "breakables.add(";
             //public static Level fire30 = new Level("Fire", 30, 15, R.layout.pack_fire_level30);
             //fire.put(30, fire30);
             HashMap<Integer, ArrayList<Block>> specialBlocks = new HashMap<Integer, ArrayList<Block>>();
@@ -3251,6 +3254,7 @@ public class Solver implements Runnable {
             specialBlocks.put(3, new ArrayList<Block>());//portalsFrom
             specialBlocks.put(4, new ArrayList<Block>());//portalsTo
             specialBlocks.put(5, new ArrayList<Block>());//frozens
+            specialBlocks.put(6, new ArrayList<Block>());//breakables
             for (Map.Entry<Coordinate, Block> ent : map.entrySet()) {
                 if (ent.getValue() instanceof Block && !(ent.getValue() instanceof EmptyBlock)) {
                     if (ent.getValue() instanceof MoltenBlock) {
@@ -3264,6 +3268,8 @@ public class Solver implements Runnable {
                         specialBlocks.get(4).add(map.get(portalExit));
                     } else if (ent.getValue() instanceof IceBlock) {
                         specialBlocks.get(5).add(ent.getValue());
+                    } else if (ent.getValue() instanceof BreakableBlock) {
+                        specialBlocks.get(6).add(ent.getValue());
                     }
                 }
             }
@@ -3276,6 +3282,7 @@ public class Solver implements Runnable {
             ArrayList<Block> portalsFrom = specialBlocks.get(3);
             ArrayList<Block> portalsTo = specialBlocks.get(4);
             ArrayList<Block> frozens = specialBlocks.get(5);
+            ArrayList<Block> breakables = specialBlocks.get(6);
             for (int i = 0; i < moltens.size(); i++) {
                 addSpecs += MOLTENS_ADD + constObstacle + moltens.get(i).getId() + putEnd + "\n";
             }
@@ -3293,6 +3300,9 @@ public class Solver implements Runnable {
             for (int i = 0; i < frozens.size(); i++) {
                 addSpecs += FROZENS_ADD + constObstacle + frozens.get(i).getId() + putEnd + "\n";
             }
+            for (int i = 0; i < breakables.size(); i++) {
+                addSpecs += BREAKABLES_ADD + constObstacle + breakables.get(i).getId() + putEnd + "\n";
+            }
             sb.append("Aux Data for Level: " + newLevel + "\n");
             sb.append(headerLine + "\n");
             sb.append(putLevelLine + "\n");
@@ -3306,12 +3316,12 @@ public class Solver implements Runnable {
 
             System.out.println(sb.toString());
 
-            File pcAuxDataDir = new File("C:\\Users\\Christian\\Documents\\AuxData\\");
-            //File macAuxDataDir = new File("/Users/dewit/Documents/shift_files/aux_data");
+            //File pcAuxDataDir = new File("C:\\Users\\Christian\\Documents\\AuxData\\");
+            File macAuxDataDir = new File("/Users/dewit/Documents/shift_files/aux_data");
             System.out.println("trying to place file");
-            File newAuxLevelDir = new File(pcAuxDataDir.getAbsolutePath() + "/" + newLevel);
+            File newAuxLevelDir = new File(macAuxDataDir.getAbsolutePath() + "/" + newLevel);
             //removed for lucky 8
-            if (!pcAuxDataDir.exists()) {
+            if (!macAuxDataDir.exists()) {
                 throw new IOException();//making a directory failed
             }
 
@@ -3371,27 +3381,25 @@ public class Solver implements Runnable {
                     throw new IllegalStateException();
                 }
 
-                //File levelsDir = new File("/Users/dewit/Documents/shift_files/level_files");
-                File levelsDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
+                File levelsDir = new File("/Users/dewit/Documents/shift_files/level_files");
+                //File levelsDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
                 //File levelsDir = new File("/Users/nrichardson/Desktop/builder/");
                 File newLevelDir = new File(levelsDir.getAbsolutePath() + "/" + outputFileName);
                 if (!levelsDir.exists()) {//it should always exist..
                     throw new IOException();//directory storing all levels does not exist?! O_O
                 }
                 //removed for lucky 8
-                /*
                 if (!newLevelDir.exists()) {
                     if (!newLevelDir.mkdir()) {
                         throw new IOException();//making a directory failed
                     }
                 }
-                */
-                while ((new File(levelsDir.getAbsolutePath() + "/" + outputFileName + ("" + levelNum + "") + ".xml")).exists()) {
+                while ((new File(newLevelDir.getAbsolutePath() + "/" + outputFileName + ("" + levelNum + "") + ".xml")).exists()) {
                     ++levelNum;
                 }
 
                 String levelName = outputFileName + ("" + levelNum + "");
-                newLevel = new File(levelsDir.getAbsolutePath() + "/" + outputFileName + ("" + levelNum + "") + ".xml");
+                newLevel = new File(newLevelDir.getAbsolutePath() + "/" + outputFileName + ("" + levelNum + "") + ".xml");
                 FileWriter fw = new FileWriter(newLevel.getAbsoluteFile());
                 BufferedWriter bw = new BufferedWriter(fw);
                 bw.write(fContent);
