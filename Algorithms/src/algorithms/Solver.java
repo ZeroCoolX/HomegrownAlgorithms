@@ -28,8 +28,8 @@ public class Solver implements Runnable {
     private static int maxY = 15;
     private static int midX = (maxX - 1) / 2;
     private static int midY = (maxY - 1) / 2;
-    private static int minMoves = 15;
-    private static int maxMoves = 18;
+    private static int minMoves = 19;
+    private static int maxMoves = 20;
     private static int retryCount = 0;
     private int numRocks;
     private int numBlocksToWrite = 0;
@@ -56,7 +56,7 @@ public class Solver implements Runnable {
     private static double rockDensity = 0;
     private static double bubbleDensity = 0;
     private static double moltenDensity = 0;
-    private static double breakableDensity = .4;
+    private static double breakableDensity = 0;
     private static double iceDensity = 0;
     private static double portalDensity = 0;
 
