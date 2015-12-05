@@ -134,7 +134,7 @@ public class Solver implements Runnable {
         }
         Solver s = new Solver();
         s.run();
-        if(breakableDensity > 0) {
+        if (breakableDensity > 0) {
             s.findBlocksHitMultipleTimes();
         }
         s.createXmlFiles();
@@ -207,7 +207,7 @@ public class Solver implements Runnable {
                 map.put(hit.getKey().getPosition(), new BreakableBlock(hit.getKey().getPosition()));
             }
         }
-        System.out.println("Map With Breakables (Replaced "+replacedCount+" Rocks W/Breakables): ");
+        System.out.println("Map With Breakables (Replaced " + replacedCount + " Rocks W/Breakables): ");
         printMap();
     }
 
@@ -375,7 +375,7 @@ public class Solver implements Runnable {
         double moltenEnd = moltenStart + moltenDensity;
         double breakableStart = moltenEnd;
         double breakableEnd = breakableStart + breakableDensity;
-        double portalStart = moltenEnd;
+        double portalStart = breakableEnd;
         double portalEnd = portalStart + portalDensity;
         double iceStart = portalEnd;
         double iceEnd = iceStart + iceDensity;
@@ -1090,7 +1090,6 @@ public class Solver implements Runnable {
 
         @Override
         public boolean canTravel(Direction direction) {
-            System.out.println("Can I travel?");
             return broken;
         }
 
