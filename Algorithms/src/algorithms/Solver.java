@@ -28,8 +28,8 @@ public class Solver implements Runnable {
     private static int maxY = 15;
     private static int midX = (maxX - 1) / 2;
     private static int midY = (maxY - 1) / 2;
-    private static int minMoves = 19;
-    private static int maxMoves = 20;
+    private static int minMoves = 17;
+    private static int maxMoves = 19;
     private static int retryCount = 0;
     private int numRocks;
     private int numBlocksToWrite = 0;
@@ -1177,15 +1177,15 @@ public class Solver implements Runnable {
                     coordinate = new Coordinate(portalExit.getX(), portalExit.getY() - 1);
                     break;
                 case RIGHT:
-                    coordinate = new Coordinate(portalExit.getX() + 1, portalExit.getY());
+                    coordinate = new Coordinate(portalExit.getX() - 1, portalExit.getY());
                     break;
                 case LEFT:
-                    coordinate = new Coordinate(portalExit.getX() - 1, portalExit.getY());
+                    coordinate = new Coordinate(portalExit.getX() + 1, portalExit.getY());
                     break;
                 default:
                     coordinate = null;
             }
-            if (map.get(coordinate) == null || map.get(coordinate) instanceof RockBlock) { // If a side of the exit portal is covered by block or wall, don't travel through it
+            if (map.get(coordinate) == null || !(map.get(coordinate) instanceof EmptyBlock)) { // If a side of the exit portal is covered by block or wall, don't travel through it
                 return;
             }
             block.setPassedThroughPortal(true);
