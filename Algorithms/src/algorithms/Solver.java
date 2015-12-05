@@ -576,9 +576,14 @@ public class Solver implements Runnable {
     private boolean canTravelInDirection(MovingBlock block, Direction direction) {
         Block nextBlock = getNextBlock(block, direction);
         if (block.getLastDirection() != null) {
-//            if(block.getLastDirection() == direction && nextBlock != null !(nextBlock instanceof BreakableBlock && ((BreakableBlock)nextBlock).broken)){
-//                return false; // Don't keep trying maybe?
-//            }
+            if (block.getLastDirection() == direction && nextBlock != null && nextBlock instanceof BreakableBlock && !((BreakableBlock) nextBlock).broken) {
+                BreakableBlock breakableBlock = (BreakableBlock) nextBlock;
+                while (!breakableBlock.broken) {
+                    breakableBlock.onTouch(block);
+                    block.savePreviousPosition();
+                }
+                return true; // Allow multiple hits right after each other
+            }
             switch (block.getLastDirection()) { // Don't move back where we just came
                 case UP:
                     if (direction == Direction.DOWN) {
