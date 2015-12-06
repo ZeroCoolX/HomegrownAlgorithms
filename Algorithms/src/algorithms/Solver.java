@@ -1315,6 +1315,7 @@ public class Solver implements Runnable {
     //constant syntax appearing on various lines. Every line has some or some combo of these
     private static final String layoutPrefix = "android:layout_";
     private static final String idPrefix = "android:id";
+    private static final String portalBrother = "ads:brother";
     private static final String backgroundPrefix = "android:background";
     private static final String idFile = "=\"@+id/";//can be used as a reference AND declaration
     private static final String dimenFile = "=\"@dimen/";
@@ -2073,6 +2074,9 @@ public class Solver implements Runnable {
                     //we handle const bases, clusters, and aligns. There is nothing else but to finish off the view block, append it and repeat
                 }
                 if (!view.equals("")) {
+                    if(block instanceof PortalBlock){
+                        view += (portalBrother + idFile + fullAssetName(assets.P_OBST) + ((PortalBlock)block).getPortalExit());
+                    }
                     view += (viewEnd + "\n");
                 }
                 if (wasDude) {//if the block was the dude don't write it
