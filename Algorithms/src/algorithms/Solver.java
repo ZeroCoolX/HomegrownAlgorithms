@@ -202,7 +202,7 @@ public class Solver implements Runnable {
             }
         }
         for (Map.Entry<RockBlock, Integer> hit : hits.entrySet()) {
-            if (hit.getValue() == 2 || hit.getValue() == 3) {
+            if (hit.getValue() <= 3) {
                 replacedCount++;
                 map.put(hit.getKey().getPosition(), new BreakableBlock(hit.getKey().getPosition()));
             }
@@ -364,8 +364,8 @@ public class Solver implements Runnable {
         Say I want 10% of blocks placed to be Portal Blocks, I pass in "portals=.1" as a command line argument
         Any block I FAIL to pass in a density for, it defaults to 0. Say I pass in "portals=.2 moltens=.1 bubbles=.4", it will auto make RockBlock density be .3 (1.0 minus all others)
          */
-        if (rockDensity + bubbleDensity + moltenDensity + breakableDensity + portalDensity + iceDensity < 1.0) {
-            rockDensity = 1.0 - (bubbleDensity + moltenDensity + breakableDensity + portalDensity + iceDensity);
+        if (rockDensity + bubbleDensity + moltenDensity + portalDensity + iceDensity < 1.0) {
+            rockDensity = 1.0 - (bubbleDensity + moltenDensity + portalDensity + iceDensity);
         }
         double rockStart = 0.0;
         double rockEnd = rockDensity;
@@ -374,7 +374,7 @@ public class Solver implements Runnable {
         double moltenStart = bubbleEnd;
         double moltenEnd = moltenStart + moltenDensity;
         double breakableStart = moltenEnd;
-        double breakableEnd = breakableStart + breakableDensity;
+        double breakableEnd = breakableStart;//breakableStart + breakableDensity; //Should NEVER generate here now!
         double portalStart = breakableEnd;
         double portalEnd = portalStart + portalDensity;
         double iceStart = portalEnd;
