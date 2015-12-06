@@ -28,8 +28,8 @@ public class Solver implements Runnable {
     private static int maxY = 15;
     private static int midX = (maxX - 1) / 2;
     private static int midY = (maxY - 1) / 2;
-    private static int minMoves = 17;
-    private static int maxMoves = 19;
+    private static int minMoves = 12;
+    private static int maxMoves = 15;
     private static int retryCount = 0;
     private int numRocks;
     private int numBlocksToWrite = 0;
@@ -1334,6 +1334,12 @@ public class Solver implements Runnable {
     //Every block begins and ends with this
     private static final String viewStart = "<View";
     private static final String viewEnd = "/>";
+    private static final String instanceStart = "<lucky8s.shift.";
+    private static final String breakableStart = "Breakable";
+    private static final String bubbleStart = "Bubble";
+    private static final String portalStart = "Portal";
+    private static final String moltenStart = "Molten";
+    private static final String frozenStart = "Frozen";
 
     private static StringBuilder levelXML;
 
@@ -1908,7 +1914,12 @@ public class Solver implements Runnable {
                         System.out.println("We need to write: " + ent.getKey());
                     }
                     block = ent.getValue();
-                    view += (viewStart + "\n");
+                    view += ((block instanceof MoltenBlock ? (instanceStart+moltenStart)
+                            : (block instanceof PortalBlock ? (instanceStart+portalStart)
+                            : (block instanceof BubbleBlock ? (instanceStart+bubbleStart)
+                            : (block instanceof IceBlock ? (instanceStart+frozenStart)
+                            : (block instanceof BreakableBlock ? (instanceStart+breakableStart)
+                            : (viewStart))))))+"\n");//the <View  block must be specific to special block instance types
                     view += (fullAssetDataName(assetData.ID) + (block instanceof MovingBlock ? (constRunner) : (block instanceof FinishBlock ? (constFinish) : (constObstacle + block.getId()))) + qm + "\n");//variable name
                     view += (fullAssetDataName(assetData.WDTH) + qm + "\n");//const width
                     view += (fullAssetDataName(assetData.HGTH) + qm + "\n");//const height
@@ -3395,25 +3406,26 @@ public class Solver implements Runnable {
                     throw new IllegalStateException();
                 }
 
-                File levelsDir = new File("/Users/dewit/Documents/shift_files/level_files");
+                File levelsDir = new File("/Users/dewit/Documents/Shift/Shift/app/src/main/res/layout");
+                //File levelsDir = new File("/Users/dewit/Documents/shift_files/level_files");
                 //File levelsDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
                 //File levelsDir = new File("/Users/nrichardson/Desktop/builder/");
-                File newLevelDir = new File(levelsDir.getAbsolutePath() + "/" + outputFileName);
+                //File newLevelDir = new File(levelsDir.getAbsolutePath() + "/" + outputFileName);
                 if (!levelsDir.exists()) {//it should always exist..
                     throw new IOException();//directory storing all levels does not exist?! O_O
                 }
-                //removed for lucky 8
-                if (!newLevelDir.exists()) {
+                //removed for  direct insertion
+                /*if (!newLevelDir.exists()) {
                     if (!newLevelDir.mkdir()) {
                         throw new IOException();//making a directory failed
                     }
-                }
-                while ((new File(newLevelDir.getAbsolutePath() + "/" + outputFileName + ("" + levelNum + "") + ".xml")).exists()) {
+                }*/
+                while ((new File(levelsDir.getAbsolutePath() + "/" + outputFileName + ("" + levelNum + "") + ".xml")).exists()) {
                     ++levelNum;
                 }
-
+                
                 String levelName = outputFileName + ("" + levelNum + "");
-                newLevel = new File(newLevelDir.getAbsolutePath() + "/" + outputFileName + ("" + levelNum + "") + ".xml");
+                newLevel = new File(levelsDir.getAbsolutePath() + "/" + outputFileName + ("" + levelNum + "") + ".xml");
                 FileWriter fw = new FileWriter(newLevel.getAbsoluteFile());
                 BufferedWriter bw = new BufferedWriter(fw);
                 bw.write(fContent);
