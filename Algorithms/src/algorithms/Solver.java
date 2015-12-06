@@ -576,7 +576,8 @@ public class Solver implements Runnable {
     private boolean canTravelInDirection(MovingBlock block, Direction direction) {
         Block nextBlock = getNextBlock(block, direction);
         if (block.getLastDirection() != null) {
-            if (block.getLastDirection() == direction && nextBlock != null && nextBlock instanceof BreakableBlock && !((BreakableBlock) nextBlock).broken) {
+            ArrayList<Coordinate> previousPositions = block.getPreviousPositions();
+            if (previousPositions.get(previousPositions.size() - 1).equals(block.getPosition()) && nextBlock instanceof BreakableBlock && !((BreakableBlock) nextBlock).broken) {
                 BreakableBlock breakableBlock = (BreakableBlock) nextBlock;
                 while (!breakableBlock.broken) {
                     breakableBlock.onTouch(block);
@@ -619,8 +620,13 @@ public class Solver implements Runnable {
                 if (block.getPreviousPositions().size() == ((BubbleBlock) secondNextBlock).turnPopped) {
                     return false; // Don't allow to go through bubble block right after popping
                 }
+            } else if (secondNextBlock != null && secondNextBlock instanceof BreakableBlock) {
+                if (block.getPreviousPositions().size() == ((BreakableBlock) secondNextBlock).turnBroken) {
+                    return false; // Don't allow to go through breakable block right after popping
+                }
             }
         }
+
         if (nextBlock == null || !nextBlock.canTravel(direction)) {
             return false;
         }
