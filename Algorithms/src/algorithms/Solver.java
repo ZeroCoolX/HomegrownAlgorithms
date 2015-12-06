@@ -240,6 +240,10 @@ public class Solver implements Runnable {
                     if (map.containsKey(currentCoordinate) && map.get(currentCoordinate) instanceof RockBlock) {
                         continue; // We previously placed a portal block here, don't overwrite it!
                     }
+                    if (i == startY && a == startX) {
+                        map.put(currentCoordinate, new EmptyBlock(currentCoordinate)); // Don't put something where the start block goes
+                        continue;
+                    }
                     placeBlock(currentCoordinate);
                 }
             }
