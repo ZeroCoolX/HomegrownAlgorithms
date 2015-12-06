@@ -192,7 +192,7 @@ public class Solver implements Runnable {
         HashMap<RockBlock, Integer> hits = new HashMap<>();
         for (Map.Entry<Coordinate, Direction> previousPositions : shortestPathRock.getAllPreviousPositions().entrySet()) {
             Block nextBlock = getNextBlock(map.get(previousPositions.getKey()), previousPositions.getValue());
-            if (nextBlock instanceof RockBlock) {
+            if (nextBlock != null && nextBlock.getClass().getName().equals("algorithms.Solver$RockBlock")) {
                 if (hits.containsKey(nextBlock)) {
                     Integer hitCount = hits.get(nextBlock);
                     hits.put((RockBlock) nextBlock, ++hitCount);
