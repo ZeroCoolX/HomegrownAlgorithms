@@ -37,10 +37,10 @@ public class Solver implements Runnable {
     private String visualDisplay = "";
     private String encodedMap = "";
     private static String levelGenre = "default";//right now its hardcoded
-    private final File templateXML = new File("/Users/dewit/Documents/shift_files/level_files/level_template/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
-    private final File templateDir = new File("/Users/dewit/Documents/shift_files/level_files/level_template/");
-    //private final File templateXML = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
-    //private final File templateDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
+    //private final File templateXML = new File("/Users/dewit/Documents/shift_files/level_files/level_template/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
+    //private final File templateDir = new File("/Users/dewit/Documents/shift_files/level_files/level_template/");
+    private final File templateXML = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
+    private final File templateDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
     //private final File templateXML = new File("/Users/nrichardson/Desktop/builder/pack_layout_template.xml");//the path is relative to my comp atm, but it will be hardcoded in the future nonetheless
     //private final File templateDir = new File("/Users/nrichardson/Desktop/builder/");
 
@@ -2075,7 +2075,7 @@ public class Solver implements Runnable {
                 }
                 if (!view.equals("")) {
                     if(block instanceof PortalBlock){
-                        view += (portalBrother + idFile + fullAssetName(assets.P_OBST) + ((PortalBlock)block).getPortalExit());
+                        view += (portalBrother + idFile + (constObstacle + map.get((((PortalBlock)block).getPortalExit())).getId()) + qm + "\n");
                     }
                     view += (viewEnd + "\n");
                 }
@@ -3345,12 +3345,12 @@ public class Solver implements Runnable {
 
             System.out.println(sb.toString());
 
-            //File pcAuxDataDir = new File("C:\\Users\\Christian\\Documents\\AuxData\\");
-            File macAuxDataDir = new File("/Users/dewit/Documents/shift_files/aux_data");
+            File pcAuxDataDir = new File("C:\\Users\\Christian\\Documents\\AuxData\\");
+            //File macAuxDataDir = new File("/Users/dewit/Documents/shift_files/aux_data");
             System.out.println("trying to place file");
-            File newAuxLevelDir = new File(macAuxDataDir.getAbsolutePath() + "/" + newLevel);
+            File newAuxLevelDir = new File(pcAuxDataDir.getAbsolutePath() + "/" + newLevel);
             //removed for lucky 8
-            if (!macAuxDataDir.exists()) {
+            if (!pcAuxDataDir.exists()) {
                 throw new IOException();//making a directory failed
             }
 
@@ -3410,20 +3410,22 @@ public class Solver implements Runnable {
                     throw new IllegalStateException();
                 }
 
-                File levelsDir = new File("/Users/dewit/Documents/Shift/Shift/app/src/main/res/layout");
+                //File levelsDir = new File("/Users/dewit/Documents/Shift/Shift/app/src/main/res/layout");
                 //File levelsDir = new File("/Users/dewit/Documents/shift_files/level_files");
-                //File levelsDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
+                File levelsDir = new File("C:\\Users\\Christian\\Documents\\TestGame\\app\\src\\main\\res\\layout\\");
                 //File levelsDir = new File("/Users/nrichardson/Desktop/builder/");
                 //File newLevelDir = new File(levelsDir.getAbsolutePath() + "/" + outputFileName);
                 if (!levelsDir.exists()) {//it should always exist..
                     throw new IOException();//directory storing all levels does not exist?! O_O
                 }
-                //removed for  direct insertion
-                /*if (!newLevelDir.exists()) {
+                /*
+                //removed for lucky 8
+                if (!newLevelDir.exists()) {
                     if (!newLevelDir.mkdir()) {
                         throw new IOException();//making a directory failed
                     }
-                }*/
+                }
+                */
                 while ((new File(levelsDir.getAbsolutePath() + "/" + outputFileName + ("" + levelNum + "") + ".xml")).exists()) {
                     ++levelNum;
                 }
