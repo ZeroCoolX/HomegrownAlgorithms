@@ -409,7 +409,7 @@ public class Solver implements Runnable {
                 int randomY = ThreadLocalRandom.current().nextInt(1, maxY - 1);
 
                 // Make sure they are at least a little bit away from each other & make sure we don't happen to get the exact same spot (very unlikely)
-                while ((randomX == coordinate.getX() && randomY == coordinate.getY()) || diff(coordinate.getX(), randomX) < 3 || diff(coordinate.getY(), randomY) < 4) {
+                while ((randomX == coordinate.getX() && randomY == coordinate.getY()) || diff(coordinate.getX(), randomX) < 3 || diff(coordinate.getY(), randomY) < 4 || map.get(new Coordinate(randomX,randomY)) instanceof PortalBlock) {
                     randomX = ThreadLocalRandom.current().nextInt(1, maxX - 1);
                     randomY = ThreadLocalRandom.current().nextInt(1, maxY - 1);
                 }
