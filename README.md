@@ -13,3 +13,6 @@ Because of this, myself and Nick were brought into Lucky 8's Entertainment LLC a
 
 Later, SolverV2.java was created due to Lucky 8's changing the way they needed their levels physically contructed, which went from XML to a MUCH, much more efficient string representation.
 
+
+
+Most all of the other algorithms and custom ADTs in this repository are recreations of known algorithms only using their theory as a reference. The code itself is original, but the algorithm ideas are not.
